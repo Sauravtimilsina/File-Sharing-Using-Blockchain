@@ -9,7 +9,6 @@ This project ensures secure file transfer by combining AES-256 encryption for co
 The system also implements secure authentication mechanisms such as OTP verification, JWT-based login, and password hashing using bcrypt to ensure that only authorized users can access the system.
 
 
-
 🚀 Features
 
 User Registration with OTP Verification
