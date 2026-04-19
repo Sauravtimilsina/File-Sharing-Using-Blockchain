@@ -9,15 +9,25 @@ This project ensures secure file transfer by combining AES encryption for confid
 🚀 Features
 
 🔑 User Registration with OTP Verification
+
 🔐 Secure Login using JWT Authentication
+
 🔒 Password Hashing with bcrypt
+
 📂 Secure File Upload
+
 🔑 AES-256-CBC File Encryption
+
 🧾 SHA-256 Hashing for Integrity
+
 ⛓️ Blockchain-style Ledger for Tamper Detection
+
 ✔️ File Verification System
+
 📤 Secure File Sharing
+
 📥 Controlled File Download
+
 🚫 Unauthorized Access Protection
 
 🛠️ Tech Stack
