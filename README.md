@@ -7,6 +7,7 @@ A secure web-based system for file upload, verification, sharing, and download u
 This project ensures secure file transfer by combining AES encryption for confidentiality and SHA-256 hashing with a blockchain-style ledger for integrity verification. It protects files from unauthorized access and detects any tampering.
 
 🚀 Features
+
 🔑 User Registration with OTP Verification
 🔐 Secure Login using JWT Authentication
 🔒 Password Hashing with bcrypt
