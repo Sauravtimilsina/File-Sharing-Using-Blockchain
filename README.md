@@ -80,9 +80,6 @@ Apply the storage migration with `supabase db push` after linking the project, o
 - `MAX_UPLOAD_BYTES`: backend file upload cap; example uses `1073741824` for 1 GB
 - `FILE_STORAGE_PROVIDER`: `local` by default or `supabase` for the private Storage bucket
 - `SUPABASE_STORAGE_BUCKET`: private Storage bucket used when `FILE_STORAGE_PROVIDER=supabase`
-- `JWT_SECRET`: backend sign-in secret
-- `ENCRYPTION_KEY`: backend file processing key material
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`: email sender settings for account verification
 - `VITE_API_BASE_URL`: frontend API base URL
 
 ## Large File Note
@@ -90,14 +87,6 @@ Apply the storage migration with `supabase db push` after linking the project, o
 The backend upload pipeline stages multipart uploads on disk and streams processing for local storage.
 
 The current upload endpoint still receives a single HTTP request. When a hosting service, load balancer, or gateway has a smaller request-body cap, large-file support should move to chunked uploads or direct object-storage uploads with a resumable upload flow.
-
-## Vercel and Cloudflare
-
-Deployment does not require running local `npm run dev` commands. For separate Vercel projects from this repository, set the frontend project Root Directory to `frontend` and the backend project Root Directory to `backend`.
-
-The folder-level Vercel configs keep those project types separate: `frontend/vercel.json` runs the Vite build and serves `dist`, while `backend/vercel.json` uses the Express preset and never runs a Vite command. In the Vercel dashboard, clear old overrides that set the backend Build Command to `vite build`, or let the backend `vercel.json` override it with `npm run build`.
-
-Set Vercel environment variables for the backend secrets, database URL, storage settings, mail provider, CORS origins, and frontend settings. Set frontend `VITE_API_BASE_URL` to the public backend origin plus `/api` when the frontend and backend are separate Vercel projects. The Vercel Express backend is suitable for normal API requests, but the large multipart upload route needs a host or direct-upload design that accepts the required file size. Cloudflare can serve DNS, proxying, and static security headers; `frontend/public/_headers` is included for a Pages-style static deployment.
 
 ## Next Security Work
 
