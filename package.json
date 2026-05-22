@@ -8,5 +8,8 @@
   "scripts": {
     "build": "npm run build --workspace frontend",
     "start": "npm run start --workspace backend"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }

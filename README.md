@@ -80,6 +80,9 @@ Apply the storage migration with `supabase db push` after linking the project, o
 - `MAX_UPLOAD_BYTES`: backend file upload cap; example uses `1073741824` for 1 GB
 - `FILE_STORAGE_PROVIDER`: `local` by default or `supabase` for the private Storage bucket
 - `SUPABASE_STORAGE_BUCKET`: private Storage bucket used when `FILE_STORAGE_PROVIDER=supabase`
+- `JWT_SECRET`: backend sign-in secret
+- `ENCRYPTION_KEY`: backend file processing key material
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`: email sender settings for account verification
 - `VITE_API_BASE_URL`: frontend API base URL
 
 ## Large File Note
