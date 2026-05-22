@@ -1,7 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "src/app.js",
+  "main": "src/server.js",
   "scripts": {
     "build": "node --check src/server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -17,7 +17,7 @@
   "license": "ISC",
   "description": "",
   "engines": {
-    "node": ">=20.0.0"
+    "node": "20.x"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.1",
@@ -26,7 +26,7 @@
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",
-    "helmet": "^8.2.0",
+    "helmet": "^8.2.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.2.4",
     "multer": "^2.1.1",
