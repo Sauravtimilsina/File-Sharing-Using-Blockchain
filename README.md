@@ -90,9 +90,9 @@ The current upload endpoint still receives a single HTTP request. When a hosting
 
 ## Vercel and Cloudflare
 
-The root `vercel.json`, root `package.json`, and `api/index.js` make the Vite frontend and Express API build from the repository root on Vercel. Deployment does not require running local `npm run dev` commands.
+The root `vercel.json`, root `package.json`, and `api/index.js` make the Vite frontend and Express API build from the repository root on Vercel. Deployment does not require running local `npm run dev` commands. Import this repository as one root Vercel project for this configuration; the experimental Services project mode expects a different `experimentalServices` layout.
 
-Set Vercel environment variables for the backend secrets, database URL, storage settings, mail provider, CORS origins, and `VITE_API_BASE_URL`. The Vercel Express function route is suitable for normal API requests, but the large multipart upload route needs a host or direct-upload design that accepts the required file size. Cloudflare can serve DNS, proxying, and static security headers; `frontend/public/_headers` is included for a Pages-style static deployment.
+Set Vercel environment variables for the backend secrets, database URL, storage settings, mail provider, CORS origins, and `VITE_API_BASE_URL`. The Vercel install command keeps optional build binaries available on Linux before Vite runs. The Vercel Express function route is suitable for normal API requests, but the large multipart upload route needs a host or direct-upload design that accepts the required file size. Cloudflare can serve DNS, proxying, and static security headers; `frontend/public/_headers` is included for a Pages-style static deployment.
 
 ## Next Security Work
 
