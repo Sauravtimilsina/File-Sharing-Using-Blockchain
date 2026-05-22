@@ -45,7 +45,10 @@ const DashboardPage = () => {
     }
   }, [toast]);
 
-  useEffect(() => { fetchFiles(); }, [fetchFiles]);
+  useEffect(() => {
+    const request = window.setTimeout(fetchFiles, 0);
+    return () => window.clearTimeout(request);
+  }, [fetchFiles]);
 
   const toggleView = (nextView) => {
     setView(nextView);
