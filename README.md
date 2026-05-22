@@ -57,6 +57,24 @@ To migrate MongoDB records after the Supabase schema is created:
 
 The browser Supabase publishable key is only needed for future direct frontend Supabase features. The API adapter uses a backend secret key or legacy service-role key and that value must never be exposed in `VITE_*` variables.
 
+The local env files keep Supabase server and browser access separate:
+
+```env
+# backend/.env
+DB_PROVIDER=postgres
+SUPABASE_URL=https://lqswsjmnlkgwshprtcyp.supabase.co
+SUPABASE_SECRET_KEY=your_supabase_secret_key
+SUPABASE_DB_URL=postgresql://postgres:your_database_password@db.lqswsjmnlkgwshprtcyp.supabase.co:5432/postgres
+```
+
+```env
+# frontend/.env
+VITE_SUPABASE_URL=https://lqswsjmnlkgwshprtcyp.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+```
+
+`SUPABASE_DB_URL` must be the Postgres connection string, not a Supabase API key.
+
 ## File Object Storage
 
 Metadata lives in Supabase Postgres. File objects can live in the private Supabase Storage bucket by setting:
