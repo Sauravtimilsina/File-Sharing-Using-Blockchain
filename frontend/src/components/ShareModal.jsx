@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { X, Send, Loader2, UserPlus } from 'lucide-react';
+import { X, Send, Loader2, Mail, Share2, UserPlus } from 'lucide-react';
 import API from '../api/axios';
-import { useToast } from './Toast';
+import { useToast } from './toastContext';
 
 const ShareModal = ({ file, onClose, onShared }) => {
   const [email, setEmail] = useState('');
@@ -31,61 +31,64 @@ const ShareModal = ({ file, onClose, onShared }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 dark:bg-black/60 backdrop-blur-sm animate-[fadeIn_0.2s_ease]">
-      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 w-full max-w-md shadow-xl animate-[scaleIn_0.2s_ease] transition-colors duration-300">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-neutral-100 dark:bg-white/10 rounded-lg">
-              <UserPlus className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md animate-[fadeIn_0.2s_ease]">
+      <div className="surface-glass premium-shadow w-full max-w-md rounded-[28px] border border-white/80 p-5 animate-[scaleIn_0.2s_ease] dark:border-white/10 sm:p-6">
+        <div className="mb-5 flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-cyan-500 to-emerald-500 text-white shadow-lg">
+              <UserPlus className="h-5 w-5" />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">Share File</h3>
-              <p className="text-xs text-neutral-500 truncate max-w-[200px]">{file?.filename}</p>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold uppercase text-cyan-700 dark:text-cyan-300">Controlled sharing</p>
+              <h3 className="text-xl font-semibold text-slate-950 dark:text-white">Share file</h3>
+              <p className="truncate text-sm text-slate-500 dark:text-slate-400">{file?.filename}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 hover:bg-neutral-100 dark:hover:bg-white/5 rounded-lg transition-colors cursor-pointer">
-            <X className="w-5 h-5 text-neutral-400" />
+          <button onClick={onClose} className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-white" title="Close share dialog">
+            <X className="h-5 w-5" />
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 px-4 py-3 rounded-lg bg-danger/10 border border-danger/20 text-danger text-sm">
+          <div className="mb-4 rounded-2xl border border-danger/20 bg-danger/10 px-4 py-3 text-sm font-medium text-danger">
             {error}
           </div>
         )}
         {success && (
-          <div className="mb-4 px-4 py-3 rounded-lg bg-success/10 border border-success/20 text-success text-sm">
+          <div className="mb-4 rounded-2xl border border-success/20 bg-success/10 px-4 py-3 text-sm font-medium text-success">
             {success}
           </div>
         )}
 
         <form onSubmit={handleShare} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1.5">Recipient Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="recipient@example.com"
-              required
-              className="w-full px-4 py-3 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white text-sm placeholder:text-neutral-400 dark:placeholder:text-neutral-700 focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 transition-all"
-            />
+            <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Recipient email</label>
+            <div className="relative">
+              <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="recipient@example.com"
+                required
+                className="w-full rounded-2xl border border-slate-200 bg-white/90 py-3.5 pl-11 pr-4 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/10 dark:border-white/10 dark:bg-slate-950/80 dark:text-white dark:focus:border-cyan-300"
+              />
+            </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-3 pt-1 sm:flex-row">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-medium text-sm hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-all cursor-pointer"
+              className="min-h-12 flex-1 rounded-2xl border border-slate-200 bg-white/80 px-4 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:bg-white dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-200 dark:hover:bg-white/10"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-3 rounded-lg bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 font-semibold text-sm hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+              className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-600 to-emerald-600 px-4 text-sm font-semibold text-white shadow-lg shadow-cyan-900/15 transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Send className="w-4 h-4" /> Share</>}
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Share2 className="h-4 w-4" /><Send className="h-4 w-4" /> Share</>}
             </button>
           </div>
         </form>

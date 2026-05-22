@@ -1,11 +1,14 @@
 const crypto = require("crypto");
 const fs = require("fs");
+const fsPromises = require("fs/promises");
+const os = require("os");
 const path = require("path");
+const { Transform } = require("stream");
+const { pipeline } = require("stream/promises");
+const { createEncryptedReadStream, readEncryptedObject, saveEncryptedObject } = require("./storageService");
 
 const ALGORITHM = "aes-256-cbc";
-const IV_LENGTH = 16; 
-
-
+const IV_LENGTH = 16;
 const getKey = () => {
   const key = process.env.ENCRYPTION_KEY;
   if (!key) {
@@ -14,49 +17,81 @@ const getKey = () => {
   return Buffer.from(key, "hex");
 };
 
-const encryptFile = (fileBuffer, storedName) => {
-  const key = getKey();
-  const iv = crypto.randomBytes(IV_LENGTH);
-
-  const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
-  const encrypted = Buffer.concat([cipher.update(fileBuffer), cipher.final()]);
-
-  
-  const encryptedWithIv = Buffer.concat([iv, encrypted]);
-
-  const filePath = path.join(__dirname, "../../uploads", storedName);
-  fs.writeFileSync(filePath, encryptedWithIv);
-
-  return filePath;
-};
-
-const decryptFile = (storedName) => {
-  const key = getKey();
-  const filePath = path.join(__dirname, "../../uploads", storedName);
-
-  if (!fs.existsSync(filePath)) {
-    const err = new Error("Encrypted file not found on disk");
-    err.code = "FILE_NOT_FOUND";
+const getIv = (encryptedBuffer) => {
+  if (encryptedBuffer.length < IV_LENGTH) {
+    const err = new Error("Encrypted file header is incomplete");
+    err.code = "DECRYPTION_FAILED";
     throw err;
   }
 
-  const encryptedWithIv = fs.readFileSync(filePath);
+  return encryptedBuffer.subarray(0, IV_LENGTH);
+};
 
-  
-  const iv = encryptedWithIv.subarray(0, IV_LENGTH);
-  const encryptedData = encryptedWithIv.subarray(IV_LENGTH);
+const createDecryptedReadStream = async (storedName) => {
+  const encryptedBuffer = await readEncryptedObject(storedName);
+  const iv = getIv(encryptedBuffer);
+  const decipher = crypto.createDecipheriv(ALGORITHM, getKey(), iv);
+  const encryptedStream = await createEncryptedReadStream(storedName);
+
+  let headerBytesLeft = IV_LENGTH;
+  const contentStream = encryptedStream.pipe(new Transform({
+    transform(chunk, encoding, callback) {
+      if (headerBytesLeft > 0) {
+        const offset = Math.min(headerBytesLeft, chunk.length);
+        headerBytesLeft -= offset;
+        callback(null, chunk.subarray(offset));
+        return;
+      }
+      callback(null, chunk);
+    },
+  }));
+
+  return contentStream.pipe(decipher);
+};
+
+const encryptFileFromPath = async (sourcePath, storedName) => {
+  const iv = crypto.randomBytes(IV_LENGTH);
+  const cipher = crypto.createCipheriv(ALGORITHM, getKey(), iv);
+  const encryptedPath = path.join(os.tmpdir(), `${storedName}.${crypto.randomUUID()}`);
+  const output = fs.createWriteStream(encryptedPath);
+
+  output.write(iv);
 
   try {
-    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
-    const decrypted = Buffer.concat([decipher.update(encryptedData), decipher.final()]);
-    return decrypted;
-  } catch (cryptoError) {
-    
-    const err = new Error("File decryption failed — the encrypted file may have been tampered with or corrupted");
+    await pipeline(fs.createReadStream(sourcePath), cipher, output);
+    await saveEncryptedObject(storedName, encryptedPath);
+    return storedName;
+  } catch (error) {
+    fs.rmSync(encryptedPath, { force: true });
+    throw error;
+  } finally {
+    await fsPromises.rm(encryptedPath, { force: true });
+  }
+};
+
+const hashDecryptedFile = async (storedName) => {
+  const hash = crypto.createHash("sha256");
+
+  try {
+    const stream = await createDecryptedReadStream(storedName);
+    for await (const chunk of stream) {
+      hash.update(chunk);
+    }
+    return hash.digest("hex");
+  } catch (error) {
+    if (error.code === "FILE_NOT_FOUND" || error.code === "DECRYPTION_FAILED") {
+      throw error;
+    }
+
+    const err = new Error("File decryption failed");
     err.code = "DECRYPTION_FAILED";
-    err.originalError = cryptoError;
+    err.originalError = error;
     throw err;
   }
 };
 
-module.exports = { encryptFile, decryptFile };
+module.exports = {
+  createDecryptedReadStream,
+  encryptFileFromPath,
+  hashDecryptedFile,
+};

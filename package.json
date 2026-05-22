@@ -1,0 +1,12 @@
+{
+  "name": "secure-transfer-workspace",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace frontend",
+    "start": "npm run start --workspace backend"
+  }
+}

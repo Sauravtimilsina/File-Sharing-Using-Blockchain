@@ -1,8 +1,7 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const User = require("../models/User");
-const OTP = require("../models/OTP");
+const repositories = require("../repositories");
 const { sendOTP: sendOTPEmail } = require("../utils/email");
 
 
@@ -15,37 +14,41 @@ const generateOTP = () => {
   return crypto.randomInt(100000, 999999).toString();
 };
 
+const cleanEmail = (value) => typeof value === "string" ? value.trim().toLowerCase() : "";
+const cleanUsername = (value) => typeof value === "string" ? value.trim() : "";
+const isEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
 
 const register = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const username = cleanUsername(req.body.username);
+    const email = cleanEmail(req.body.email);
+    const { password } = req.body;
 
-    if (!username || !email || !password) {
+    if (!username || !isEmail(email) || typeof password !== "string" || password.length < 8) {
       return res.status(400).json({ message: "Please provide all fields" });
     }
 
-    
-    const existingUser = await User.findOne({
-      $or: [{ email }, { username }],
-    });
+
+    const existingUser = await repositories.users.findExisting({ email, username });
 
     if (existingUser) {
-      
-      if (!existingUser.isVerified && existingUser.email === email) {
-        
-        const salt = await bcrypt.genSalt(10);
-        existingUser.password = await bcrypt.hash(password, salt);
-        existingUser.username = username;
-        await existingUser.save();
 
-        
-        await OTP.deleteMany({ email });
+      if (!existingUser.isVerified && existingUser.email === email) {
+
+        const salt = await bcrypt.genSalt(10);
+        await repositories.users.updateUnverifiedCredentials(existingUser._id, {
+          username,
+          password: await bcrypt.hash(password, salt),
+        });
+
+
+        await repositories.otps.deleteByEmail(email);
         const otp = generateOTP();
-        await OTP.create({
+        await repositories.otps.create({
           email,
           otp,
-          expiresAt: new Date(Date.now() + 5 * 60 * 1000), 
+          expiresAt: new Date(Date.now() + 5 * 60 * 1000),
         });
 
         try {
@@ -64,21 +67,21 @@ const register = async (req, res) => {
       return res.status(400).json({ message: "User already exists with that email or username" });
     }
 
-    
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    
-    const user = await User.create({
+
+    const user = await repositories.users.create({
       username,
       email,
       password: hashedPassword,
       isVerified: false,
     });
 
-    
+
     const otp = generateOTP();
-    await OTP.create({
+    await repositories.otps.create({
       email,
       otp,
       expiresAt: new Date(Date.now() + 5 * 60 * 1000),
@@ -106,37 +109,37 @@ const register = async (req, res) => {
 
 const verifyOTP = async (req, res) => {
   try {
-    const { email, otp } = req.body;
+    const email = cleanEmail(req.body.email);
+    const otp = typeof req.body.otp === "string" ? req.body.otp.trim() : "";
 
-    if (!email || !otp) {
+    if (!isEmail(email) || !/^\d{6}$/.test(otp)) {
       return res.status(400).json({ message: "Please provide email and OTP" });
     }
 
-    
-    const otpRecord = await OTP.findOne({ email, otp });
+
+    const otpRecord = await repositories.otps.findByEmailAndCode(email, otp);
     if (!otpRecord) {
       return res.status(400).json({ message: "Invalid or expired verification code" });
     }
 
-    
-    if (otpRecord.expiresAt < new Date()) {
-      await OTP.deleteMany({ email });
+
+    if (new Date(otpRecord.expiresAt) < new Date()) {
+      await repositories.otps.deleteByEmail(email);
       return res.status(400).json({ message: "Verification code has expired. Please request a new one." });
     }
 
-    
-    const user = await User.findOne({ email });
+
+    const user = await repositories.users.findByEmail(email);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    user.isVerified = true;
-    await user.save();
+    await repositories.users.markVerified(user._id);
 
-    
-    await OTP.deleteMany({ email });
 
-    
+    await repositories.otps.deleteByEmail(email);
+
+
     const token = generateToken(user._id);
 
     res.status(200).json({
@@ -158,13 +161,13 @@ const verifyOTP = async (req, res) => {
 
 const resendOTP = async (req, res) => {
   try {
-    const { email } = req.body;
+    const email = cleanEmail(req.body.email);
 
-    if (!email) {
+    if (!isEmail(email)) {
       return res.status(400).json({ message: "Please provide email" });
     }
 
-    const user = await User.findOne({ email });
+    const user = await repositories.users.findByEmail(email);
     if (!user) {
       return res.status(404).json({ message: "No account found with that email" });
     }
@@ -173,10 +176,10 @@ const resendOTP = async (req, res) => {
       return res.status(400).json({ message: "Email is already verified" });
     }
 
-    
-    await OTP.deleteMany({ email });
+
+    await repositories.otps.deleteByEmail(email);
     const otp = generateOTP();
-    await OTP.create({
+    await repositories.otps.create({
       email,
       otp,
       expiresAt: new Date(Date.now() + 5 * 60 * 1000),
@@ -200,18 +203,19 @@ const resendOTP = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const email = cleanEmail(req.body.email);
+    const { password } = req.body;
 
-    if (!email || !password) {
+    if (!isEmail(email) || typeof password !== "string" || !password) {
       return res.status(400).json({ message: "Please provide email and password" });
     }
 
-    const user = await User.findOne({ email });
+    const user = await repositories.users.findByEmail(email);
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    
+
     if (!user.isVerified) {
       return res.status(403).json({
         message: "Please verify your email before logging in",
@@ -245,12 +249,13 @@ const login = async (req, res) => {
 
 const getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await repositories.users.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.status(200).json({ user });
+    const { password, ...safeUser } = user;
+    res.status(200).json({ user: safeUser });
   } catch (error) {
     console.error("GetMe error:", error);
     res.status(500).json({ message: "Server error" });

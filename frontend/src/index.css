@@ -1,8 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @theme {
   --color-success: #22c55e;
@@ -11,35 +10,203 @@
   --font-family-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
-/* ── Light mode (default) ── */
 body {
-  @apply bg-neutral-50 text-neutral-900 antialiased;
+  @apply bg-slate-50 text-slate-950 antialiased;
   font-family: var(--font-family-sans);
+  letter-spacing: 0;
+  min-width: 320px;
 }
 
-/* ── Dark mode ── */
+button,
+a,
+input {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a {
+  letter-spacing: 0;
+}
+
+#root {
+  min-height: 100vh;
+}
+
 .dark body {
-  @apply bg-neutral-950 text-neutral-100;
+  @apply bg-slate-950 text-slate-100;
 }
 
-/* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #aaa; }
-.dark ::-webkit-scrollbar-thumb { background: #333; }
-.dark ::-webkit-scrollbar-thumb:hover { background: #555; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+.dark ::-webkit-scrollbar-thumb { background: #334155; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
-/* ── Animations ── */
+.app-shell {
+  position: relative;
+  isolation: isolate;
+  overflow-x: hidden;
+  background:
+    linear-gradient(135deg, rgba(6, 182, 212, 0.15), transparent 26rem),
+    linear-gradient(225deg, rgba(34, 197, 94, 0.11), transparent 30rem),
+    #ecfeff;
+}
+
+.dark .app-shell {
+  background:
+    linear-gradient(135deg, rgba(6, 182, 212, 0.17), transparent 28rem),
+    linear-gradient(225deg, rgba(34, 197, 94, 0.12), transparent 32rem),
+    #02040a;
+}
+
+.app-shell::before,
+.app-shell::after,
+.auth-stage::before,
+.auth-stage::after {
+  content: "";
+  position: fixed;
+  inset: -18vh -12vw;
+  z-index: -2;
+  pointer-events: none;
+}
+
+.app-shell::before,
+.auth-stage::before {
+  background:
+    repeating-linear-gradient(122deg, transparent 0 8rem, rgba(34, 211, 238, 0.16) 8rem 8.12rem, transparent 8.12rem 15rem),
+    repeating-linear-gradient(58deg, transparent 0 10rem, rgba(74, 222, 128, 0.12) 10rem 10.08rem, transparent 10.08rem 18rem);
+  animation: packetFlow 26s linear infinite;
+  mask-image: linear-gradient(to bottom, transparent, black 14%, black 86%, transparent);
+}
+
+.app-shell::after,
+.auth-stage::after {
+  z-index: -1;
+  background:
+    linear-gradient(180deg, transparent 0 18%, rgba(34, 211, 238, 0.14) 18.4%, transparent 19% 56%, rgba(16, 185, 129, 0.1) 56.4%, transparent 57%),
+    linear-gradient(90deg, rgba(8, 145, 178, 0.1), transparent 24%, transparent 76%, rgba(34, 197, 94, 0.09));
+  opacity: 0.72;
+  animation: scanField 14s ease-in-out infinite alternate;
+}
+
+.security-grid {
+  background-image:
+    linear-gradient(rgba(15, 23, 42, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.055) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+.dark .security-grid {
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.07) 1px, transparent 1px);
+}
+
+.surface-glass {
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow:
+    0 24px 80px rgba(15, 23, 42, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px);
+}
+
+.dark .surface-glass {
+  background: rgba(15, 23, 42, 0.76);
+  box-shadow:
+    0 24px 90px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.premium-shadow {
+  box-shadow:
+    0 18px 60px rgba(2, 6, 23, 0.12),
+    0 2px 10px rgba(2, 6, 23, 0.06);
+}
+
+.dark .premium-shadow {
+  box-shadow:
+    0 24px 74px rgba(0, 0, 0, 0.38),
+    0 2px 14px rgba(0, 0, 0, 0.24);
+}
+
+.auth-stage {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(8, 145, 178, 0.2), transparent 22rem),
+    linear-gradient(225deg, rgba(34, 197, 94, 0.15), transparent 24rem),
+    #ecfeff;
+}
+
+.dark .auth-stage {
+  background:
+    linear-gradient(135deg, rgba(6, 182, 212, 0.22), transparent 24rem),
+    linear-gradient(225deg, rgba(34, 197, 94, 0.14), transparent 26rem),
+    #02040a;
+}
+
+.auth-rail {
+  background:
+    linear-gradient(155deg, rgba(2, 6, 23, 0.99), rgba(6, 78, 59, 0.94)),
+    #020617;
+}
+
+.dark .auth-rail {
+  background:
+    linear-gradient(155deg, rgba(2, 6, 23, 0.98), rgba(8, 47, 73, 0.92)),
+    #020617;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
 @keyframes scaleIn {
   from { opacity: 0; transform: scale(0.96); }
   to { opacity: 1; transform: scale(1); }
 }
+
 @keyframes slideIn {
   from { opacity: 0; transform: translateX(-8px); }
   to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes floatUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes packetFlow {
+  from { transform: translate3d(-4rem, -2rem, 0); }
+  to { transform: translate3d(8rem, 6rem, 0); }
+}
+
+@keyframes scanField {
+  from { transform: translate3d(0, -5%, 0); opacity: 0.42; }
+  to { transform: translate3d(0, 5%, 0); opacity: 0.86; }
+}
+
+@keyframes signalSweep {
+  from { transform: translateY(0) scaleY(0.92); opacity: 0.58; }
+  to { transform: translateY(-4px) scaleY(1.05); opacity: 1; }
+}
+
+@media (hover: none) {
+  .touch-reveal {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

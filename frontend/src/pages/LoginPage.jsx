@@ -1,8 +1,8 @@
-import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail, Moon, Sun } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
+import AuthShell from '../components/AuthShell';
+import { useAuth } from '../context/authStore';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -11,7 +11,6 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
-  const { dark, toggle } = useTheme();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -33,95 +32,85 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950 px-4 transition-colors duration-300">
-      <button
-        onClick={toggle}
-        className="absolute top-5 right-5 p-2 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-200 dark:hover:bg-white/10 transition-all cursor-pointer"
-      >
-        {dark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-      </button>
-
-      <div className="w-full max-w-md animate-[fadeIn_0.5s_ease]">
-        <div className="flex flex-col items-center mb-8">
-          <div className="p-2  rounded-lg">
-            <img src="logo.png" className='h-15 w-15' alt="logo" />
-          </div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">SecureTransfer</h1>
-        </div>
-
-        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-8 shadow-sm transition-colors duration-300">
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white mb-1">Welcome back</h2>
-          <p className="text-neutral-500 text-sm mb-6">Sign in to your account</p>
-
-          {error && (
-            <div className="mb-4 px-4 py-3 rounded-lg bg-danger/10 border border-danger/20 text-danger text-sm animate-[slideIn_0.3s_ease]">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1.5">Email</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-600" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  required
-                  className="w-full pl-10 pr-4 py-3 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white text-sm placeholder:text-neutral-400 dark:placeholder:text-neutral-700 focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 transition-all"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1.5">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 dark:text-neutral-600" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  className="w-full pl-10 pr-10 py-3 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white text-sm placeholder:text-neutral-400 dark:placeholder:text-neutral-700 focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 transition-all"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 font-semibold rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 active:bg-neutral-700 dark:active:bg-neutral-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
-            >
-              {loading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <>
-                  Sign In
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
-          </form>
-        </div>
-
-        <p className="text-center text-sm text-neutral-500 mt-6">
-          Don&apos;t have an account?{' '}
-          <Link to="/register" className="text-neutral-900 dark:text-white hover:underline font-medium">
-            Create one
+    <AuthShell
+      eyebrow="Client access"
+      title="Welcome back"
+      description="Sign in to manage files, review activity, and share documents with the people you trust."
+      footer={(
+        <>
+          New to SecureTransfer?{' '}
+          <Link to="/register" className="font-semibold text-sky-700 transition hover:text-sky-900 dark:text-sky-300 dark:hover:text-white">
+            Create an account
           </Link>
-        </p>
+        </>
+      )}
+    >
+      <div className="mb-6 flex items-center gap-3 rounded-2xl border border-emerald-200/80 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-400/15 dark:bg-emerald-400/10 dark:text-emerald-200">
+        <ShieldCheck className="h-5 w-5 shrink-0" />
+        Your workspace is ready after a quick sign in.
       </div>
-    </div>
+
+      {error && (
+        <div className="mb-4 rounded-2xl border border-danger/20 bg-danger/10 px-4 py-3 text-sm font-medium text-danger animate-[slideIn_0.3s_ease]">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Email</label>
+          <div className="relative">
+            <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              required
+              className="w-full rounded-2xl border border-slate-200 bg-white/90 py-3.5 pl-11 pr-4 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 dark:border-white/10 dark:bg-slate-950/80 dark:text-white dark:focus:border-sky-300"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Password</label>
+          <div className="relative">
+            <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              required
+              className="w-full rounded-2xl border border-slate-200 bg-white/90 py-3.5 pl-11 pr-12 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 dark:border-white/10 dark:bg-slate-950/80 dark:text-white dark:focus:border-sky-300"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-white"
+              title={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-600 via-cyan-600 to-emerald-600 px-4 py-3.5 font-semibold text-white shadow-lg shadow-sky-900/15 transition hover:-translate-y-0.5 hover:shadow-xl disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loading ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <>
+              Sign in
+              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+            </>
+          )}
+        </button>
+      </form>
+    </AuthShell>
   );
 };
 
