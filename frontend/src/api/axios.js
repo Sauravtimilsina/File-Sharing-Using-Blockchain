@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const defaultApiBaseUrl = import.meta.env.PROD
-  ? '/_/backend/api'
+  ? '/api'
   : 'http://localhost:5000/api';
 
 const API = axios.create({
