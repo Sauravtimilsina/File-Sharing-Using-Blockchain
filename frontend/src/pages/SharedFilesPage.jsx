@@ -1,11 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import API from '../api/axios';
 import FileTypeIcon from '../components/FileTypeIcon';
-import { useToast } from '../components/Toast';
+import { useToast } from '../components/toastContext';
 import {
-  Users, Download, ShieldCheck, Loader2,
-  Clock, User, AlertTriangle, CheckCircle2, Package,
-  LayoutGrid, List
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  Download,
+  LayoutGrid,
+  List,
+  Loader2,
+  Package,
+  ShieldCheck,
+  UserRound,
+  Users,
 } from 'lucide-react';
 
 const SharedFilesPage = () => {
@@ -22,18 +30,18 @@ const SharedFilesPage = () => {
       try {
         const res = await API.get('/files/shared');
         setFiles(res.data.files);
-      } catch (err) {
+      } catch {
         toast.error('Failed to load shared files');
       } finally {
         setLoading(false);
       }
     };
     fetchSharedFiles();
-  }, []);
+  }, [toast]);
 
-  const toggleView = (v) => {
-    setView(v);
-    localStorage.setItem('sharedView', v);
+  const toggleView = (nextView) => {
+    setView(nextView);
+    localStorage.setItem('sharedView', nextView);
   };
 
   const handleDownload = async (file) => {
@@ -82,9 +90,9 @@ const SharedFilesPage = () => {
       const res = await API.get(`/files/verify/${fileId}`);
       setVerifyResult({ fileId, ...res.data });
       if (res.data.isValid) {
-        toast.success(`"${filename}" — integrity verified`);
+        toast.success(`"${filename}" passed its check`);
       } else {
-        toast.warning(`"${filename}" — tampering detected!`);
+        toast.warning(`"${filename}" needs review`);
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Verification failed');
@@ -98,113 +106,167 @@ const SharedFilesPage = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <Loader2 className="w-8 h-8 text-neutral-400 animate-spin" />
+      <div className="flex min-h-[70vh] items-center justify-center">
+        <div className="surface-glass flex items-center gap-3 rounded-3xl border border-white/80 px-6 py-5 text-slate-500 dark:border-white/10 dark:text-slate-300">
+          <Loader2 className="h-6 w-6 animate-spin text-sky-500" />
+          Loading shared files
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-[fadeIn_0.4s_ease]">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white flex items-center gap-3">
-          <div className="p-2.5 bg-neutral-900 dark:bg-white rounded-xl">
-            <Users className="w-5 h-5 text-white dark:text-neutral-900" />
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <section className="surface-glass premium-shadow security-grid rounded-[28px] border border-white/80 px-5 py-6 dark:border-white/10 sm:px-7 sm:py-8">
+        <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
+          <div>
+            <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-fuchsia-200 bg-fuchsia-50/80 px-3 py-1.5 text-sm font-semibold text-fuchsia-800 dark:border-fuchsia-400/15 dark:bg-fuchsia-400/10 dark:text-fuchsia-100">
+              <Users className="h-4 w-4" />
+              Received file access
+            </p>
+            <h1 className="text-3xl font-semibold text-slate-950 dark:text-white sm:text-4xl">Shared with me</h1>
+            <p className="mt-4 max-w-2xl leading-7 text-slate-600 dark:text-slate-300">
+              Review files shared by other users, run a quick check before use, and keep ownership context visible.
+            </p>
           </div>
-          Shared With Me
-        </h1>
-        <p className="text-neutral-500 text-sm mt-2 ml-[52px]">Files other users have shared with your account</p>
-      </div>
-
-      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden transition-colors duration-300">
-        <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-          <span className="text-sm text-neutral-500">{files.length} shared files</span>
-          <div className="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 rounded-lg p-1">
-            <button onClick={() => toggleView('grid')} className={`p-1.5 rounded-md transition-all cursor-pointer ${view === 'grid' ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-sm' : 'text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300'}`}>
-              <LayoutGrid className="w-4 h-4" />
-            </button>
-            <button onClick={() => toggleView('list')} className={`p-1.5 rounded-md transition-all cursor-pointer ${view === 'list' ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-sm' : 'text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300'}`}>
-              <List className="w-4 h-4" />
-            </button>
+          <div className="rounded-[24px] border border-white/80 bg-white/70 p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Available shares</p>
+            <p className="mt-1 text-3xl font-semibold text-slate-950 dark:text-white">{files.length}</p>
           </div>
         </div>
+      </section>
+
+      <section className="mt-5 overflow-hidden rounded-[28px] border border-white/80 bg-white/80 shadow-sm dark:border-white/10 dark:bg-slate-900/70">
+        <header className="flex flex-col gap-4 border-b border-slate-200/80 px-5 py-5 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div>
+            <p className="text-sm font-semibold uppercase text-fuchsia-700 dark:text-fuchsia-300">Collaborative access</p>
+            <h2 className="mt-1 text-xl font-semibold text-slate-950 dark:text-white">Incoming files</h2>
+          </div>
+          <div className="inline-flex w-fit items-center gap-1 rounded-2xl border border-slate-200 bg-slate-100/80 p-1 dark:border-white/10 dark:bg-white/[0.06]">
+            <button
+              onClick={() => toggleView('grid')}
+              className={`grid h-10 w-10 place-items-center rounded-2xl transition ${view === 'grid' ? 'bg-white text-slate-950 shadow-sm dark:bg-white dark:text-slate-950' : 'text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
+              title="Grid view"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => toggleView('list')}
+              className={`grid h-10 w-10 place-items-center rounded-2xl transition ${view === 'list' ? 'bg-white text-slate-950 shadow-sm dark:bg-white dark:text-slate-950' : 'text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
+              title="List view"
+            >
+              <List className="h-4 w-4" />
+            </button>
+          </div>
+        </header>
 
         {files.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-neutral-500">
-            <Package className="w-12 h-12 mb-3 text-neutral-300 dark:text-neutral-600" />
-            <p className="text-sm">No files have been shared with you yet</p>
+          <div className="flex flex-col items-center justify-center px-5 py-16 text-center">
+            <div className="mb-4 grid h-20 w-20 place-items-center rounded-[24px] bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-400/10 dark:text-fuchsia-200">
+              <Package className="h-10 w-10" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-950 dark:text-white">Nothing has been shared yet</h3>
+            <p className="mt-2 max-w-md text-sm leading-6 text-slate-500 dark:text-slate-400">
+              Shared files appear here after another verified user grants access.
+            </p>
           </div>
         ) : view === 'grid' ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 p-4">
+          <div className="grid gap-4 p-4 sm:grid-cols-2 md:p-5 lg:grid-cols-3 xl:grid-cols-4">
             {files.map((share) => {
               const fileId = share.fileId?._id || share.fileId;
               const filename = share.fileId?.filename || 'Unknown file';
               const ownerName = share.owner?.username || 'Unknown';
               return (
-                <div key={share._id} className="group bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800 rounded-xl p-4 hover:border-neutral-300 dark:hover:border-neutral-700 hover:shadow-sm transition-all">
-                  <div className="flex items-center justify-center w-full aspect-square bg-white dark:bg-neutral-900 rounded-lg mb-3 relative">
-                    <FileTypeIcon filename={filename} className="w-10 h-10" />
-                    <span className="absolute bottom-2 right-2 text-[10px] font-bold text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded">{getExtension(filename)}</span>
+                <article key={share._id} className="group rounded-[24px] border border-slate-200/80 bg-slate-50/80 p-4 transition hover:-translate-y-1 hover:border-fuchsia-200 hover:bg-white hover:shadow-xl dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.07]">
+                  <div className="relative mb-4 flex aspect-[1.25] items-center justify-center rounded-[20px] border border-white bg-white shadow-sm dark:border-white/10 dark:bg-slate-950/70">
+                    <FileTypeIcon filename={filename} className="h-14 w-14" />
+                    <span className="absolute bottom-3 right-3 rounded-full bg-slate-950 px-2 py-1 text-[10px] font-bold text-white dark:bg-white dark:text-slate-950">{getExtension(filename)}</span>
                     {verifyResult?.fileId === fileId && (
-                      <div className="absolute top-2 left-2">
-                        {verifyResult.isValid ? <CheckCircle2 className="w-4 h-4 text-success" /> : <AlertTriangle className="w-4 h-4 text-danger" />}
+                      <div className="absolute left-3 top-3 rounded-full bg-white p-1 shadow-sm dark:bg-slate-900">
+                        {verifyResult.isValid ? <CheckCircle2 className="h-4 w-4 text-success" /> : <AlertTriangle className="h-4 w-4 text-danger" />}
                       </div>
                     )}
                   </div>
-                  <p className="text-sm font-medium text-neutral-900 dark:text-white truncate mb-0.5" title={filename}>{filename}</p>
-                  <p className="text-xs text-neutral-400 mb-3 flex items-center gap-1"><User className="w-3 h-3" /> {ownerName}</p>
-                  <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => handleDownload(share)} disabled={downloading === fileId} className="flex-1 p-1.5 rounded-lg bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-all disabled:opacity-50 cursor-pointer" title="Download">
-                      {downloading === fileId ? <Loader2 className="w-3.5 h-3.5 mx-auto animate-spin" /> : <Download className="w-3.5 h-3.5 mx-auto" />}
+                  <p className="truncate text-sm font-semibold text-slate-950 dark:text-white" title={filename}>{filename}</p>
+                  <div className="mt-2 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-300">
+                    <span className="grid h-7 w-7 place-items-center rounded-xl bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-400/10 dark:text-fuchsia-200">
+                      <UserRound className="h-3.5 w-3.5" />
+                    </span>
+                    <span className="truncate">{ownerName}</span>
+                  </div>
+                  <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-400">
+                    <Clock className="h-3.5 w-3.5" />
+                    {new Date(share.createdAt).toLocaleDateString()}
+                  </div>
+                  <div className="touch-reveal mt-4 grid grid-cols-2 gap-2 opacity-100 transition md:opacity-0 md:group-hover:opacity-100">
+                    <button onClick={() => handleDownload(share)} disabled={downloading === fileId} className="grid min-h-10 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:border-sky-200 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Download">
+                      {downloading === fileId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                     </button>
-                    <button onClick={() => handleVerify(share)} disabled={verifying === fileId} className="flex-1 p-1.5 rounded-lg bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-all disabled:opacity-50 cursor-pointer" title="Verify">
-                      {verifying === fileId ? <Loader2 className="w-3.5 h-3.5 mx-auto animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5 mx-auto" />}
+                    <button onClick={() => handleVerify(share)} disabled={verifying === fileId} className="grid min-h-10 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:border-emerald-200 hover:text-emerald-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Verify">
+                      {verifying === fileId ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
                     </button>
                   </div>
-                </div>
+                </article>
               );
             })}
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="min-w-[780px] w-full">
               <thead>
-                <tr className="text-left text-xs text-neutral-500 uppercase tracking-wider border-b border-neutral-100 dark:border-neutral-800">
-                  <th className="px-6 py-3 font-medium">Name</th>
-                  <th className="px-6 py-3 font-medium">Shared By</th>
-                  <th className="px-6 py-3 font-medium">Date</th>
-                  <th className="px-6 py-3 font-medium">Status</th>
-                  <th className="px-6 py-3 font-medium text-right">Actions</th>
+                <tr className="border-b border-slate-200/80 text-left text-xs font-bold uppercase text-slate-500 dark:border-white/10 dark:text-slate-400">
+                  <th className="px-6 py-4">Name</th>
+                  <th className="px-6 py-4">Shared by</th>
+                  <th className="px-6 py-4">Date</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+              <tbody className="divide-y divide-slate-200/70 dark:divide-white/10">
                 {files.map((share) => {
                   const fileId = share.fileId?._id || share.fileId;
                   const filename = share.fileId?.filename || 'Unknown file';
                   const ownerName = share.owner?.username || 'Unknown';
                   return (
-                    <tr key={share._id} className="hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition-colors">
-                      <td className="px-6 py-3.5">
+                    <tr key={share._id} className="transition hover:bg-fuchsia-50/50 dark:hover:bg-white/[0.04]">
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <FileTypeIcon filename={filename} className="w-5 h-5" />
-                          <span className="text-sm text-neutral-900 dark:text-white font-medium truncate max-w-[200px]">{filename}</span>
+                          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-slate-100 dark:bg-white/10">
+                            <FileTypeIcon filename={filename} className="h-5 w-5" />
+                          </span>
+                          <span className="max-w-[220px] truncate text-sm font-semibold text-slate-950 dark:text-white">{filename}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-3.5"><div className="flex items-center gap-2 text-sm text-neutral-500"><User className="w-3.5 h-3.5" />{ownerName}</div></td>
-                      <td className="px-6 py-3.5"><div className="flex items-center gap-1.5 text-sm text-neutral-500"><Clock className="w-3.5 h-3.5" />{new Date(share.createdAt).toLocaleDateString()}</div></td>
-                      <td className="px-6 py-3.5">
-                        {verifyResult?.fileId === fileId ? (
-                          verifyResult.isValid ? <span className="flex items-center gap-1.5 text-xs text-success font-medium"><CheckCircle2 className="w-4 h-4" /> Verified</span>
-                            : <span className="flex items-center gap-1.5 text-xs text-danger font-medium"><AlertTriangle className="w-4 h-4" /> Tampered</span>
-                        ) : <span className="text-xs text-neutral-400">—</span>}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-300">
+                          <UserRound className="h-4 w-4" />
+                          {ownerName}
+                        </div>
                       </td>
-                      <td className="px-6 py-3.5">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-300">
+                          <Clock className="h-4 w-4" />
+                          {new Date(share.createdAt).toLocaleDateString()}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        {verifyResult?.fileId === fileId ? (
+                          verifyResult.isValid ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-xs font-bold text-success"><CheckCircle2 className="h-3.5 w-3.5" /> Verified</span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-danger/10 px-2.5 py-1 text-xs font-bold text-danger"><AlertTriangle className="h-3.5 w-3.5" /> Tampered</span>
+                          )
+                        ) : (
+                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500 dark:bg-white/10 dark:text-slate-300">Ready</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
                         <div className="flex items-center justify-end gap-2">
-                          <button onClick={() => handleDownload(share)} disabled={downloading === fileId} className="p-2 rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-all disabled:opacity-50 cursor-pointer" title="Download">
-                            {downloading === fileId ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                          <button onClick={() => handleDownload(share)} disabled={downloading === fileId} className="grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 text-slate-500 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Download">
+                            {downloading === fileId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                           </button>
-                          <button onClick={() => handleVerify(share)} disabled={verifying === fileId} className="p-2 rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-all disabled:opacity-50 cursor-pointer" title="Verify">
-                            {verifying === fileId ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                          <button onClick={() => handleVerify(share)} disabled={verifying === fileId} className="grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 text-slate-500 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Verify">
+                            {verifying === fileId ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
                           </button>
                         </div>
                       </td>
@@ -215,12 +277,12 @@ const SharedFilesPage = () => {
             </table>
           </div>
         )}
-      </div>
+      </section>
 
       {verifyResult && (
-        <div className={`mt-4 px-5 py-4 rounded-xl border flex items-start gap-3 animate-[slideIn_0.3s_ease] ${verifyResult.isValid ? 'bg-success/10 border-success/20' : 'bg-danger/10 border-danger/20'}`}>
-          {verifyResult.isValid ? <CheckCircle2 className="w-5 h-5 text-success mt-0.5 shrink-0" /> : <AlertTriangle className="w-5 h-5 text-danger mt-0.5 shrink-0" />}
-          <p className={`text-sm font-medium ${verifyResult.isValid ? 'text-success' : 'text-danger'}`}>{verifyResult.message}</p>
+        <div className={`mt-5 flex items-start gap-3 rounded-[24px] border px-5 py-4 animate-[slideIn_0.3s_ease] ${verifyResult.isValid ? 'border-success/20 bg-success/10' : 'border-danger/20 bg-danger/10'}`}>
+          {verifyResult.isValid ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" /> : <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-danger" />}
+          <p className={`text-sm font-semibold ${verifyResult.isValid ? 'text-success' : 'text-danger'}`}>{verifyResult.message}</p>
         </div>
       )}
     </div>

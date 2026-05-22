@@ -1,20 +1,21 @@
-const Share = require("../models/Share");
-const File = require("../models/File");
-const User = require("../models/User");
+const repositories = require("../repositories");
 const { sendShareNotification } = require("../utils/email");
 
 
 
 const shareFile = async (req, res) => {
   try {
-    const { fileId, sharedWithEmail } = req.body;
+    const fileId = typeof req.body.fileId === "string" ? req.body.fileId : "";
+    const sharedWithEmail = typeof req.body.sharedWithEmail === "string"
+      ? req.body.sharedWithEmail.trim().toLowerCase()
+      : "";
 
     if (!fileId || !sharedWithEmail) {
       return res.status(400).json({ message: "Please provide fileId and sharedWithEmail" });
     }
 
     
-    const file = await File.findById(fileId);
+    const file = await repositories.files.findById(fileId);
     if (!file) {
       return res.status(404).json({ message: "File not found" });
     }
@@ -23,7 +24,7 @@ const shareFile = async (req, res) => {
     }
 
     
-    const recipient = await User.findOne({ email: sharedWithEmail });
+    const recipient = await repositories.users.findByEmail(sharedWithEmail);
     if (!recipient) {
       return res.status(404).json({ message: "No user found with that email" });
     }
@@ -34,23 +35,20 @@ const shareFile = async (req, res) => {
     }
 
     
-    const existingShare = await Share.findOne({
-      fileId,
-      sharedWith: recipient._id,
-    });
+    const existingShare = await repositories.shares.findByFileAndRecipient(fileId, recipient._id);
     if (existingShare) {
       return res.status(400).json({ message: "File already shared with this user" });
     }
 
     
-    const share = await Share.create({
+    const share = await repositories.shares.create({
       fileId,
       owner: req.user.id,
       sharedWith: recipient._id,
     });
 
     
-    const owner = await User.findById(req.user.id);
+    const owner = await repositories.users.findById(req.user.id);
     sendShareNotification(recipient.email, owner.username, file.filename).catch((err) => {
       console.error("Share notification email error:", err.message);
     });

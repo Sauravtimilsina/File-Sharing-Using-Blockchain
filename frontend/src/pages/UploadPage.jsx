@@ -1,16 +1,25 @@
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../api/axios';
-import { useToast } from '../components/Toast';
+import { useToast } from '../components/toastContext';
 import {
-  Upload, FileUp, X, CheckCircle2, Hash, Boxes,
-  ArrowRight, Loader2, File as FileIcon
+  ArrowRight,
+  CheckCircle2,
+  File as FileIcon,
+  FileUp,
+  Fingerprint,
+  Loader2,
+  ScanLine,
+  ScanSearch,
+  Upload,
+  X,
 } from 'lucide-react';
 
 const UploadPage = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const inputRef = useRef(null);
@@ -44,158 +53,208 @@ const UploadPage = () => {
   };
 
   const formatSize = (bytes) => {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   };
 
   const handleUpload = async () => {
     if (!selectedFile) return;
     setUploading(true);
+    setUploadProgress(0);
     setError('');
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
       const res = await API.post('/files/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          if (!progressEvent.total) return;
+          setUploadProgress(Math.round((progressEvent.loaded * 100) / progressEvent.total));
+        },
       });
       setResult(res.data);
       setSelectedFile(null);
-      toast.success(`"${selectedFile.name}" uploaded and secured!`);
+      toast.success(`"${selectedFile.name}" uploaded.`);
     } catch (err) {
-      const msg = err.response?.data?.message || 'Upload failed';
-      setError(msg);
-      toast.error(msg);
+      const message = err.response?.data?.message || 'Upload failed';
+      setError(message);
+      toast.error(message);
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
   };
 
+  const uploadSteps = [
+    { icon: FileUp, title: 'Add', text: 'Select a file from desktop, tablet, or mobile.' },
+    { icon: ScanLine, title: 'Prepare', text: 'The workspace prepares it for your file library.' },
+    { icon: ScanSearch, title: 'Review', text: 'Run a quick file check before using it later.' },
+  ];
+
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 animate-[fadeIn_0.4s_ease]">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white flex items-center gap-3">
-          <div className="p-2.5 bg-neutral-900 dark:bg-white rounded-xl">
-            <Upload className="w-5 h-5 text-white dark:text-neutral-900" />
-          </div>
-          Upload File
-        </h1>
-        <p className="text-neutral-500 text-sm mt-2 ml-[52px]">
-          Files are encrypted (AES-256) and verified with SHA-256 hashing
-        </p>
-      </div>
-
-      {!result && (
-        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-8 transition-colors duration-300">
-          <div
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-            onClick={() => inputRef.current?.click()}
-            className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all duration-300 ${
-              dragActive
-                ? 'border-neutral-900 dark:border-white bg-neutral-50 dark:bg-white/5'
-                : 'border-neutral-300 dark:border-neutral-700 hover:border-neutral-400 dark:hover:border-neutral-600 hover:bg-neutral-50 dark:hover:bg-white/[0.02]'
-            }`}
-          >
-            <input ref={inputRef} type="file" onChange={handleFileSelect} className="hidden" />
-            <FileUp className={`w-12 h-12 mx-auto mb-4 transition-colors ${dragActive ? 'text-neutral-900 dark:text-white' : 'text-neutral-300 dark:text-neutral-600'}`} />
-            <p className="text-neutral-900 dark:text-white font-medium mb-1">
-              {dragActive ? 'Drop file here' : 'Drag & drop your file here'}
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <section className="surface-glass premium-shadow security-grid overflow-hidden rounded-[28px] border border-white/80 px-5 py-6 dark:border-white/10 sm:px-7 sm:py-8">
+        <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div>
+            <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50/80 px-3 py-1.5 text-sm font-semibold text-emerald-800 dark:border-emerald-400/15 dark:bg-emerald-400/10 dark:text-emerald-100">
+              <Fingerprint className="h-4 w-4" />
+              File upload
             </p>
-            <p className="text-sm text-neutral-500">or click to browse · Max 10 MB</p>
+            <h1 className="text-3xl font-semibold text-slate-950 dark:text-white sm:text-4xl">Add a file to your workspace</h1>
+            <p className="mt-4 max-w-2xl leading-7 text-slate-600 dark:text-slate-300">
+              Drag in a document, watch the transfer progress, and return to your library when it is ready.
+            </p>
           </div>
+          <div className="rounded-[24px] border border-white/80 bg-white/70 p-4 text-sm text-slate-600 shadow-sm dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-200">
+            <p className="font-semibold text-slate-950 dark:text-white">Upload limit</p>
+            <p className="mt-1">Up to 1 GB per file</p>
+          </div>
+        </div>
+      </section>
 
-          {selectedFile && (
-            <div className="mt-5 flex items-center gap-4 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl p-4">
-              <div className="p-3 bg-neutral-200 dark:bg-white/10 rounded-lg">
-                <FileIcon className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-neutral-900 dark:text-white font-medium truncate">{selectedFile.name}</p>
-                <p className="text-xs text-neutral-500">{formatSize(selectedFile.size)} · {selectedFile.type || 'Unknown type'}</p>
-              </div>
-              <button
-                onClick={(e) => { e.stopPropagation(); setSelectedFile(null); }}
-                className="p-1.5 hover:bg-neutral-200 dark:hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
+      <div className="mt-5 grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+        <section className="overflow-hidden rounded-[28px] border border-white/80 bg-white/80 p-4 shadow-sm dark:border-white/10 dark:bg-slate-900/70 sm:p-6">
+          {!result ? (
+            <>
+              <div
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+                onClick={() => inputRef.current?.click()}
+                className={`security-grid flex min-h-[360px] cursor-pointer flex-col items-center justify-center rounded-[24px] border-2 border-dashed px-5 py-10 text-center transition ${
+                  dragActive
+                    ? 'border-sky-400 bg-sky-50 text-sky-900 shadow-inner dark:border-sky-300 dark:bg-sky-400/10 dark:text-white'
+                    : 'border-slate-300 bg-slate-50/70 text-slate-950 hover:-translate-y-0.5 hover:border-sky-300 hover:bg-white dark:border-white/15 dark:bg-white/[0.04] dark:text-white dark:hover:border-sky-300/50 dark:hover:bg-white/[0.07]'
+                }`}
               >
-                <X className="w-4 h-4 text-neutral-400" />
+                <input ref={inputRef} type="file" onChange={handleFileSelect} className="hidden" />
+                <span className={`mb-5 grid h-24 w-24 place-items-center rounded-[28px] transition ${dragActive ? 'bg-sky-600 text-white shadow-2xl' : 'bg-white text-sky-600 shadow-lg dark:bg-slate-950 dark:text-sky-200'}`}>
+                  <FileUp className="h-11 w-11" />
+                </span>
+                <h2 className="text-2xl font-semibold">{dragActive ? 'Drop file to upload it' : 'Drag and drop your file'}</h2>
+                <p className="mt-3 max-w-md text-sm leading-6 text-slate-500 dark:text-slate-300">
+                  Browse from desktop or tap from mobile to start the upload.
+                </p>
+                <span className="mt-5 inline-flex min-h-11 items-center justify-center rounded-2xl bg-slate-950 px-5 font-semibold text-white dark:bg-white dark:text-slate-950">
+                  Choose file
+                </span>
+              </div>
+
+              {selectedFile && (
+                <div className="mt-4 flex flex-col gap-3 rounded-[24px] border border-slate-200 bg-slate-50/80 p-4 dark:border-white/10 dark:bg-white/[0.05] sm:flex-row sm:items-center">
+                  <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-sky-500 to-emerald-500 text-white shadow-lg">
+                    <FileIcon className="h-6 w-6" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold text-slate-950 dark:text-white">{selectedFile.name}</p>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{formatSize(selectedFile.size)} / {selectedFile.type || 'Unknown type'}</p>
+                  </div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setSelectedFile(null); }}
+                    className="grid h-10 w-10 place-items-center rounded-2xl text-slate-400 transition hover:bg-white hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-white"
+                    title="Remove selected file"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+
+              {error && (
+                <div className="mt-4 rounded-2xl border border-danger/20 bg-danger/10 px-4 py-3 text-sm font-medium text-danger">
+                  {error}
+                </div>
+              )}
+
+              <button
+                onClick={handleUpload}
+                disabled={!selectedFile || uploading}
+                className="mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-[22px] bg-gradient-to-r from-sky-600 via-cyan-600 to-emerald-600 px-5 font-semibold text-white shadow-lg shadow-sky-900/15 transition hover:-translate-y-0.5 hover:shadow-xl disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Uploading
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-5 w-5" />
+                    Upload file
+                  </>
+                )}
+              </button>
+
+              {uploading && (
+                <div className="mt-4 rounded-[22px] border border-cyan-200 bg-cyan-50/80 p-4 dark:border-cyan-300/15 dark:bg-cyan-300/10">
+                  <div className="mb-2 flex items-center justify-between gap-3 text-sm font-semibold text-cyan-900 dark:text-cyan-100">
+                    <span>Transfer progress</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-cyan-950/10 dark:bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-cyan-500 via-sky-500 to-emerald-400 transition-[width] duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="animate-[scaleIn_0.3s_ease]">
+              <div className="flex flex-col gap-4 rounded-[24px] border border-success/25 bg-success/10 p-5 sm:flex-row sm:items-center">
+                <span className="grid h-16 w-16 shrink-0 place-items-center rounded-[22px] bg-white text-success shadow-sm dark:bg-slate-950">
+                  <CheckCircle2 className="h-8 w-8" />
+                </span>
+                <div>
+                  <h2 className="text-2xl font-semibold text-slate-950 dark:text-white">Upload successful</h2>
+                  <p className="mt-1 text-slate-600 dark:text-slate-300">{result.file.filename}</p>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-[24px] border border-slate-200 bg-slate-50/80 p-4 dark:border-white/10 dark:bg-white/[0.05]">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl bg-white p-3 dark:bg-slate-950">
+                    <p className="text-xs font-semibold text-slate-400">Library receipt</p>
+                    <p className="mt-1 font-semibold text-slate-950 dark:text-white">#{result.receipt?.index}</p>
+                  </div>
+                  <div className="rounded-2xl bg-white p-3 dark:bg-slate-950">
+                    <p className="text-xs font-semibold text-slate-400">Added</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-950 dark:text-white">
+                      {result.receipt?.timestamp ? new Date(result.receipt.timestamp).toLocaleString() : 'Just now'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-[22px] bg-slate-950 px-5 font-semibold text-white transition hover:-translate-y-0.5 dark:bg-white dark:text-slate-950"
+              >
+                Return to dashboard
+                <ArrowRight className="h-4 w-4" />
               </button>
             </div>
           )}
+        </section>
 
-          {error && (
-            <div className="mt-4 px-4 py-3 rounded-lg bg-danger/10 border border-danger/20 text-danger text-sm">
-              {error}
-            </div>
-          )}
-
-          <button
-            onClick={handleUpload}
-            disabled={!selectedFile || uploading}
-            className="mt-6 w-full py-3.5 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 font-semibold rounded-xl hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
-          >
-            {uploading ? (
-              <><Loader2 className="w-5 h-5 animate-spin" /> Encrypting & Uploading...</>
-            ) : (
-              <><Upload className="w-5 h-5" /> Upload & Secure</>
-            )}
-          </button>
-        </div>
-      )}
-
-      {result && (
-        <div className="bg-white dark:bg-neutral-900 border border-success/30 rounded-2xl p-8 animate-[scaleIn_0.3s_ease] transition-colors duration-300">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2.5 bg-success/10 rounded-xl">
-              <CheckCircle2 className="w-6 h-6 text-success" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">Upload Successful</h3>
-              <p className="text-sm text-neutral-500">{result.file.filename}</p>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Hash className="w-4 h-4 text-neutral-500" />
-                <span className="text-sm font-medium text-neutral-600 dark:text-neutral-400">SHA-256 File Hash</span>
-              </div>
-              <code className="text-xs font-mono text-neutral-700 dark:text-neutral-300 break-all leading-5">{result.file.hash}</code>
-            </div>
-
-            <div className="bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Boxes className="w-4 h-4 text-neutral-500" />
-                <span className="text-sm font-medium text-neutral-600 dark:text-neutral-400">Blockchain Block</span>
-              </div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
+        <aside className="space-y-4">
+          {uploadSteps.map((step, index) => (
+            <div key={step.title} className="rounded-[24px] border border-white/80 bg-white/80 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-white/10 dark:bg-white/[0.06]">
+              <div className="flex items-start gap-4">
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-slate-950 text-white dark:bg-white dark:text-slate-950">
+                  <step.icon className="h-5 w-5" />
+                </span>
                 <div>
-                  <p className="text-xs text-neutral-500">Block Index</p>
-                  <p className="text-neutral-900 dark:text-white font-mono font-medium">#{result.block.index}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-neutral-500">Timestamp</p>
-                  <p className="text-neutral-900 dark:text-white text-xs">{new Date(result.block.timestamp).toLocaleString()}</p>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-xs text-neutral-500 mb-1">Previous Hash</p>
-                  <code className="text-xs font-mono text-neutral-500 break-all">{result.block.previousHash}</code>
+                  <p className="text-xs font-bold uppercase text-sky-700 dark:text-sky-300">Step 0{index + 1}</p>
+                  <h3 className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{step.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-300">{step.text}</p>
                 </div>
               </div>
             </div>
-          </div>
-
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="mt-6 w-full py-3 rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white font-medium hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-all flex items-center justify-center gap-2 cursor-pointer"
-          >
-            Go to Dashboard <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-      )}
+          ))}
+        </aside>
+      </div>
     </div>
   );
 };

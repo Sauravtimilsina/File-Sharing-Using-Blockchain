@@ -1,12 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import API from '../api/axios';
-import ShareModal from '../components/ShareModal';
 import FileTypeIcon from '../components/FileTypeIcon';
-import { useToast } from '../components/Toast';
+import ShareModal from '../components/ShareModal';
+import { useToast } from '../components/toastContext';
 import {
-  Download, Share2, ShieldCheck, Loader2,
-  Clock, Hash, Package, Users, CheckCircle2, AlertTriangle,
-  Copy, Check, LayoutGrid, List
+  AlertTriangle,
+  ArrowUpRight,
+  CheckCircle2,
+  Download,
+  Fingerprint,
+  LayoutGrid,
+  List,
+  LockKeyhole,
+  Loader2,
+  Package,
+  Search,
+  Share2,
+  ShieldCheck,
+  Signal,
+  UploadCloud,
+  Users,
 } from 'lucide-react';
 
 const DashboardPage = () => {
@@ -16,26 +30,26 @@ const DashboardPage = () => {
   const [verifying, setVerifying] = useState(null);
   const [verifyResult, setVerifyResult] = useState(null);
   const [downloading, setDownloading] = useState(null);
-  const [copiedHash, setCopiedHash] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [view, setView] = useState(() => localStorage.getItem('fileView') || 'grid');
   const toast = useToast();
 
-  const fetchFiles = async () => {
+  const fetchFiles = useCallback(async () => {
     try {
       const res = await API.get('/files/my-files');
       setFiles(res.data.files);
-    } catch (err) {
+    } catch {
       toast.error('Failed to load files');
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  useEffect(() => { fetchFiles(); }, []);
+  useEffect(() => { fetchFiles(); }, [fetchFiles]);
 
-  const toggleView = (v) => {
-    setView(v);
-    localStorage.setItem('fileView', v);
+  const toggleView = (nextView) => {
+    setView(nextView);
+    localStorage.setItem('fileView', nextView);
   };
 
   const handleDownload = async (file) => {
@@ -52,14 +66,13 @@ const DashboardPage = () => {
       window.URL.revokeObjectURL(url);
       toast.success(`Downloaded "${file.filename}"`);
     } catch (err) {
-      // Handle JSON error responses from blob requests
       if (err.response?.data instanceof Blob) {
         try {
           const text = await err.response.data.text();
           const data = JSON.parse(text);
           if (data.tampered) {
             toast.error(`Tampering detected! "${file.filename}" has been modified or corrupted.`);
-            setVerifyResult({ fileId: file._id, isValid: false, message: data.message, storedHash: data.storedHash, currentHash: data.currentHash });
+            setVerifyResult({ fileId: file._id, isValid: false, message: data.message });
           } else {
             toast.error(data.message || 'Download failed');
           }
@@ -81,9 +94,9 @@ const DashboardPage = () => {
       const res = await API.get(`/files/verify/${file._id}`);
       setVerifyResult({ fileId: file._id, ...res.data });
       if (res.data.isValid) {
-        toast.success(`"${file.filename}" — integrity verified`);
+        toast.success(`"${file.filename}" passed its check`);
       } else {
-        toast.warning(`"${file.filename}" — tampering detected!`);
+        toast.warning(`"${file.filename}" needs review`);
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Verification failed');
@@ -93,156 +106,330 @@ const DashboardPage = () => {
     }
   };
 
-  const copyHash = (hash, id) => {
-    navigator.clipboard.writeText(hash);
-    setCopiedHash(id);
-    toast.info('Hash copied to clipboard');
-    setTimeout(() => setCopiedHash(null), 2000);
-  };
-
-  const truncateHash = (hash) => hash ? `${hash.slice(0, 10)}...${hash.slice(-8)}` : '';
   const getExtension = (filename) => filename?.split('.').pop()?.toUpperCase() || '';
+  const filteredFiles = files.filter((file) => file.filename?.toLowerCase().includes(searchQuery.trim().toLowerCase()));
+  const recentFiles = [...files]
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 4);
+  const extensionCounts = files.reduce((counts, file) => {
+    const extension = getExtension(file.filename) || 'FILE';
+    counts[extension] = (counts[extension] || 0) + 1;
+    return counts;
+  }, {});
+  const extensionSignals = Object.entries(extensionCounts)
+    .sort(([, firstCount], [, secondCount]) => secondCount - firstCount)
+    .slice(0, 4);
+  const lastUpload = recentFiles[0];
 
   const stats = [
-    { label: 'Total Files', value: files.length, icon: Package },
-    { label: 'Verified', value: files.length, icon: ShieldCheck },
-    { label: 'Shared', value: '—', icon: Users },
+    { label: 'My files', value: files.length, icon: Package, tone: 'from-sky-500 to-cyan-400' },
+    { label: 'Quick checks', value: files.length ? 'Ready' : 'Open', icon: ShieldCheck, tone: 'from-emerald-500 to-lime-400' },
+    { label: 'File formats', value: Object.keys(extensionCounts).length, icon: Signal, tone: 'from-cyan-500 to-blue-500' },
+    { label: 'Sharing', value: 'Ready', icon: Users, tone: 'from-fuchsia-500 to-rose-400' },
   ];
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <Loader2 className="w-8 h-8 text-neutral-400 animate-spin" />
+      <div className="flex min-h-[70vh] items-center justify-center">
+        <div className="surface-glass flex items-center gap-3 rounded-3xl border border-white/80 px-6 py-5 text-slate-500 dark:border-white/10 dark:text-slate-300">
+          <Loader2 className="h-6 w-6 animate-spin text-sky-500" />
+          Loading secure workspace
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-[fadeIn_0.4s_ease]">
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <section className="surface-glass premium-shadow security-grid relative overflow-hidden rounded-[28px] border border-white/80 px-5 py-6 dark:border-white/10 sm:px-7 sm:py-8">
+        <div className="relative grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div>
+            <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50/80 px-3 py-1.5 text-sm font-semibold text-cyan-900 dark:border-cyan-400/15 dark:bg-cyan-400/10 dark:text-cyan-100">
+              <Fingerprint className="h-4 w-4" />
+              Dashboard
+            </p>
+            <h1 className="max-w-3xl text-3xl font-semibold leading-tight text-slate-950 dark:text-white sm:text-4xl">
+              A clean workspace for your files.
+            </h1>
+            <p className="mt-4 max-w-2xl leading-7 text-slate-600 dark:text-slate-300">
+              See recent activity, run quick file checks, and move into sharing without extra clutter.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
+            <Link
+              to="/upload"
+              className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-600 via-cyan-600 to-emerald-600 px-5 font-semibold text-white shadow-lg shadow-sky-900/15 transition hover:-translate-y-0.5 hover:shadow-xl"
+            >
+              <UploadCloud className="h-5 w-5" />
+              Upload file
+            </Link>
+            <Link
+              to="/shared"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white/80 px-5 font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-800 dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-100 dark:hover:text-sky-200"
+            >
+              Shared files
+              <ArrowUpRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-5 hover:border-neutral-300 dark:hover:border-neutral-700 transition-all group">
-            <div className="flex items-center justify-between">
+          <div key={stat.label} className="group rounded-[24px] border border-white/80 bg-white/80 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-white/10 dark:bg-white/[0.06]">
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm text-neutral-500">{stat.label}</p>
-                <p className="text-2xl font-bold text-neutral-900 dark:text-white mt-1">{stat.value}</p>
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{stat.label}</p>
+                <p className="mt-2 text-3xl font-semibold text-slate-950 dark:text-white">{stat.value}</p>
               </div>
-              <div className="p-3 rounded-xl bg-neutral-100 dark:bg-white/5 text-neutral-400 group-hover:scale-110 transition-transform">
-                <stat.icon className="w-6 h-6" />
+              <div className={`grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br ${stat.tone} text-white shadow-lg transition group-hover:scale-105`}>
+                <stat.icon className="h-6 w-6" />
               </div>
             </div>
           </div>
         ))}
-      </div>
+      </section>
 
-      {/* Files Section */}
-      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
-            My Files
-            <span className="text-xs text-neutral-400 font-normal ml-2">{files.length}</span>
-          </h2>
-          <div className="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 rounded-lg p-1">
-            <button onClick={() => toggleView('grid')} className={`p-1.5 rounded-md transition-all cursor-pointer ${view === 'grid' ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-sm' : 'text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300'}`} title="Grid view">
-              <LayoutGrid className="w-4 h-4" />
+      <section className="mt-5 grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="overflow-hidden rounded-[28px] border border-cyan-200/80 bg-slate-950 p-5 text-white shadow-2xl shadow-cyan-950/15 dark:border-cyan-300/15 sm:p-6">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase text-cyan-300">Integrity Channel</p>
+              <h2 className="mt-2 text-2xl font-semibold">File Check Center</h2>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">
+                This area gives you a fast visual check before you download or share a file.
+              </p>
+            </div>
+            <span className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-sm font-semibold text-emerald-200">
+              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-300" />
+              Live
+            </span>
+          </div>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-[22px] border border-white/10 bg-white/[0.08] p-4">
+              <p className="text-xs text-slate-400">Latest upload</p>
+              <p className="mt-2 truncate text-sm font-semibold">{lastUpload?.filename || 'No file'}</p>
+            </div>
+            <div className="rounded-[22px] border border-white/10 bg-white/[0.08] p-4">
+              <p className="text-xs text-slate-400">Library count</p>
+              <p className="mt-2 text-sm font-semibold">{files.length} file{files.length === 1 ? '' : 's'}</p>
+            </div>
+            <div className="rounded-[22px] border border-white/10 bg-white/[0.08] p-4">
+              <p className="text-xs text-slate-400">Last signal</p>
+              <p className="mt-2 text-sm font-semibold">{lastUpload ? new Date(lastUpload.createdAt).toLocaleDateString() : 'Waiting'}</p>
+            </div>
+          </div>
+
+          <div className="mt-5 overflow-hidden rounded-[24px] border border-cyan-200/10 bg-black/20 p-4">
+            <div className="flex h-24 items-end gap-2">
+              {[28, 52, 36, 68, 47, 84, 58, 76, 44, 88, 62, 72].map((height, index) => (
+                <span
+                  key={height + index}
+                  className="flex-1 rounded-t-full bg-gradient-to-t from-emerald-400/35 via-cyan-300/75 to-white/90"
+                  style={{ height: `${height}%`, animation: `signalSweep ${10 + index}s ease-in-out infinite alternate` }}
+                />
+              ))}
+            </div>
+          </div>
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+            <button
+              onClick={() => lastUpload && handleVerify(lastUpload)}
+              disabled={!lastUpload || verifying === lastUpload?._id}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {verifying === lastUpload?._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+              Check latest file
             </button>
-            <button onClick={() => toggleView('list')} className={`p-1.5 rounded-md transition-all cursor-pointer ${view === 'list' ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-sm' : 'text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300'}`} title="List view">
-              <List className="w-4 h-4" />
-            </button>
+            <Link to="/shared" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/[0.08] px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/[0.14]">
+              Open shared files
+              <ArrowUpRight className="h-4 w-4" />
+            </Link>
           </div>
         </div>
 
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+          <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase text-emerald-700 dark:text-emerald-300">Format map</p>
+                <h2 className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">Stored types</h2>
+              </div>
+              <LockKeyhole className="h-5 w-5 text-emerald-500" />
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {(extensionSignals.length ? extensionSignals : [['NONE', 0]]).map(([extension, count]) => (
+                <span key={extension} className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800 dark:border-emerald-300/15 dark:bg-emerald-300/10 dark:text-emerald-100">
+                  {extension} / {count}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
+            <p className="text-xs font-bold uppercase text-cyan-700 dark:text-cyan-300">Recent assets</p>
+            <div className="mt-4 space-y-2">
+              {(recentFiles.length ? recentFiles : [{ _id: 'empty', filename: 'No files captured', createdAt: null }]).map((file) => (
+                <div key={file._id} className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/70 p-2.5 dark:border-white/10 dark:bg-slate-950/45">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-cyan-50 dark:bg-cyan-300/10">
+                    <FileTypeIcon filename={file.filename} className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{file.filename}</p>
+                    <p className="text-xs text-slate-400">{file.createdAt ? new Date(file.createdAt).toLocaleDateString() : 'Waiting for upload'}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mt-5 overflow-hidden rounded-[28px] border border-white/80 bg-white/80 shadow-sm dark:border-white/10 dark:bg-slate-900/70">
+        <header className="flex flex-col gap-4 border-b border-slate-200/80 px-5 py-5 dark:border-white/10 lg:flex-row lg:items-center lg:justify-between lg:px-6">
+          <div>
+            <p className="text-sm font-semibold uppercase text-sky-700 dark:text-sky-300">File Management</p>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <h2 className="text-xl font-semibold text-slate-950 dark:text-white">My Files</h2>
+              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500 dark:bg-white/10 dark:text-slate-300">{filteredFiles.length}/{files.length}</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <label className="relative block min-w-0 sm:w-72">
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search files"
+                className="h-12 w-full rounded-2xl border border-slate-200 bg-white/80 pl-11 pr-4 text-sm text-slate-950 outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/10 dark:border-white/10 dark:bg-slate-950/55 dark:text-white"
+              />
+            </label>
+            <div className="inline-flex w-fit items-center gap-1 rounded-2xl border border-slate-200 bg-slate-100/80 p-1 dark:border-white/10 dark:bg-white/[0.06]">
+              <button
+                onClick={() => toggleView('grid')}
+                className={`grid h-10 w-10 place-items-center rounded-2xl transition ${view === 'grid' ? 'bg-white text-slate-950 shadow-sm dark:bg-white dark:text-slate-950' : 'text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
+                title="Grid view"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => toggleView('list')}
+                className={`grid h-10 w-10 place-items-center rounded-2xl transition ${view === 'list' ? 'bg-white text-slate-950 shadow-sm dark:bg-white dark:text-slate-950' : 'text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
+                title="List view"
+              >
+                <List className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </header>
+
         {files.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-neutral-500">
-            <Package className="w-12 h-12 mb-3 text-neutral-300 dark:text-neutral-600" />
-            <p className="text-sm">No files uploaded yet</p>
-            <a href="/upload" className="text-neutral-900 dark:text-white text-sm mt-2 hover:underline">Upload your first file →</a>
+          <div className="flex flex-col items-center justify-center px-5 py-16 text-center">
+            <div className="mb-4 grid h-20 w-20 place-items-center rounded-[24px] bg-sky-50 text-sky-600 dark:bg-sky-400/10 dark:text-sky-200">
+              <Package className="h-10 w-10" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-950 dark:text-white">No files yet</h3>
+            <p className="mt-2 max-w-md text-sm leading-6 text-slate-500 dark:text-slate-400">
+              Upload the first document to start building your file library.
+            </p>
+            <Link to="/upload" className="mt-5 inline-flex min-h-11 items-center justify-center rounded-2xl bg-slate-950 px-5 font-semibold text-white transition hover:-translate-y-0.5 dark:bg-white dark:text-slate-950">
+              Upload first file
+            </Link>
+          </div>
+        ) : filteredFiles.length === 0 ? (
+          <div className="px-5 py-14 text-center">
+            <Search className="mx-auto h-9 w-9 text-cyan-500" />
+            <h3 className="mt-4 text-lg font-semibold text-slate-950 dark:text-white">No file matches that search</h3>
           </div>
         ) : view === 'grid' ? (
-          /* ── Grid View ── */
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 p-4">
-            {files.map((file) => (
-              <div key={file._id} className="group bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800 rounded-xl p-4 hover:border-neutral-300 dark:hover:border-neutral-700 hover:shadow-sm transition-all">
-                <div className="flex items-center justify-center w-full aspect-square bg-white dark:bg-neutral-900 rounded-lg mb-3 relative">
-                  <FileTypeIcon filename={file.filename} className="w-10 h-10" />
-                  <span className="absolute bottom-2 right-2 text-[10px] font-bold text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded">{getExtension(file.filename)}</span>
+          <div className="grid gap-4 p-4 sm:grid-cols-2 md:p-5 lg:grid-cols-3 xl:grid-cols-4">
+            {filteredFiles.map((file) => (
+              <article key={file._id} className="group rounded-[24px] border border-slate-200/80 bg-slate-50/80 p-4 transition hover:-translate-y-1 hover:border-sky-200 hover:bg-white hover:shadow-xl dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-sky-300/20 dark:hover:bg-white/[0.07]">
+                <div className="relative mb-4 flex aspect-[1.25] items-center justify-center overflow-hidden rounded-[20px] border border-white bg-white shadow-sm dark:border-white/10 dark:bg-slate-950/70">
+                  <FileTypeIcon filename={file.filename} className="h-14 w-14" />
+                  <span className="absolute bottom-3 right-3 rounded-full bg-slate-950 px-2 py-1 text-[10px] font-bold text-white dark:bg-white dark:text-slate-950">
+                    {getExtension(file.filename)}
+                  </span>
                   {verifyResult?.fileId === file._id && (
-                    <div className="absolute top-2 left-2">
-                      {verifyResult.isValid ? <CheckCircle2 className="w-4 h-4 text-success" /> : <AlertTriangle className="w-4 h-4 text-danger" />}
+                    <div className="absolute left-3 top-3 rounded-full bg-white p-1 shadow-sm dark:bg-slate-900">
+                      {verifyResult.isValid ? <CheckCircle2 className="h-4 w-4 text-success" /> : <AlertTriangle className="h-4 w-4 text-danger" />}
                     </div>
                   )}
                 </div>
-                <p className="text-sm font-medium text-neutral-900 dark:text-white truncate mb-1" title={file.filename}>{file.filename}</p>
-                <p className="text-xs text-neutral-400 mb-3">{new Date(file.createdAt).toLocaleDateString()}</p>
-                <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => handleDownload(file)} disabled={downloading === file._id} className="flex-1 p-1.5 rounded-lg bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-all disabled:opacity-50 cursor-pointer" title="Download">
-                    {downloading === file._id ? <Loader2 className="w-3.5 h-3.5 mx-auto animate-spin" /> : <Download className="w-3.5 h-3.5 mx-auto" />}
+
+                <p className="truncate text-sm font-semibold text-slate-950 dark:text-white" title={file.filename}>{file.filename}</p>
+                <div className="mt-2 flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+                  <span>{new Date(file.createdAt).toLocaleDateString()}</span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 font-semibold text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-200">
+                    <ShieldCheck className="h-3 w-3" />
+                    Ready
+                  </span>
+                </div>
+
+                <div className="touch-reveal mt-4 grid grid-cols-3 gap-2 opacity-100 transition md:opacity-0 md:group-hover:opacity-100">
+                  <button onClick={() => handleDownload(file)} disabled={downloading === file._id} className="grid min-h-10 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:border-sky-200 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Download">
+                    {downloading === file._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                   </button>
-                  <button onClick={() => setShareFile(file)} className="flex-1 p-1.5 rounded-lg bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-all cursor-pointer" title="Share">
-                    <Share2 className="w-3.5 h-3.5 mx-auto" />
+                  <button onClick={() => setShareFile(file)} className="grid min-h-10 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:border-cyan-200 hover:text-cyan-700 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Share">
+                    <Share2 className="h-4 w-4" />
                   </button>
-                  <button onClick={() => handleVerify(file)} disabled={verifying === file._id} className="flex-1 p-1.5 rounded-lg bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-all disabled:opacity-50 cursor-pointer" title="Verify">
-                    {verifying === file._id ? <Loader2 className="w-3.5 h-3.5 mx-auto animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5 mx-auto" />}
+                  <button onClick={() => handleVerify(file)} disabled={verifying === file._id} className="grid min-h-10 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:border-emerald-200 hover:text-emerald-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Verify">
+                    {verifying === file._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
                   </button>
                 </div>
-              </div>
+              </article>
             ))}
           </div>
         ) : (
-          /* ── List View ── */
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="min-w-[860px] w-full">
               <thead>
-                <tr className="text-left text-xs text-neutral-500 uppercase tracking-wider border-b border-neutral-100 dark:border-neutral-800">
-                  <th className="px-6 py-3 font-medium">Name</th>
-                  <th className="px-6 py-3 font-medium">Hash</th>
-                  <th className="px-6 py-3 font-medium">Modified</th>
-                  <th className="px-6 py-3 font-medium">Status</th>
-                  <th className="px-6 py-3 font-medium text-right">Actions</th>
+                <tr className="border-b border-slate-200/80 text-left text-xs font-bold uppercase text-slate-500 dark:border-white/10 dark:text-slate-400">
+                  <th className="px-6 py-4">Name</th>
+                  <th className="px-6 py-4">Type</th>
+                  <th className="px-6 py-4">Uploaded</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                {files.map((file) => (
-                  <tr key={file._id} className="hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition-colors">
-                    <td className="px-6 py-3.5">
+              <tbody className="divide-y divide-slate-200/70 dark:divide-white/10">
+                {filteredFiles.map((file) => (
+                  <tr key={file._id} className="transition hover:bg-sky-50/60 dark:hover:bg-white/[0.04]">
+                    <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <FileTypeIcon filename={file.filename} className="w-5 h-5" />
-                        <span className="text-sm text-neutral-900 dark:text-white font-medium truncate max-w-[220px]">{file.filename}</span>
+                        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-slate-100 dark:bg-white/10">
+                          <FileTypeIcon filename={file.filename} className="h-5 w-5" />
+                        </span>
+                        <span className="max-w-[240px] truncate text-sm font-semibold text-slate-950 dark:text-white">{file.filename}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-3.5">
-                      <div className="flex items-center gap-2">
-                        <code className="text-xs font-mono text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-white/5 px-2 py-1 rounded">{truncateHash(file.hash)}</code>
-                        <button onClick={() => copyHash(file.hash, file._id)} className="p-1 hover:bg-neutral-100 dark:hover:bg-white/5 rounded transition-colors cursor-pointer" title="Copy full hash">
-                          {copiedHash === file._id ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5 text-neutral-400" />}
-                        </button>
-                      </div>
+                    <td className="px-6 py-4">
+                      <span className="rounded-xl bg-slate-100 px-2.5 py-1.5 text-xs font-semibold text-slate-600 dark:bg-white/10 dark:text-slate-300">{getExtension(file.filename) || 'FILE'}</span>
                     </td>
-                    <td className="px-6 py-3.5">
-                      <span className="text-sm text-neutral-500">{new Date(file.createdAt).toLocaleDateString()}</span>
-                    </td>
-                    <td className="px-6 py-3.5">
+                    <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{new Date(file.createdAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4">
                       {verifyResult?.fileId === file._id ? (
                         verifyResult.isValid ? (
-                          <span className="flex items-center gap-1.5 text-xs text-success font-medium"><CheckCircle2 className="w-4 h-4" /> Verified</span>
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-xs font-bold text-success"><CheckCircle2 className="h-3.5 w-3.5" /> Verified</span>
                         ) : (
-                          <span className="flex items-center gap-1.5 text-xs text-danger font-medium"><AlertTriangle className="w-4 h-4" /> Tampered</span>
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-danger/10 px-2.5 py-1 text-xs font-bold text-danger"><AlertTriangle className="h-3.5 w-3.5" /> Tampered</span>
                         )
                       ) : (
-                        <span className="flex items-center gap-1.5 text-xs text-neutral-400"><Hash className="w-3.5 h-3.5" /> Pending</span>
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500 dark:bg-white/10 dark:text-slate-300"><ShieldCheck className="h-3.5 w-3.5" /> Ready</span>
                       )}
                     </td>
-                    <td className="px-6 py-3.5">
+                    <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => handleDownload(file)} disabled={downloading === file._id} className="p-2 rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:border-neutral-300 dark:hover:border-neutral-600 transition-all disabled:opacity-50 cursor-pointer" title="Download">
-                          {downloading === file._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                        <button onClick={() => handleDownload(file)} disabled={downloading === file._id} className="grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 text-slate-500 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Download">
+                          {downloading === file._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                         </button>
-                        <button onClick={() => setShareFile(file)} className="p-2 rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:border-neutral-300 dark:hover:border-neutral-600 transition-all cursor-pointer" title="Share">
-                          <Share2 className="w-4 h-4" />
+                        <button onClick={() => setShareFile(file)} className="grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 text-slate-500 transition hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Share">
+                          <Share2 className="h-4 w-4" />
                         </button>
-                        <button onClick={() => handleVerify(file)} disabled={verifying === file._id} className="p-2 rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:border-neutral-300 dark:hover:border-neutral-600 transition-all disabled:opacity-50 cursor-pointer" title="Verify">
-                          {verifying === file._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                        <button onClick={() => handleVerify(file)} disabled={verifying === file._id} className="grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 text-slate-500 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Verify">
+                          {verifying === file._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
                         </button>
                       </div>
                     </td>
@@ -252,24 +439,15 @@ const DashboardPage = () => {
             </table>
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Verify Result Banner */}
       {verifyResult && (
-        <div className={`mt-4 px-5 py-4 rounded-xl border flex items-start gap-3 animate-[slideIn_0.3s_ease] ${
-          verifyResult.isValid ? 'bg-success/10 border-success/20' : 'bg-danger/10 border-danger/20'
-        }`}>
-          {verifyResult.isValid ? <CheckCircle2 className="w-5 h-5 text-success mt-0.5 shrink-0" /> : <AlertTriangle className="w-5 h-5 text-danger mt-0.5 shrink-0" />}
-          <div>
-            <p className={`text-sm font-medium ${verifyResult.isValid ? 'text-success' : 'text-danger'}`}>{verifyResult.message}</p>
-            {verifyResult.storedHash && (
-              <div className="mt-2 space-y-1 text-xs font-mono">
-                <p className="text-neutral-500">Stored: <span className="text-neutral-700 dark:text-neutral-300">{verifyResult.storedHash}</span></p>
-                {verifyResult.currentHash && (
-                  <p className="text-neutral-500">Current: <span className={verifyResult.isValid ? 'text-success' : 'text-danger'}>{verifyResult.currentHash}</span></p>
-                )}
-              </div>
-            )}
+        <div className={`mt-5 rounded-[24px] border px-5 py-4 animate-[slideIn_0.3s_ease] ${verifyResult.isValid ? 'border-success/20 bg-success/10' : 'border-danger/20 bg-danger/10'}`}>
+          <div className="flex items-start gap-3">
+            {verifyResult.isValid ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" /> : <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-danger" />}
+            <div className="min-w-0">
+              <p className={`text-sm font-semibold ${verifyResult.isValid ? 'text-success' : 'text-danger'}`}>{verifyResult.message}</p>
+            </div>
           </div>
         </div>
       )}

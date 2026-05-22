@@ -1,10 +1,23 @@
 const { v4: uuidv4 } = require("uuid");
+const fs = require("fs/promises");
 const path = require("path");
-const File = require("../models/File");
-const { encryptFile, decryptFile } = require("../services/fileService");
-const { generateHash, createBlock, verifyFileIntegrity } = require("../services/blockchainService");
+const repositories = require("../repositories");
+const { createDecryptedReadStream, encryptFileFromPath, hashDecryptedFile } = require("../services/fileService");
+const { createBlock, generateHashFromPath, verifyHashIntegrity } = require("../services/blockchainService");
 
+const clientFile = (file) => ({
+  _id: file._id,
+  filename: file.filename,
+  createdAt: file.createdAt,
+  updatedAt: file.updatedAt,
+});
 
+const canAccessFile = async (file, userId) => {
+  if (file.owner.toString() === userId) return true;
+  return Boolean(await repositories.shares.findByFileAndRecipient(file._id, userId));
+};
+
+const downloadName = (filename) => filename.replace(/[\r\n"]/g, "_");
 
 const uploadFile = async (req, res) => {
   try {
@@ -12,194 +25,160 @@ const uploadFile = async (req, res) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const originalBuffer = req.file.buffer;
     const originalName = req.file.originalname;
     const ext = path.extname(originalName);
     const storedName = `${uuidv4()}${ext}.enc`;
+    const fileHash = await generateHashFromPath(req.file.path);
 
-    
-    const fileHash = generateHash(originalBuffer);
+    await encryptFileFromPath(req.file.path, storedName);
 
-    
-    encryptFile(originalBuffer, storedName);
-
-    
-    const file = await File.create({
+    const file = await repositories.files.create({
       owner: req.user.id,
       filename: originalName,
       storedName,
       hash: fileHash,
     });
-
-    
     const block = await createBlock(file._id, fileHash);
 
-    res.status(201).json({
+    return res.status(201).json({
       message: "File uploaded successfully",
       file: {
         id: file._id,
         filename: file.filename,
-        hash: file.hash,
         createdAt: file.createdAt,
       },
-      block: {
+      receipt: {
+        id: block._id,
         index: block.index,
-        fileHash: block.fileHash,
-        previousHash: block.previousHash,
         timestamp: block.timestamp,
       },
     });
   } catch (error) {
     console.error("Upload error:", error);
-    res.status(500).json({ message: "Server error during file upload" });
+    return res.status(500).json({ message: "Server error during file upload" });
+  } finally {
+    if (req.file?.path) {
+      await fs.rm(req.file.path, { force: true });
+    }
   }
 };
-
-
 
 const getMyFiles = async (req, res) => {
   try {
-    const files = await File.find({ owner: req.user.id }).sort({ createdAt: -1 });
-    res.status(200).json({ files });
+    const files = await repositories.files.findByOwner(req.user.id);
+    return res.status(200).json({ files: files.map(clientFile) });
   } catch (error) {
     console.error("GetMyFiles error:", error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };
-
-
 
 const getSharedFiles = async (req, res) => {
   try {
-    const Share = require("../models/Share");
-    const sharedFiles = await Share.find({ sharedWith: req.user.id })
-      .populate("fileId", "filename hash")
-      .populate("owner", "username")
-      .sort({ createdAt: -1 });
-      
-    res.status(200).json({ files: sharedFiles });
+    const sharedFiles = await repositories.shares.findReceivedByUser(req.user.id);
+    return res.status(200).json({ files: sharedFiles });
   } catch (error) {
     console.error("GetSharedFiles error:", error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
-
-
 const downloadFile = async (req, res) => {
   try {
-    const file = await File.findById(req.params.id);
+    const file = await repositories.files.findById(req.params.id);
     if (!file) {
       return res.status(404).json({ message: "File not found" });
     }
 
-    
-    if (file.owner.toString() !== req.user.id) {
-      const Share = require("../models/Share");
-      const shared = await Share.findOne({
-        fileId: file._id,
-        sharedWith: req.user.id,
-      });
-      if (!shared) {
-        return res.status(403).json({ message: "Access denied" });
-      }
+    if (!(await canAccessFile(file, req.user.id))) {
+      return res.status(403).json({ message: "Access denied" });
     }
 
-    
-    let decryptedBuffer;
+    let currentHash;
     try {
-      decryptedBuffer = decryptFile(file.storedName);
-    } catch (decryptError) {
-      if (decryptError.code === "DECRYPTION_FAILED") {
+      currentHash = await hashDecryptedFile(file.storedName);
+    } catch (error) {
+      if (error.code === "DECRYPTION_FAILED") {
         return res.status(422).json({
-          message: "File tampering detected! The encrypted file has been modified or corrupted and cannot be decrypted.",
+          message: "This file cannot be opened because its stored copy failed a safety check.",
           tampered: true,
           filename: file.filename,
         });
       }
-      if (decryptError.code === "FILE_NOT_FOUND") {
-        return res.status(404).json({
-          message: "The encrypted file is missing from storage.",
-        });
+      if (error.code === "FILE_NOT_FOUND") {
+        return res.status(404).json({ message: "The stored file could not be found." });
       }
-      throw decryptError;
+      throw error;
     }
 
-    
-    const verification = await verifyFileIntegrity(decryptedBuffer, file._id);
-
+    const verification = await verifyHashIntegrity(currentHash, file._id);
     if (!verification.isValid) {
       return res.status(422).json({
-        message: "File tampering detected! The file hash does not match the blockchain record.",
+        message: "This file failed its safety check and cannot be downloaded.",
         tampered: true,
         filename: file.filename,
-        storedHash: verification.storedHash,
-        currentHash: verification.currentHash,
       });
     }
 
-    
     res.set({
       "Content-Type": "application/octet-stream",
-      "Content-Disposition": `attachment; filename="${file.filename}"`,
-      "X-File-Hash": verification.currentHash,
-      "X-Integrity-Verified": "true",
+      "Content-Disposition": `attachment; filename="${downloadName(file.filename)}"`,
+      "X-File-Check": "passed",
     });
 
-    res.send(decryptedBuffer);
+    const decryptedStream = await createDecryptedReadStream(file.storedName);
+    decryptedStream.on("error", (streamError) => {
+      console.error("Download stream error:", streamError);
+      res.destroy(streamError);
+    });
+    return decryptedStream.pipe(res);
   } catch (error) {
     console.error("Download error:", error);
-    res.status(500).json({ message: "Server error during file download" });
+    return res.status(500).json({ message: "Server error during file download" });
   }
 };
 
-
-
 const verifyFile = async (req, res) => {
   try {
-    const file = await File.findById(req.params.id);
+    const file = await repositories.files.findById(req.params.id);
     if (!file) {
       return res.status(404).json({ message: "File not found" });
     }
 
-    
-    let decryptedBuffer;
+    if (!(await canAccessFile(file, req.user.id))) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    let currentHash;
     try {
-      decryptedBuffer = decryptFile(file.storedName);
-    } catch (decryptError) {
-      if (decryptError.code === "DECRYPTION_FAILED") {
+      currentHash = await hashDecryptedFile(file.storedName);
+    } catch (error) {
+      if (error.code === "DECRYPTION_FAILED") {
         return res.status(200).json({
           filename: file.filename,
           isValid: false,
           tampered: true,
-          storedHash: file.hash,
-          currentHash: null,
-          message: "File tampering detected! The encrypted file has been modified or corrupted — decryption failed.",
+          message: "This file failed its safety check.",
         });
       }
-      if (decryptError.code === "FILE_NOT_FOUND") {
-        return res.status(404).json({
-          message: "The encrypted file is missing from storage.",
-        });
+      if (error.code === "FILE_NOT_FOUND") {
+        return res.status(404).json({ message: "The stored file could not be found." });
       }
-      throw decryptError;
+      throw error;
     }
 
-    const verification = await verifyFileIntegrity(decryptedBuffer, file._id);
-
-    res.status(200).json({
+    const verification = await verifyHashIntegrity(currentHash, file._id);
+    return res.status(200).json({
       filename: file.filename,
       isValid: verification.isValid,
       tampered: !verification.isValid,
-      storedHash: verification.storedHash,
-      currentHash: verification.currentHash,
       message: verification.isValid
-        ? "File integrity verified — no tampering detected"
-        : "File tampering detected! Hash mismatch",
+        ? "File check passed."
+        : "This file failed its safety check.",
     });
   } catch (error) {
     console.error("Verify error:", error);
-    res.status(500).json({ message: "Server error during verification" });
+    return res.status(500).json({ message: "Server error during verification" });
   }
 };
 

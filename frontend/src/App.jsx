@@ -12,9 +12,9 @@ import UploadPage from './pages/UploadPage';
 import SharedFilesPage from './pages/SharedFilesPage';
 
 const AppLayout = ({ children }) => (
-  <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 transition-colors duration-300">
+  <div className="app-shell min-h-screen transition-colors duration-300">
     <Navbar />
-    <main>{children}</main>
+    <main className="relative isolate pb-10">{children}</main>
   </div>
 );
 

@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
-import { useToast } from '../components/Toast';
-import { Shield, Loader2, Sun, Moon, RotateCcw } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Loader2, RotateCcw, ShieldCheck } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import AuthShell from '../components/AuthShell';
+import { useToast } from '../components/toastContext';
+import { useAuth } from '../context/authStore';
 
 const VerifyOTPPage = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -12,7 +12,6 @@ const VerifyOTPPage = () => {
   const [countdown, setCountdown] = useState(0);
   const inputRefs = useRef([]);
   const { verifyOTP, resendOTP } = useAuth();
-  const { dark, toggle } = useTheme();
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,12 +32,11 @@ const VerifyOTPPage = () => {
     if (value.length > 1) {
       const digits = value.replace(/\D/g, '').slice(0, 6).split('');
       const newOtp = [...otp];
-      digits.forEach((d, i) => {
-        if (index + i < 6) newOtp[index + i] = d;
+      digits.forEach((digit, offset) => {
+        if (index + offset < 6) newOtp[index + offset] = digit;
       });
       setOtp(newOtp);
-      const nextIndex = Math.min(index + digits.length, 5);
-      inputRefs.current[nextIndex]?.focus();
+      inputRefs.current[Math.min(index + digits.length, 5)]?.focus();
       return;
     }
 
@@ -99,84 +97,64 @@ const VerifyOTPPage = () => {
   if (!email) return null;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950 px-4 transition-colors duration-300">
-      <button
-        onClick={toggle}
-        className="absolute top-5 right-5 p-2 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-200 dark:hover:bg-white/10 transition-all cursor-pointer"
-      >
-        {dark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-      </button>
-
-      <div className="w-full max-w-md animate-[fadeIn_0.5s_ease]">
-        <div className="flex flex-col items-center mb-8">
-          <div className="flex flex-col items-center mb-8">
-            <div className="p-2  rounded-lg">
-              <img src="logo.png" className='h-15 w-15' alt="logo" />
-            </div>
-            <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Verify your Email Address</h1>
-          </div>
-          <p className="text-neutral-500 text-sm mt-1 text-center">
-            We sent a 6-digit code to<br />
-            <span className="text-neutral-900 dark:text-white font-medium">{email}</span>
-          </p>
-        </div>
-
-        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-8 shadow-sm transition-colors duration-300">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="flex justify-center gap-3">
-              {otp.map((digit, index) => (
-                <input
-                  key={index}
-                  ref={(el) => (inputRefs.current[index] = el)}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={digit}
-                  onChange={(e) => handleChange(index, e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(index, e)}
-                  className="w-12 h-14 text-center text-xl font-bold bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 transition-all"
-                  autoFocus={index === 0}
-                />
-              ))}
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading || otp.join('').length !== 6}
-              className="w-full py-3 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 font-semibold rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
-            >
-              {loading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                'Verify Email'
-              )}
-            </button>
-          </form>
-
-          <div className="mt-5 text-center">
-            <p className="text-sm text-neutral-500">
-              Didn&apos;t receive the code?{' '}
-              {countdown > 0 ? (
-                <span className="text-neutral-400">Resend in {countdown}s</span>
-              ) : (
-                <button
-                  onClick={handleResend}
-                  disabled={resending}
-                  className="text-neutral-900 dark:text-white font-medium hover:underline inline-flex items-center gap-1 cursor-pointer"
-                >
-                  {resending ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
-                  Resend
-                </button>
-              )}
-            </p>
-          </div>
-        </div>
-
-        <p className="text-center text-xs text-neutral-400 mt-6">
-          Code expires in 5 minutes
-        </p>
+    <AuthShell
+      eyebrow="Identity verification"
+      title="Confirm your email"
+      description={(
+        <>
+          Enter the six-digit code sent to <span className="font-semibold text-slate-800 dark:text-white">{email}</span>.
+        </>
+      )}
+      footer="Verification codes expire after 5 minutes."
+    >
+      <div className="mb-6 flex items-center gap-3 rounded-2xl border border-sky-200/80 bg-sky-50/80 px-4 py-3 text-sm text-sky-800 dark:border-sky-400/15 dark:bg-sky-400/10 dark:text-sky-100">
+        <ShieldCheck className="h-5 w-5 shrink-0" />
+        Complete this step before accessing the secure workspace.
       </div>
-    </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-6 gap-2 sm:gap-3">
+          {otp.map((digit, index) => (
+            <input
+              key={index}
+              ref={(el) => (inputRefs.current[index] = el)}
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              value={digit}
+              onChange={(e) => handleChange(index, e.target.value)}
+              onKeyDown={(e) => handleKeyDown(index, e)}
+              className="h-14 min-w-0 rounded-2xl border border-slate-200 bg-white/90 text-center text-xl font-bold text-slate-950 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 dark:border-white/10 dark:bg-slate-950/80 dark:text-white dark:focus:border-sky-300 sm:h-16"
+              autoFocus={index === 0}
+            />
+          ))}
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading || otp.join('').length !== 6}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-600 via-cyan-600 to-emerald-600 px-4 py-3.5 font-semibold text-white shadow-lg shadow-sky-900/15 transition hover:-translate-y-0.5 hover:shadow-xl disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Verify email'}
+        </button>
+      </form>
+
+      <div className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
+        Did not receive the code?{' '}
+        {countdown > 0 ? (
+          <span className="font-medium text-slate-400">Resend in {countdown}s</span>
+        ) : (
+          <button
+            onClick={handleResend}
+            disabled={resending}
+            className="inline-flex items-center gap-1 font-semibold text-sky-700 transition hover:text-sky-900 disabled:opacity-60 dark:text-sky-300 dark:hover:text-white"
+          >
+            {resending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
+            Resend
+          </button>
+        )}
+      </div>
+    </AuthShell>
   );
 };
 

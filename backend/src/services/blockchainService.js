@@ -1,13 +1,24 @@
 const crypto = require("crypto");
-const Block = require("../models/Block");
+const fs = require("fs");
+const repositories = require("../repositories");
 
 
 const generateHash = (fileBuffer) => {
   return crypto.createHash("sha256").update(fileBuffer).digest("hex");
 };
 
+const generateHashFromPath = async (filePath) => {
+  const hash = crypto.createHash("sha256");
+
+  for await (const chunk of fs.createReadStream(filePath)) {
+    hash.update(chunk);
+  }
+
+  return hash.digest("hex");
+};
+
 const getLastBlock = async () => {
-  const lastBlock = await Block.findOne().sort({ index: -1 });
+  const lastBlock = await repositories.blocks.findLast();
   return lastBlock;
 };
 
@@ -15,7 +26,7 @@ const getLastBlock = async () => {
 const createBlock = async (fileId, fileHash) => {
   const lastBlock = await getLastBlock();
 
-  const newBlock = await Block.create({
+  const newBlock = await repositories.blocks.create({
     index: lastBlock ? lastBlock.index + 1 : 0,
     fileId,
     fileHash,
@@ -28,8 +39,11 @@ const createBlock = async (fileId, fileHash) => {
 
 const verifyFileIntegrity = async (fileBuffer, fileId) => {
   const currentHash = generateHash(fileBuffer);
+  return verifyHashIntegrity(currentHash, fileId);
+};
 
-  const block = await Block.findOne({ fileId });
+const verifyHashIntegrity = async (currentHash, fileId) => {
+  const block = await repositories.blocks.findByFileId(fileId);
   if (!block) {
     return { isValid: false, error: "No blockchain record found for this file" };
   }
@@ -41,4 +55,11 @@ const verifyFileIntegrity = async (fileBuffer, fileId) => {
   };
 };
 
-module.exports = { generateHash, getLastBlock, createBlock, verifyFileIntegrity };
+module.exports = {
+  generateHash,
+  generateHashFromPath,
+  getLastBlock,
+  createBlock,
+  verifyFileIntegrity,
+  verifyHashIntegrity,
+};

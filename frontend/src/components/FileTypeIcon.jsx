@@ -74,5 +74,4 @@ const FileTypeIcon = ({ filename, className = 'w-5 h-5' }) => {
   return <Icon className={`${className} ${color}`} />;
 };
 
-export { getFileInfo };
 export default FileTypeIcon;
