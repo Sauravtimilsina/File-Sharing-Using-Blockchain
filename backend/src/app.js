@@ -5,6 +5,17 @@ const helmet = require("helmet");
 const connectDB = require("./utils/db");
 const runtimeConfig = require("./config/runtime");
 
+const isLocalBrowserOrigin = (origin) => process.env.NODE_ENV !== "production"
+  && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+
+const allowOrigin = (origin, callback) => {
+  if (!origin || runtimeConfig.corsOrigins.includes(origin) || isLocalBrowserOrigin(origin)) {
+    callback(null, true);
+    return;
+  }
+
+  callback(new Error("Origin is not allowed by CORS."));
+};
 
 connectDB();
 
@@ -16,7 +27,7 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization"],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
-  origin: runtimeConfig.corsOrigins,
+  origin: allowOrigin,
 }));
 app.use(helmet());
 app.use(express.json());
