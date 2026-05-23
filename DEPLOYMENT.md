@@ -34,9 +34,9 @@ SMTP_PASS=
 SMTP_FROM=
 SMTP_TIMEOUT_MS=5000
 SMTP_EFFECTIVE_PORT=465
-EMAIL_PROVIDER=smtp
+EMAIL_PROVIDER=resend
 RESEND_API_KEY=
-RESEND_FROM=
+RESEND_FROM=SecureTransfer <noreply@auth.sauravtimilsina.com.np>
 ```
 
 For faster OTP delivery on Render, use an HTTP mail provider instead of Gmail SMTP:
@@ -44,16 +44,18 @@ For faster OTP delivery on Render, use an HTTP mail provider instead of Gmail SM
 ```env
 EMAIL_PROVIDER=resend
 RESEND_API_KEY=your_resend_api_key
-RESEND_FROM=SecureTransfer <onboarding@resend.dev>
+RESEND_FROM=SecureTransfer <noreply@auth.sauravtimilsina.com.np>
 ```
 
 Gmail SMTP can time out from Render free instances. Resend/Brevo/SendGrid are better for near-instant verification emails.
 
-Resend's starter test mode can only send to your Resend account email. To send OTPs to any user Gmail address, verify a domain in Resend and use a from address on that domain, for example:
+Resend's starter test mode can only send to your Resend account email. To send OTPs to any user Gmail address, verify `auth.sauravtimilsina.com.np` in Resend and use a from address on that domain:
 
 ```env
-RESEND_FROM=SecureTransfer <verify@your-domain.com>
+RESEND_FROM=SecureTransfer <noreply@auth.sauravtimilsina.com.np>
 ```
+
+The backend runs on Render, so `RESEND_API_KEY` must be set in Render. Saving the key only in Vercel will not send OTP emails from the API.
 
 Render already gets these non-secret defaults from `render.yaml`:
 
