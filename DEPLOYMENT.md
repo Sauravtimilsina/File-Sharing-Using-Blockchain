@@ -34,7 +34,20 @@ SMTP_PASS=
 SMTP_FROM=
 SMTP_TIMEOUT_MS=5000
 SMTP_EFFECTIVE_PORT=465
+EMAIL_PROVIDER=smtp
+RESEND_API_KEY=
+RESEND_FROM=
 ```
+
+For faster OTP delivery on Render, use an HTTP mail provider instead of Gmail SMTP:
+
+```env
+EMAIL_PROVIDER=resend
+RESEND_API_KEY=your_resend_api_key
+RESEND_FROM=SecureTransfer <onboarding@resend.dev>
+```
+
+Gmail SMTP can time out from Render free instances. Resend/Brevo/SendGrid are better for near-instant verification emails.
 
 Render already gets these non-secret defaults from `render.yaml`:
 
