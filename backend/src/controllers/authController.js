@@ -31,6 +31,9 @@ const generateOTP = () => {
   return crypto.randomInt(100000, 999999).toString();
 };
 
+const canExposeDevOtp = () => process.env.NODE_ENV !== "production" && process.env.DEV_SHOW_OTP === "true";
+const devOtpPayload = (otp) => (canExposeDevOtp() ? { devOtp: otp } : {});
+
 const smtpFailureMessage = (error) => {
   if (error?.publicMessage) {
     return `Failed to send verification email. ${error.publicMessage}`;
@@ -91,6 +94,7 @@ const register = async (req, res) => {
           message: "Verification code sent to your email",
           email,
           requiresVerification: true,
+          ...devOtpPayload(otp),
         });
       }
       return res.status(400).json({ message: "User already exists with that email or username" });
@@ -122,6 +126,7 @@ const register = async (req, res) => {
       message: "Verification code sent to your email",
       email,
       requiresVerification: true,
+      ...devOtpPayload(otp),
     });
   } catch (error) {
     console.error("Register error:", error);
@@ -220,7 +225,10 @@ const resendOTP = async (req, res) => {
       return res.status(500).json({ message: smtpFailureMessage(emailErr) });
     }
 
-    res.status(200).json({ message: "New verification code sent to your email" });
+    res.status(200).json({
+      message: "New verification code sent to your email",
+      ...devOtpPayload(otp),
+    });
   } catch (error) {
     console.error("ResendOTP error:", error);
     res.status(500).json({ message: "Server error" });

@@ -23,8 +23,8 @@ const RegisterPage = () => {
     try {
       const cleanUsername = username.trim();
       const cleanEmail = email.trim();
-      await register(cleanUsername, cleanEmail, password);
-      navigate('/verify-otp', { state: { email: cleanEmail } });
+      const data = await register(cleanUsername, cleanEmail, password);
+      navigate('/verify-otp', { state: { email: cleanEmail, devOtp: data.devOtp } });
     } catch (err) {
       const timedOut = err.code === 'ECONNABORTED';
       const offline = !err.response;
