@@ -5,9 +5,13 @@ if (!runtimeConfig.database.postgresUrl) {
   throw new Error("Postgres backend adapter requires SUPABASE_DB_URL or POSTGRES_URL.");
 }
 
+const useSsl = process.env.POSTGRES_SSL === "false"
+  ? false
+  : {
+    rejectUnauthorized: false,
+  };
+
 module.exports = new Pool({
   connectionString: runtimeConfig.database.postgresUrl,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  ssl: useSsl,
 });

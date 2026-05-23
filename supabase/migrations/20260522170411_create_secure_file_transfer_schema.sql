@@ -1,3 +1,26 @@
+create extension if not exists pgcrypto;
+
+do $$
+begin
+  create role anon;
+exception
+  when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create role authenticated;
+exception
+  when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create role service_role;
+exception
+  when duplicate_object then null;
+end $$;
+
 create table if not exists public.users (
   id text primary key default gen_random_uuid()::text,
   username text not null unique,

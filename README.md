@@ -29,6 +29,34 @@ Secure File Transfer is an academic web system for encrypted upload, file sharin
 
 ## Local Setup
 
+### Docker
+
+Run the full local stack without entering the frontend or backend folders:
+
+```bash
+docker compose up --build
+```
+
+This starts:
+
+- Frontend: http://localhost:5174
+- Backend API: http://localhost:5001
+- Postgres with the Supabase-compatible schema: localhost:5432
+
+Docker mode uses the same backend `.env` for app secrets and mail settings, but overrides the database to the local `db` container and stores encrypted uploads locally in a Docker volume. Your normal non-Docker setup can still use the hosted Supabase Postgres connection from `backend/.env`.
+
+To stop the stack:
+
+```bash
+docker compose down
+```
+
+To reset the Docker database and uploaded Docker files:
+
+```bash
+docker compose down -v
+```
+
 ### Backend
 
 1. Install dependencies in `backend`.
