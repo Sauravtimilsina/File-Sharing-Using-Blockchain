@@ -1,0 +1,64 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: secure_file_transfer
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./supabase/migrations/20260522170411_create_secure_file_transfer_schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+      - ./supabase/migrations/20260523081000_add_user_unlock_helper.sql:/docker-entrypoint-initdb.d/002_unlock_helper.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d secure_file_transfer"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build:
+      context: ./backend
+    env_file:
+      - ./backend/.env
+    environment:
+      PORT: 5000
+      NODE_ENV: development
+      DB_PROVIDER: postgres
+      SUPABASE_DB_URL: postgresql://postgres:postgres@db:5432/secure_file_transfer
+      POSTGRES_URL: postgresql://postgres:postgres@db:5432/secure_file_transfer
+      POSTGRES_SSL: "false"
+      CLIENT_ORIGINS: http://localhost:5174
+      FILE_STORAGE_PROVIDER: local
+      UPLOAD_TMP_DIR: /tmp/secure-file-transfer/uploads
+    ports:
+      - "5001:5000"
+    volumes:
+      - ./backend:/app
+      - backend-node-modules:/app/node_modules
+      - backend-uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    command: npm run dev
+
+  frontend:
+    build:
+      context: ./frontend
+    environment:
+      VITE_API_BASE_URL: http://localhost:5001/api
+    ports:
+      - "5174:5173"
+    volumes:
+      - ./frontend:/app
+      - frontend-node-modules:/app/node_modules
+    depends_on:
+      - backend
+    command: npm run dev -- --host 0.0.0.0
+
+volumes:
+  postgres-data:
+  backend-node-modules:
+  frontend-node-modules:
+  backend-uploads:
