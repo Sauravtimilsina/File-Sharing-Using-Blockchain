@@ -51,6 +51,19 @@ export const AuthProvider = ({ children }) => {
     return res.data;
   };
 
+  const updateProfile = async (username) => {
+    const res = await API.put('/auth/profile', { username });
+    const nextUser = res.data.user;
+    localStorage.setItem('user', JSON.stringify(nextUser));
+    setUser(nextUser);
+    return res.data;
+  };
+
+  const changePassword = async (currentPassword, newPassword) => {
+    const res = await API.put('/auth/change-password', { currentPassword, newPassword });
+    return res.data;
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -59,7 +72,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, verifyOTP, resendOTP, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, verifyOTP, resendOTP, updateProfile, changePassword, logout }}>
       {children}
     </AuthContext.Provider>
   );

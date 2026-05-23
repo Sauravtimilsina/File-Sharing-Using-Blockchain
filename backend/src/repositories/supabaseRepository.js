@@ -25,6 +25,8 @@ const mapFile = (file) => file && ({
   filename: file.filename,
   storedName: file.stored_name,
   hash: file.hash,
+  fileSize: Number(file.file_size || 0),
+  mimeType: file.mime_type,
   createdAt: file.created_at,
   updatedAt: file.updated_at,
 });
@@ -35,6 +37,8 @@ const mapShare = (share, file, owner) => share && ({
     ? {
       _id: file.id,
       filename: file.filename,
+      fileSize: Number(file.file_size || 0),
+      mimeType: file.mime_type,
     }
     : share.file_id,
   owner: owner
@@ -75,6 +79,9 @@ module.exports = {
     findByEmail: async (email) => mapUser(await singleOrNull(
       supabase.from("users").select("*").eq("email", email),
     )),
+    findByUsername: async (username) => mapUser(await singleOrNull(
+      supabase.from("users").select("*").eq("username", username),
+    )),
     findById: async (id) => mapUser(await singleOrNull(
       supabase.from("users").select("*").eq("id", id),
     )),
@@ -107,17 +114,33 @@ module.exports = {
       .eq("id", id)
       .select("*")
       .single())),
-    updatePassword: async (id, password) => mapUser(failOnError(await supabase
+    updateProfile: async (id, input) => mapUser(failOnError(await supabase
       .from("users")
       .update({
-        password,
-        failed_login_attempts: 0,
-        locked_until: null,
+        username: input.username,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
       .select("*")
       .single())),
+    updatePassword: async (id, password, options = { resetLock: true }) => {
+      const update = {
+        password,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (options.resetLock !== false) {
+        update.failed_login_attempts = 0;
+        update.locked_until = null;
+      }
+
+      return mapUser(failOnError(await supabase
+        .from("users")
+        .update(update)
+        .eq("id", id)
+        .select("*")
+        .single()));
+    },
     recordLoginFailure: async (id, lockedUntil) => {
       const user = await singleOrNull(supabase.from("users").select("failed_login_attempts").eq("id", id));
       return mapUser(failOnError(await supabase
@@ -180,6 +203,8 @@ module.exports = {
         filename: input.filename,
         stored_name: input.storedName,
         hash: input.hash,
+        file_size: input.fileSize,
+        mime_type: input.mimeType,
       })
       .select("*")
       .single())),
@@ -215,7 +240,7 @@ module.exports = {
       if (!shares.length) return [];
 
       const [files, owners] = await Promise.all([
-        supabase.from("files").select("id,filename").in("id", shares.map((share) => share.file_id)),
+        supabase.from("files").select("id,filename,file_size,mime_type").in("id", shares.map((share) => share.file_id)),
         supabase.from("users").select("id,username").in("id", shares.map((share) => share.owner_id)),
       ]);
 

@@ -124,6 +124,12 @@ const DashboardPage = () => {
   };
 
   const getExtension = (filename) => filename?.split('.').pop()?.toUpperCase() || '';
+  const formatSize = (bytes = 0) => {
+    if (!bytes) return 'Unknown size';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  };
   const filteredFiles = files.filter((file) => file.filename?.toLowerCase().includes(searchQuery.trim().toLowerCase()));
   const recentFiles = [...files]
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -140,7 +146,7 @@ const DashboardPage = () => {
 
   const stats = [
     { label: 'My files', value: files.length, icon: Package, tone: 'from-sky-500 to-cyan-400' },
-    { label: 'Quick checks', value: files.length ? 'Ready' : 'Open', icon: ShieldCheck, tone: 'from-emerald-500 to-lime-400' },
+    { label: 'Stored data', value: formatSize(files.reduce((total, file) => total + Number(file.fileSize || 0), 0)), icon: ShieldCheck, tone: 'from-emerald-500 to-lime-400' },
     { label: 'File formats', value: Object.keys(extensionCounts).length, icon: Signal, tone: 'from-cyan-500 to-blue-500' },
     { label: 'Sharing', value: 'Ready', icon: Users, tone: 'from-fuchsia-500 to-rose-400' },
   ];
@@ -423,7 +429,7 @@ const DashboardPage = () => {
 
                 <p className="truncate text-sm font-semibold text-slate-950 dark:text-white" title={file.filename}>{file.filename}</p>
                 <div className="mt-2 flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
-                  <span>{new Date(file.createdAt).toLocaleDateString()}</span>
+                  <span>{formatSize(file.fileSize)}</span>
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 font-semibold text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-200">
                     <ShieldCheck className="h-3 w-3" />
                     Ready
@@ -451,6 +457,7 @@ const DashboardPage = () => {
                 <tr className="border-b border-slate-200/80 text-left text-xs font-bold uppercase text-slate-500 dark:border-white/10 dark:text-slate-400">
                   <th className="px-6 py-4">Name</th>
                   <th className="px-6 py-4">Type</th>
+                  <th className="px-6 py-4">Size</th>
                   <th className="px-6 py-4">Uploaded</th>
                   <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4 text-right">Actions</th>
@@ -470,6 +477,7 @@ const DashboardPage = () => {
                     <td className="px-6 py-4">
                       <span className="rounded-xl bg-slate-100 px-2.5 py-1.5 text-xs font-semibold text-slate-600 dark:bg-white/10 dark:text-slate-300">{getExtension(file.filename) || 'FILE'}</span>
                     </td>
+                    <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{formatSize(file.fileSize)}</td>
                     <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{new Date(file.createdAt).toLocaleDateString()}</td>
                     <td className="px-6 py-4">
                       {verifyResult?.fileId === file._id ? (

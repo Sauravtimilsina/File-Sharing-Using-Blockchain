@@ -11,6 +11,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import UploadPage from './pages/UploadPage';
 import SharedFilesPage from './pages/SharedFilesPage';
+import ProfilePage from './pages/ProfilePage';
 
 const AppLayout = ({ children }) => (
   <div className="app-shell min-h-screen transition-colors duration-300">
@@ -44,6 +45,11 @@ function App() {
               <Route path="/shared" element={
                 <ProtectedRoute>
                   <AppLayout><SharedFilesPage /></AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <AppLayout><ProfilePage /></AppLayout>
                 </ProtectedRoute>
               } />
 

@@ -9,6 +9,8 @@ const {
   resendOTP,
   requestPasswordReset,
   resetPassword,
+  updateProfile,
+  changePassword,
 } = require("../controllers/authController");
 const auth = require("../middleware/auth");
 
@@ -37,5 +39,7 @@ router.post("/reset-password", authLimiter, resetPassword);
 
 
 router.get("/me", auth, getMe);
+router.put("/profile", auth, updateProfile);
+router.put("/change-password", auth, changePassword);
 
 module.exports = router;

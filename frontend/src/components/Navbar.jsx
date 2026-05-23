@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/authStore';
 import { useTheme } from '../context/themeStore';
 import SystemStatus from './SystemStatus';
-import { Activity, LayoutDashboard, LogOut, Moon, ShieldCheck, Sun, Upload, Users } from 'lucide-react';
+import { Activity, LayoutDashboard, LogOut, Moon, Settings, ShieldCheck, Sun, Upload, Users } from 'lucide-react';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -19,6 +19,7 @@ const Navbar = () => {
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/upload', label: 'Upload', icon: Upload },
     { to: '/shared', label: 'Shared Files', icon: Users },
+    { to: '/profile', label: 'Profile', icon: Settings },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -77,7 +78,7 @@ const Navbar = () => {
               {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
 
-            <div className="hidden items-center gap-2 rounded-2xl border border-slate-200 bg-white/80 px-3 py-2 shadow-sm dark:border-white/10 dark:bg-white/[0.06] sm:flex">
+            <Link to="/profile" className="hidden items-center gap-2 rounded-2xl border border-slate-200 bg-white/80 px-3 py-2 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-200 dark:border-white/10 dark:bg-white/[0.06] sm:flex">
               <div className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-sky-600 to-emerald-500 text-xs font-bold text-white">
                 {user?.username?.charAt(0).toUpperCase()}
               </div>
@@ -86,7 +87,7 @@ const Navbar = () => {
                 <p className="max-w-28 truncate text-sm font-semibold text-slate-700 dark:text-slate-100">{user?.username}</p>
               </div>
               <ShieldCheck className="hidden h-4 w-4 text-emerald-500 lg:block" />
-            </div>
+            </Link>
 
             <button
               onClick={handleLogout}
