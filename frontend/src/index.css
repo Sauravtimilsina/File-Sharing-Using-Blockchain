@@ -15,6 +15,7 @@ body {
   font-family: var(--font-family-sans);
   letter-spacing: 0;
   min-width: 320px;
+  transition: background-color 180ms ease, color 180ms ease;
 }
 
 button,
@@ -52,6 +53,7 @@ a {
     linear-gradient(225deg, rgba(16, 185, 129, 0.1), transparent 32rem),
     linear-gradient(180deg, rgba(244, 114, 182, 0.055), transparent 34rem),
     #f8fafc;
+  transition: background-color 180ms ease;
 }
 
 .dark .app-shell {
@@ -78,8 +80,9 @@ a {
   background:
     linear-gradient(115deg, transparent 0 18%, rgba(14, 165, 233, 0.11) 18.4%, rgba(255, 255, 255, 0.3) 18.8%, transparent 19.4% 44%, rgba(16, 185, 129, 0.08) 44.4%, transparent 45.4%),
     linear-gradient(63deg, transparent 0 34%, rgba(244, 114, 182, 0.065) 34.4%, transparent 35.5% 72%, rgba(234, 179, 8, 0.07) 72.4%, transparent 73.2%);
-  animation: ribbonDrift 18s ease-in-out infinite alternate;
+  animation: ribbonDrift 28s ease-in-out infinite alternate;
   mask-image: linear-gradient(to bottom, transparent, black 14%, black 86%, transparent);
+  will-change: transform, opacity;
 }
 
 .app-shell::after,
@@ -89,7 +92,8 @@ a {
     radial-gradient(ellipse at top, rgba(255, 255, 255, 0.62), transparent 42%),
     linear-gradient(90deg, rgba(14, 165, 233, 0.07), transparent 28%, transparent 72%, rgba(16, 185, 129, 0.055));
   opacity: 0.7;
-  animation: satinSweep 12s ease-in-out infinite alternate;
+  animation: satinSweep 22s ease-in-out infinite alternate;
+  will-change: transform, opacity;
 }
 
 .security-grid {
@@ -111,6 +115,7 @@ a {
     0 20px 70px rgba(15, 23, 42, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(16px);
+  transition: background-color 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
 }
 
 .dark .surface-glass {
@@ -212,6 +217,13 @@ a {
     inset 0 -1px 0 rgba(255, 255, 255, 0.72);
 }
 
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  animation-play-state: paused !important;
+  transition-duration: 0ms !important;
+}
+
 .dark .nav-luxe {
   box-shadow:
     0 18px 58px rgba(0, 0, 0, 0.34),
@@ -276,7 +288,8 @@ a {
   background:
     linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.28), transparent 52%),
     linear-gradient(70deg, transparent 42%, rgba(125, 211, 252, 0.22), transparent 56%);
-  animation: heroPrism 8s ease-in-out infinite alternate;
+  animation: heroPrism 14s ease-in-out infinite alternate;
+  will-change: transform, opacity;
 }
 
 .profile-aurora::after {
@@ -285,7 +298,8 @@ a {
     linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
   background-size: 44px 44px;
   mask-image: radial-gradient(circle at center, black, transparent 70%);
-  animation: gridBreathe 9s ease-in-out infinite alternate;
+  animation: gridBreathe 16s ease-in-out infinite alternate;
+  will-change: transform, opacity;
 }
 
 .profile-card-luxe {

@@ -236,7 +236,7 @@ const ProfilePage = () => {
             </div>
             <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-300/15 dark:bg-amber-300/10 dark:text-amber-100 sm:flex-row sm:items-center">
               <Sparkles className="h-5 w-5 shrink-0" />
-              Repeated same-day lockouts now increase from 10 minutes to 30 minutes, then 1 hour, 2 hours, and longer.
+              Extra account protection is active for unusual sign-in activity.
             </div>
             <button
               type="submit"

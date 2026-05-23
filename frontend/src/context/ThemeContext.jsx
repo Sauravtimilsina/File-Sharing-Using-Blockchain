@@ -9,6 +9,7 @@ export const ThemeProvider = ({ children }) => {
 
   useEffect(() => {
     const root = document.documentElement;
+    root.classList.add('theme-switching');
     if (dark) {
       root.classList.add('dark');
       localStorage.setItem('theme', 'dark');
@@ -16,6 +17,12 @@ export const ThemeProvider = ({ children }) => {
       root.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
+
+    const timer = window.setTimeout(() => {
+      root.classList.remove('theme-switching');
+    }, 260);
+
+    return () => window.clearTimeout(timer);
   }, [dark]);
 
   const toggle = () => setDark((prev) => !prev);
