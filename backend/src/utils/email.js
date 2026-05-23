@@ -1,14 +1,27 @@
 const nodemailer = require("nodemailer");
 
-const SMTP_TIMEOUT_MS = Number(process.env.SMTP_TIMEOUT_MS) || 10000;
+const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
+const requestedPort = parseInt(process.env.SMTP_PORT, 10) || 587;
+const isGmailSmtp = SMTP_HOST === "smtp.gmail.com";
+const SMTP_PORT = parseInt(process.env.SMTP_EFFECTIVE_PORT, 10) || (isGmailSmtp ? 465 : requestedPort);
+const SMTP_TIMEOUT_MS = Number(process.env.SMTP_TIMEOUT_MS) || 5000;
+const SMTP_SECURE = process.env.SMTP_SECURE
+  ? process.env.SMTP_SECURE === "true"
+  : SMTP_PORT === 465;
 
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "smtp.gmail.com",
-  port: parseInt(process.env.SMTP_PORT, 10) || 587,
-  secure: Number(process.env.SMTP_PORT) === 465,
+  host: SMTP_HOST,
+  port: SMTP_PORT,
+  secure: SMTP_SECURE,
+  pool: true,
+  maxConnections: 2,
+  maxMessages: 100,
   connectionTimeout: SMTP_TIMEOUT_MS,
   greetingTimeout: SMTP_TIMEOUT_MS,
   socketTimeout: SMTP_TIMEOUT_MS,
+  tls: {
+    servername: SMTP_HOST,
+  },
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
@@ -32,6 +45,14 @@ const verifyEmailTransport = async () => {
   ensureEmailConfigured();
   await transporter.verify();
 };
+
+const getEmailTransportStatus = () => ({
+  host: SMTP_HOST,
+  port: SMTP_PORT,
+  secure: SMTP_SECURE,
+  timeoutMs: SMTP_TIMEOUT_MS,
+  emailConfigured: Boolean(process.env.SMTP_USER && process.env.SMTP_PASS),
+});
 
 const escapeHtml = (value) => String(value)
   .replace(/&/g, "&amp;")
@@ -175,4 +196,10 @@ const sendShareNotification = async (recipientEmail, ownerName, filename) => sen
   }),
 });
 
-module.exports = { sendOTP, sendPasswordResetOTP, sendShareNotification, verifyEmailTransport };
+module.exports = {
+  sendOTP,
+  sendPasswordResetOTP,
+  sendShareNotification,
+  verifyEmailTransport,
+  getEmailTransportStatus,
+};

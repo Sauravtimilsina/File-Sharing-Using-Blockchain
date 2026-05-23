@@ -44,4 +44,6 @@ services:
       - key: SMTP_FROM
         sync: false
       - key: SMTP_TIMEOUT_MS
-        value: 10000
+        value: 5000
+      - key: SMTP_EFFECTIVE_PORT
+        value: 465
