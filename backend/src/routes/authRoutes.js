@@ -37,8 +37,8 @@ const avatarUpload = multer({
   limits: {
     fileSize: 750 * 1024,
     files: 1,
-    fields: 0,
-    parts: 1,
+    fields: 2,
+    parts: 4,
   },
 });
 
