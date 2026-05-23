@@ -16,13 +16,24 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
+
     setError('');
     setLoading(true);
     try {
-      await register(username, email, password);
-      navigate('/verify-otp', { state: { email } });
+      const cleanUsername = username.trim();
+      const cleanEmail = email.trim();
+      await register(cleanUsername, cleanEmail, password);
+      navigate('/verify-otp', { state: { email: cleanEmail } });
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
+      const timedOut = err.code === 'ECONNABORTED';
+      const offline = !err.response;
+      setError(
+        err.response?.data?.message
+        || (timedOut ? 'The server took too long to respond. Please try again.' : null)
+        || (offline ? 'Cannot reach the server right now. Please check the backend and try again.' : null)
+        || 'Registration failed',
+      );
     } finally {
       setLoading(false);
     }
@@ -59,6 +70,7 @@ const RegisterPage = () => {
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Workspace username"
               required
+              disabled={loading}
               className="w-full rounded-2xl border border-slate-200 bg-white/90 py-3.5 pl-11 pr-4 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 dark:border-white/10 dark:bg-slate-950/80 dark:text-white dark:focus:border-sky-300"
             />
           </div>
@@ -74,6 +86,7 @@ const RegisterPage = () => {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
+              disabled={loading}
               className="w-full rounded-2xl border border-slate-200 bg-white/90 py-3.5 pl-11 pr-4 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 dark:border-white/10 dark:bg-slate-950/80 dark:text-white dark:focus:border-sky-300"
             />
           </div>
@@ -91,11 +104,13 @@ const RegisterPage = () => {
               required
               minLength={8}
               maxLength={128}
+              disabled={loading}
               className="w-full rounded-2xl border border-slate-200 bg-white/90 py-3.5 pl-11 pr-12 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 dark:border-white/10 dark:bg-slate-950/80 dark:text-white dark:focus:border-sky-300"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
+              disabled={loading}
               className="absolute right-3 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-white"
               title={showPassword ? 'Hide password' : 'Show password'}
             >
