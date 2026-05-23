@@ -67,9 +67,17 @@ const sendWithResend = async (mailOptions) => {
 
   if (!response.ok) {
     const body = await response.text();
-    const error = new Error(body || `Resend API failed with ${response.status}`);
+    let message = body || `Resend API failed with ${response.status}`;
+    try {
+      message = JSON.parse(body).message || message;
+    } catch {
+      // Keep the raw provider response when it is not JSON.
+    }
+
+    const error = new Error(message);
     error.code = "RESEND_API_ERROR";
     error.responseCode = response.status;
+    error.publicMessage = message;
     throw error;
   }
 

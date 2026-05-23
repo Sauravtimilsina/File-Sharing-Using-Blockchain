@@ -49,6 +49,12 @@ RESEND_FROM=SecureTransfer <onboarding@resend.dev>
 
 Gmail SMTP can time out from Render free instances. Resend/Brevo/SendGrid are better for near-instant verification emails.
 
+Resend's starter test mode can only send to your Resend account email. To send OTPs to any user Gmail address, verify a domain in Resend and use a from address on that domain, for example:
+
+```env
+RESEND_FROM=SecureTransfer <verify@your-domain.com>
+```
+
 Render already gets these non-secret defaults from `render.yaml`:
 
 ```env
