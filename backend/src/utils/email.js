@@ -9,10 +9,10 @@ const SMTP_SECURE = process.env.SMTP_SECURE
   ? process.env.SMTP_SECURE === "true"
   : SMTP_PORT === 465;
 
-const transporter = nodemailer.createTransport({
+const createTransport = ({ port, secure }) => nodemailer.createTransport({
   host: SMTP_HOST,
-  port: SMTP_PORT,
-  secure: SMTP_SECURE,
+  port,
+  secure,
   pool: true,
   maxConnections: 2,
   maxMessages: 100,
@@ -28,6 +28,11 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const transporter = createTransport({ port: SMTP_PORT, secure: SMTP_SECURE });
+const fallbackTransporter = isGmailSmtp
+  ? createTransport({ port: SMTP_PORT === 465 ? 587 : 465, secure: SMTP_PORT !== 465 })
+  : null;
+
 const ensureEmailConfigured = () => {
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
     const error = new Error("SMTP_USER and SMTP_PASS must be configured to send email.");
@@ -38,18 +43,37 @@ const ensureEmailConfigured = () => {
 
 const sendMail = async (mailOptions) => {
   ensureEmailConfigured();
-  return transporter.sendMail(mailOptions);
+
+  try {
+    return await transporter.sendMail(mailOptions);
+  } catch (error) {
+    if (!fallbackTransporter) throw error;
+
+    try {
+      return await fallbackTransporter.sendMail(mailOptions);
+    } catch (fallbackError) {
+      fallbackError.primaryCode = error.code;
+      fallbackError.primaryCommand = error.command;
+      throw fallbackError;
+    }
+  }
 };
 
 const verifyEmailTransport = async () => {
   ensureEmailConfigured();
-  await transporter.verify();
+  try {
+    await transporter.verify();
+  } catch (error) {
+    if (!fallbackTransporter) throw error;
+    await fallbackTransporter.verify();
+  }
 };
 
 const getEmailTransportStatus = () => ({
   host: SMTP_HOST,
   port: SMTP_PORT,
   secure: SMTP_SECURE,
+  fallbackPort: fallbackTransporter ? (SMTP_PORT === 465 ? 587 : 465) : null,
   timeoutMs: SMTP_TIMEOUT_MS,
   emailConfigured: Boolean(process.env.SMTP_USER && process.env.SMTP_PASS),
 });

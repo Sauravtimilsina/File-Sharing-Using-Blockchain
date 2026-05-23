@@ -31,6 +31,11 @@ const generateOTP = () => {
   return crypto.randomInt(100000, 999999).toString();
 };
 
+const smtpFailureMessage = (error) => {
+  const detail = error?.code || error?.responseCode || error?.command || "SMTP_ERROR";
+  return `Failed to send verification email. Check SMTP settings. (${detail})`;
+};
+
 const sendVerificationOtpInBackground = (email, otp) => {
   setImmediate(async () => {
     try {
@@ -208,7 +213,7 @@ const resendOTP = async (req, res) => {
       await sendOTPEmail(email, otp);
     } catch (emailErr) {
       console.error(`Verification OTP resend failed for ${email}:`, emailErr.message);
-      return res.status(500).json({ message: "Failed to send verification email. Check SMTP settings." });
+      return res.status(500).json({ message: smtpFailureMessage(emailErr) });
     }
 
     res.status(200).json({ message: "New verification code sent to your email" });
