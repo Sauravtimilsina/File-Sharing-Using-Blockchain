@@ -204,7 +204,12 @@ const resendOTP = async (req, res) => {
       expiresAt: new Date(Date.now() + 5 * 60 * 1000),
     });
 
-    sendVerificationOtpInBackground(email, otp);
+    try {
+      await sendOTPEmail(email, otp);
+    } catch (emailErr) {
+      console.error(`Verification OTP resend failed for ${email}:`, emailErr.message);
+      return res.status(500).json({ message: "Failed to send verification email. Check SMTP settings." });
+    }
 
     res.status(200).json({ message: "New verification code sent to your email" });
   } catch (error) {
