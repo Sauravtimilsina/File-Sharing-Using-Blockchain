@@ -14,9 +14,17 @@ const hasSupabaseBackendConfig = Boolean(
 const hasPostgresConfig = Boolean(process.env.SUPABASE_DB_URL || process.env.POSTGRES_URL);
 const isProduction = process.env.NODE_ENV === "production";
 
+const looksLikePlaceholder = (value) => !value
+  || value.includes("replace_with")
+  || value.includes("your_")
+  || value.includes("mail_");
+
 const requireStrongProductionSecret = (name, value) => {
-  if (isProduction && (!value || value.length < 32 || value.includes("replace_with"))) {
-    throw new Error(`${name} must be a strong production secret.`);
+  if (isProduction && (looksLikePlaceholder(value) || value.length < 32)) {
+    throw new Error(
+      `${name} must be set in the deployment environment with at least 32 random characters. `
+      + "Generate one with: npm run generate:secrets",
+    );
   }
 };
 

@@ -10,16 +10,23 @@ This project is deployment-ready for a free setup using:
 
 1. Go to Render and create a new Blueprint from this GitHub repository.
 2. Render will read `render.yaml`.
-3. Set these secret environment variables in Render:
+3. Generate secrets locally:
+
+```bash
+cd backend
+npm run generate:secrets
+```
+
+4. Set these secret environment variables in Render:
 
 ```env
 SUPABASE_URL=
 SUPABASE_SECRET_KEY=
 SUPABASE_DB_URL=
 CLIENT_ORIGINS=https://your-vercel-frontend-url.vercel.app
-JWT_SECRET=
-OTP_SECRET=
-ENCRYPTION_KEY=
+JWT_SECRET=copy_from_generate_secrets_output
+OTP_SECRET=copy_from_generate_secrets_output
+ENCRYPTION_KEY=copy_from_generate_secrets_output
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=
