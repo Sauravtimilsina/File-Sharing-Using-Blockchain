@@ -65,7 +65,7 @@ Install Command: npm ci
 4. Add this Vercel environment variable:
 
 ```env
-VITE_API_BASE_URL=https://your-render-backend-url.onrender.com/api
+VITE_API_BASE_URL=https://secure-file-transfer-api.onrender.com/api
 ```
 
 The `frontend/vercel.json` file makes React Router pages work after refresh.

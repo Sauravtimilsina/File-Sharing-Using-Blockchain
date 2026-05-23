@@ -69,6 +69,7 @@ SUPABASE_DB_URL=postgresql://postgres.faplouuyewkqttpclyzz:your_database_passwor
 
 ```env
 # frontend/.env
+VITE_API_BASE_URL=https://secure-file-transfer-api.onrender.com/api
 VITE_SUPABASE_URL=https://faplouuyewkqttpclyzz.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 ```
