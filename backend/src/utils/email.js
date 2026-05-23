@@ -132,6 +132,8 @@ const verifyEmailTransport = async () => {
 const getEmailTransportStatus = () => ({
   provider: EMAIL_PROVIDER,
   resendConfigured: Boolean(RESEND_API_KEY && RESEND_FROM),
+  resendApiKeyConfigured: Boolean(RESEND_API_KEY),
+  resendFromConfigured: Boolean(RESEND_FROM),
   host: SMTP_HOST,
   port: SMTP_PORT,
   secure: SMTP_SECURE,
