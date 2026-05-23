@@ -14,7 +14,9 @@ const allowOrigin = (origin, callback) => {
     return;
   }
 
-  callback(new Error("Origin is not allowed by CORS."));
+  const error = new Error("Origin is not allowed by CORS.");
+  error.statusCode = 403;
+  callback(error);
 };
 
 connectDB();
@@ -55,6 +57,9 @@ app.get("/", (req, res) => {
 app.use((error, req, res, next) => {
   console.error("Unhandled API error:", error);
   if (res.headersSent) return next(error);
+  if (error.statusCode === 403 && error.message === "Origin is not allowed by CORS.") {
+    return res.status(403).json({ message: "Origin is not allowed by CORS." });
+  }
   return res.status(500).json({ message: "Unexpected server error" });
 });
 
