@@ -1,14 +1,32 @@
 const nodemailer = require("nodemailer");
 
+const SMTP_TIMEOUT_MS = Number(process.env.SMTP_TIMEOUT_MS) || 10000;
+
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || "smtp.gmail.com",
   port: parseInt(process.env.SMTP_PORT, 10) || 587,
   secure: false,
+  connectionTimeout: SMTP_TIMEOUT_MS,
+  greetingTimeout: SMTP_TIMEOUT_MS,
+  socketTimeout: SMTP_TIMEOUT_MS,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
 });
+
+const ensureEmailConfigured = () => {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    const error = new Error("SMTP_USER and SMTP_PASS must be configured to send email.");
+    error.code = "SMTP_NOT_CONFIGURED";
+    throw error;
+  }
+};
+
+const sendMail = async (mailOptions) => {
+  ensureEmailConfigured();
+  return transporter.sendMail(mailOptions);
+};
 
 const escapeHtml = (value) => String(value)
   .replace(/&/g, "&amp;")
@@ -74,7 +92,7 @@ const emailFrame = ({ eyebrow, title, intro, content }) => `
   </html>
 `;
 
-const sendOTP = async (email, otp) => transporter.sendMail({
+const sendOTP = async (email, otp) => sendMail({
   from: process.env.SMTP_FROM || process.env.SMTP_USER,
   to: email,
   subject: "SecureTransfer - Verify your email",
@@ -102,7 +120,7 @@ const sendOTP = async (email, otp) => transporter.sendMail({
   }),
 });
 
-const sendPasswordResetOTP = async (email, otp) => transporter.sendMail({
+const sendPasswordResetOTP = async (email, otp) => sendMail({
   from: process.env.SMTP_FROM || process.env.SMTP_USER,
   to: email,
   subject: "SecureTransfer - Reset your password",
@@ -130,7 +148,7 @@ const sendPasswordResetOTP = async (email, otp) => transporter.sendMail({
   }),
 });
 
-const sendShareNotification = async (recipientEmail, ownerName, filename) => transporter.sendMail({
+const sendShareNotification = async (recipientEmail, ownerName, filename) => sendMail({
   from: process.env.SMTP_FROM || process.env.SMTP_USER,
   to: recipientEmail,
   subject: `SecureTransfer - ${ownerName} shared a file with you`,
