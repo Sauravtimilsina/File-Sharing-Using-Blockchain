@@ -11,6 +11,7 @@
     "migrate:mongo-to-postgres": "node scripts/migrateMongoToPostgres.js",
     "migrate:postgres-to-postgres": "node scripts/migratePostgresToPostgres.js",
     "ensure:mongo-security-schema": "node scripts/ensureMongoSecuritySchema.js",
+    "generate:secrets": "node scripts/generateSecrets.js",
     "restore:tracked-html-upload": "node scripts/restoreTrackedEncryptedFile.js"
   },
   "keywords": [],
