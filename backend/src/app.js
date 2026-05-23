@@ -4,6 +4,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const connectDB = require("./utils/db");
 const runtimeConfig = require("./config/runtime");
+const { getEmailTransportStatus } = require("./utils/email");
 
 const isLocalBrowserOrigin = (origin) => process.env.NODE_ENV !== "production"
   && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
@@ -69,11 +70,12 @@ app.use("/api/files", fileRoutes);
 app.use("/api/share", shareRoutes);
 
 app.get("/api/health", (req, res) => {
+  const emailStatus = getEmailTransportStatus();
+
   res.status(200).json({
     status: "ok",
     version: process.env.RENDER_GIT_COMMIT || process.env.COMMIT_SHA || "local",
-    smtpTimeoutMs: Number(process.env.SMTP_TIMEOUT_MS) || 10000,
-    emailConfigured: Boolean(process.env.SMTP_USER && process.env.SMTP_PASS),
+    smtp: emailStatus,
   });
 });
 

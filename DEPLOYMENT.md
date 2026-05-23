@@ -32,7 +32,8 @@ SMTP_PORT=587
 SMTP_USER=
 SMTP_PASS=
 SMTP_FROM=
-SMTP_TIMEOUT_MS=10000
+SMTP_TIMEOUT_MS=5000
+SMTP_EFFECTIVE_PORT=465
 ```
 
 Render already gets these non-secret defaults from `render.yaml`:
