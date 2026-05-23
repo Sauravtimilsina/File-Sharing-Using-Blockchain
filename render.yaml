@@ -48,8 +48,8 @@ services:
       - key: SMTP_EFFECTIVE_PORT
         value: 465
       - key: EMAIL_PROVIDER
-        value: smtp
+        value: resend
       - key: RESEND_API_KEY
         sync: false
       - key: RESEND_FROM
-        sync: false
+        value: SecureTransfer <noreply@auth.sauravtimilsina.com.np>
