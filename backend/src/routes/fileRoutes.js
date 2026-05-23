@@ -17,6 +17,9 @@ const upload = multer({
   }),
   limits: {
     fileSize: runtimeConfig.maxUploadBytes,
+    files: 1,
+    fields: 4,
+    parts: 5,
   },
 });
 
@@ -29,6 +32,11 @@ const handleUpload = (req, res, next) => {
 
     if (error.code === "LIMIT_FILE_SIZE") {
       res.status(413).json({ message: "File exceeds the upload size limit." });
+      return;
+    }
+
+    if (error instanceof multer.MulterError) {
+      res.status(400).json({ message: "Upload request is not valid." });
       return;
     }
 

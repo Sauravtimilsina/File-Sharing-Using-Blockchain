@@ -17,47 +17,139 @@ const escapeHtml = (value) => String(value)
   .replace(/"/g, "&quot;")
   .replace(/'/g, "&#39;");
 
-const card = (content) => `
-  <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #f8fafc; border-radius: 16px;">
-    <div style="text-align: center; margin-bottom: 24px;">
-      <div style="display: inline-block; background: #0f172a; padding: 12px; border-radius: 12px; color: #fff; font-weight: 700;">ST</div>
-      <h2 style="margin: 12px 0 4px; color: #0f172a; font-size: 20px;">SecureTransfer</h2>
-    </div>
-    ${content}
-  </div>
+const emailFrame = ({ eyebrow, title, intro, content }) => `
+  <!doctype html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    </head>
+    <body style="margin: 0; padding: 0; background: #eaf7fb;">
+      <span style="display: none; max-height: 0; overflow: hidden; opacity: 0; color: transparent;">
+        ${escapeHtml(intro)}
+      </span>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width: 100%; background: #eaf7fb; border-collapse: collapse;">
+        <tr>
+          <td align="center" style="padding: 36px 16px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width: 100%; max-width: 560px; border-collapse: separate; border-spacing: 0; background: #ffffff; border: 1px solid #cfe5ec; border-radius: 28px; overflow: hidden; box-shadow: 0 24px 68px rgba(2, 24, 39, 0.16);">
+              <tr>
+                <td style="padding: 0; background: #06131d;">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #06131d 0%, #073344 54%, #075b49 100%);">
+                    <tr>
+                      <td style="padding: 30px 34px 26px; font-family: 'Segoe UI', Arial, sans-serif;">
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="border-collapse: collapse;">
+                          <tr>
+                            <td style="width: 58px; height: 58px; border-radius: 18px; background: #ffffff; color: #06131d; font-size: 19px; line-height: 58px; text-align: center; font-weight: 800; letter-spacing: 0;">ST</td>
+                            <td style="padding-left: 15px;">
+                              <p style="margin: 0 0 4px; color: #9ee8dc; font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0; text-transform: uppercase;">${escapeHtml(eyebrow)}</p>
+                              <p style="margin: 0; color: #ffffff; font-size: 25px; line-height: 31px; font-weight: 800; letter-spacing: 0;">SecureTransfer</p>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 34px; font-family: 'Segoe UI', Arial, sans-serif;">
+                  <h1 style="margin: 0 0 10px; color: #071827; font-size: 28px; line-height: 35px; font-weight: 800; letter-spacing: 0;">${escapeHtml(title)}</h1>
+                  <p style="margin: 0 0 24px; color: #436174; font-size: 15px; line-height: 24px; letter-spacing: 0;">${escapeHtml(intro)}</p>
+                  ${content}
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 0 34px 30px; font-family: 'Segoe UI', Arial, sans-serif;">
+                  <div style="height: 1px; background: #e3eef2; line-height: 1px;">&nbsp;</div>
+                  <p style="margin: 18px 0 0; color: #6b8796; font-size: 12px; line-height: 19px; letter-spacing: 0;">
+                    This message was sent for your SecureTransfer account activity.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+  </html>
 `;
 
 const sendOTP = async (email, otp) => transporter.sendMail({
   from: process.env.SMTP_FROM || process.env.SMTP_USER,
   to: email,
   subject: "SecureTransfer - Verify your email",
-  html: card(`
-    <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; text-align: center;">
-      <p style="color: #334155; font-size: 14px; margin: 0 0 16px;">Your verification code is:</p>
-      <div style="background: #f1f5f9; border-radius: 8px; padding: 16px; letter-spacing: 8px; font-size: 32px; font-weight: bold; color: #0f172a; font-family: monospace;">
-        ${escapeHtml(otp)}
-      </div>
-      <p style="color: #64748b; font-size: 12px; margin: 16px 0 0;">This code expires in 5 minutes. Do not share it.</p>
-    </div>
-  `),
+  html: emailFrame({
+    eyebrow: "Account verification",
+    title: "Verify your email",
+    intro: "Enter this one-time code to finish setting up your account.",
+    content: `
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width: 100%; border-collapse: separate; border-spacing: 0; background: #f3fbfc; border: 1px solid #d6ebef; border-radius: 22px;">
+        <tr>
+          <td align="center" style="padding: 25px 24px 10px; color: #456476; font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; line-height: 18px; font-weight: 700; letter-spacing: 0; text-transform: uppercase;">Verification code</td>
+        </tr>
+        <tr>
+          <td align="center" style="padding: 0 24px;">
+            <div style="background: #071827; border-radius: 18px; padding: 22px 12px; color: #ffffff; font-family: Consolas, 'Courier New', monospace; font-size: 38px; line-height: 44px; font-weight: 800; letter-spacing: 10px; text-indent: 10px;">${escapeHtml(otp)}</div>
+          </td>
+        </tr>
+        <tr>
+          <td align="center" style="padding: 18px 24px 25px; color: #527184; font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; line-height: 20px; letter-spacing: 0;">
+            It expires in 5 minutes. Keep it private.
+          </td>
+        </tr>
+      </table>
+    `,
+  }),
+});
+
+const sendPasswordResetOTP = async (email, otp) => transporter.sendMail({
+  from: process.env.SMTP_FROM || process.env.SMTP_USER,
+  to: email,
+  subject: "SecureTransfer - Reset your password",
+  html: emailFrame({
+    eyebrow: "Password recovery",
+    title: "Reset your password",
+    intro: "Use this one-time code to choose a new password for your account.",
+    content: `
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width: 100%; border-collapse: separate; border-spacing: 0; background: #f3fbfc; border: 1px solid #d6ebef; border-radius: 22px;">
+        <tr>
+          <td align="center" style="padding: 25px 24px 10px; color: #456476; font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; line-height: 18px; font-weight: 700; letter-spacing: 0; text-transform: uppercase;">Reset code</td>
+        </tr>
+        <tr>
+          <td align="center" style="padding: 0 24px;">
+            <div style="background: #071827; border-radius: 18px; padding: 22px 12px; color: #ffffff; font-family: Consolas, 'Courier New', monospace; font-size: 38px; line-height: 44px; font-weight: 800; letter-spacing: 10px; text-indent: 10px;">${escapeHtml(otp)}</div>
+          </td>
+        </tr>
+        <tr>
+          <td align="center" style="padding: 18px 24px 25px; color: #527184; font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; line-height: 20px; letter-spacing: 0;">
+            It expires in 5 minutes. Ignore this email if you did not request it.
+          </td>
+        </tr>
+      </table>
+    `,
+  }),
 });
 
 const sendShareNotification = async (recipientEmail, ownerName, filename) => transporter.sendMail({
   from: process.env.SMTP_FROM || process.env.SMTP_USER,
   to: recipientEmail,
   subject: `SecureTransfer - ${ownerName} shared a file with you`,
-  html: card(`
-    <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px;">
-      <p style="color: #334155; font-size: 14px; margin: 0 0 12px;">
-        <strong>${escapeHtml(ownerName)}</strong> shared a file with you:
-      </p>
-      <div style="background: #f1f5f9; border-radius: 8px; padding: 12px 16px;">
-        <p style="margin: 0; font-weight: 600; color: #0f172a; font-size: 14px;">${escapeHtml(filename)}</p>
-        <p style="margin: 4px 0 0; color: #64748b; font-size: 12px;">Ready in your shared files area</p>
-      </div>
-      <p style="color: #475569; font-size: 13px; margin: 16px 0 0;">Sign in to review and download it.</p>
-    </div>
-  `),
+  html: emailFrame({
+    eyebrow: "Shared file",
+    title: "A file is ready for you",
+    intro: `${ownerName} shared a file in your workspace.`,
+    content: `
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width: 100%; border-collapse: separate; border-spacing: 0; background: #f3fbfc; border: 1px solid #d6ebef; border-radius: 22px;">
+        <tr>
+          <td style="padding: 22px 24px; font-family: 'Segoe UI', Arial, sans-serif;">
+            <p style="margin: 0 0 8px; color: #527184; font-size: 12px; line-height: 18px; font-weight: 700; letter-spacing: 0; text-transform: uppercase;">Shared item</p>
+            <p style="margin: 0; color: #071827; font-size: 18px; line-height: 25px; font-weight: 800; letter-spacing: 0;">${escapeHtml(filename)}</p>
+            <p style="margin: 12px 0 0; color: #456476; font-size: 14px; line-height: 22px; letter-spacing: 0;">Sign in to review and download it from your shared files.</p>
+          </td>
+        </tr>
+      </table>
+    `,
+  }),
 });
 
-module.exports = { sendOTP, sendShareNotification };
+module.exports = { sendOTP, sendPasswordResetOTP, sendShareNotification };

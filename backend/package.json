@@ -9,6 +9,8 @@
     "migrate:local-files-to-storage": "node scripts/migrateLocalFilesToStorage.js",
     "migrate:mongo-to-supabase": "node scripts/migrateMongoToSupabase.js",
     "migrate:mongo-to-postgres": "node scripts/migrateMongoToPostgres.js",
+    "migrate:postgres-to-postgres": "node scripts/migratePostgresToPostgres.js",
+    "ensure:mongo-security-schema": "node scripts/ensureMongoSecuritySchema.js",
     "restore:tracked-html-upload": "node scripts/restoreTrackedEncryptedFile.js"
   },
   "keywords": [],

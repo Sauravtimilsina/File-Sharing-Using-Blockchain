@@ -11,6 +11,10 @@ const mapUser = (user) => user && ({
   email: user.email,
   password: user.password,
   isVerified: user.is_verified,
+  failedLoginAttempts: Number(user.failed_login_attempts || 0),
+  lockedUntil: user.locked_until,
+  lastLoginAt: user.last_login_at,
+  lastLoginIp: user.last_login_ip,
   createdAt: user.created_at,
   updatedAt: user.updated_at,
 });
@@ -31,7 +35,6 @@ const mapShare = (share, file, owner) => share && ({
     ? {
       _id: file.id,
       filename: file.filename,
-      hash: file.hash,
     }
     : share.file_id,
   owner: owner
@@ -104,19 +107,67 @@ module.exports = {
       .eq("id", id)
       .select("*")
       .single())),
+    updatePassword: async (id, password) => mapUser(failOnError(await supabase
+      .from("users")
+      .update({
+        password,
+        failed_login_attempts: 0,
+        locked_until: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .select("*")
+      .single())),
+    recordLoginFailure: async (id, lockedUntil) => {
+      const user = await singleOrNull(supabase.from("users").select("failed_login_attempts").eq("id", id));
+      return mapUser(failOnError(await supabase
+        .from("users")
+        .update({
+          failed_login_attempts: Number(user?.failed_login_attempts || 0) + 1,
+          ...(lockedUntil ? { locked_until: lockedUntil } : {}),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id)
+        .select("*")
+        .single()));
+    },
+    recordLoginSuccess: async (id, ipAddress) => mapUser(failOnError(await supabase
+      .from("users")
+      .update({
+        failed_login_attempts: 0,
+        locked_until: null,
+        last_login_at: new Date().toISOString(),
+        last_login_ip: ipAddress,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .select("*")
+      .single())),
   },
   otps: {
-    deleteByEmail: async (email) => failOnError(await supabase.from("otps").delete().eq("email", email)),
+    deleteByEmail: async (email, purpose = "email_verification") => failOnError(await supabase
+      .from("otps")
+      .delete()
+      .eq("email", email)
+      .eq("purpose", purpose)),
     create: async (input) => failOnError(await supabase.from("otps").insert({
       email: input.email,
-      otp: input.otp,
+      purpose: input.purpose || "email_verification",
+      otp_hash: input.otpHash,
       expires_at: input.expiresAt,
     })),
-    findByEmailAndCode: async (email, otp) => {
-      const record = await singleOrNull(supabase.from("otps").select("*").eq("email", email).eq("otp", otp));
+    findLatestByEmail: async (email, purpose = "email_verification") => {
+      const record = failOnError(await supabase
+        .from("otps")
+        .select("*")
+        .eq("email", email)
+        .eq("purpose", purpose)
+        .order("created_at", { ascending: false })
+        .limit(1))[0];
       return record && {
         email: record.email,
         otp: record.otp,
+        otpHash: record.otp_hash,
         expiresAt: record.expires_at,
       };
     },
@@ -136,7 +187,8 @@ module.exports = {
       .from("files")
       .select("*")
       .eq("owner_id", owner)
-      .order("created_at", { ascending: false })).map(mapFile),
+      .order("created_at", { ascending: false })
+      .limit(200)).map(mapFile),
     findById: async (id) => mapFile(await singleOrNull(supabase.from("files").select("*").eq("id", id))),
   },
   shares: {
@@ -157,12 +209,13 @@ module.exports = {
         .from("shares")
         .select("*")
         .eq("shared_with_id", sharedWith)
-        .order("created_at", { ascending: false }));
+        .order("created_at", { ascending: false })
+        .limit(200));
 
       if (!shares.length) return [];
 
       const [files, owners] = await Promise.all([
-        supabase.from("files").select("id,filename,hash").in("id", shares.map((share) => share.file_id)),
+        supabase.from("files").select("id,filename").in("id", shares.map((share) => share.file_id)),
         supabase.from("users").select("id,username").in("id", shares.map((share) => share.owner_id)),
       ]);
 
@@ -190,5 +243,25 @@ module.exports = {
     findByFileId: async (fileId) => mapBlock(await singleOrNull(
       supabase.from("blocks").select("*").eq("file_id", fileId),
     )),
+  },
+  loginAuditLogs: {
+    create: async (input) => failOnError(await supabase.from("login_audit_logs").insert({
+      user_id: input.userId,
+      identifier: input.identifier,
+      event_type: input.eventType,
+      reason: input.reason,
+      ip_address: input.ipAddress,
+      user_agent: input.userAgent,
+    })),
+  },
+  activityAuditLogs: {
+    create: async (input) => failOnError(await supabase.from("activity_audit_logs").insert({
+      actor_id: input.actorId,
+      action: input.action,
+      target_type: input.targetType,
+      target_id: input.targetId,
+      ip_address: input.ipAddress,
+      user_agent: input.userAgent,
+    })),
   },
 };

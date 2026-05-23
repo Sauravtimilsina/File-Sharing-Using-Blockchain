@@ -24,17 +24,24 @@ const getLastBlock = async () => {
 
 
 const createBlock = async (fileId, fileHash) => {
-  const lastBlock = await getLastBlock();
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const lastBlock = await getLastBlock();
 
-  const newBlock = await repositories.blocks.create({
-    index: lastBlock ? lastBlock.index + 1 : 0,
-    fileId,
-    fileHash,
-    previousHash: lastBlock ? lastBlock.fileHash : "0",
-    timestamp: new Date(),
-  });
+    try {
+      return await repositories.blocks.create({
+        index: lastBlock ? lastBlock.index + 1 : 0,
+        fileId,
+        fileHash,
+        previousHash: lastBlock ? lastBlock.fileHash : "0",
+        timestamp: new Date(),
+      });
+    } catch (error) {
+      const duplicateIndex = error.code === "23505" || error.code === 11000 || error.status === 409;
+      if (!duplicateIndex || attempt === 2) throw error;
+    }
+  }
 
-  return newBlock;
+  throw new Error("Unable to create file history entry.");
 };
 
 const verifyFileIntegrity = async (fileBuffer, fileId) => {

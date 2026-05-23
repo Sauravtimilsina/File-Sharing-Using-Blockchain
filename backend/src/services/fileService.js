@@ -14,7 +14,13 @@ const getKey = () => {
   if (!key) {
     throw new Error("ENCRYPTION_KEY is not set in environment variables");
   }
-  return Buffer.from(key, "hex");
+
+  const keyBuffer = Buffer.from(key, "hex");
+  if (keyBuffer.length !== 32) {
+    throw new Error("ENCRYPTION_KEY must be 32 bytes of hex key material");
+  }
+
+  return keyBuffer;
 };
 
 const getIv = (encryptedBuffer) => {

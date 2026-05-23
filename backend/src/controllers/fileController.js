@@ -4,6 +4,8 @@ const path = require("path");
 const repositories = require("../repositories");
 const { createDecryptedReadStream, encryptFileFromPath, hashDecryptedFile } = require("../services/fileService");
 const { createBlock, generateHashFromPath, verifyHashIntegrity } = require("../services/blockchainService");
+const { recordActivityAudit } = require("../utils/audit");
+const { cleanFilename, isRecordId } = require("../utils/validation");
 
 const clientFile = (file) => ({
   _id: file._id,
@@ -25,7 +27,11 @@ const uploadFile = async (req, res) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const originalName = req.file.originalname;
+    const originalName = cleanFilename(req.file.originalname);
+    if (!originalName || req.file.size <= 0) {
+      return res.status(400).json({ message: "Upload a non-empty file with a valid name." });
+    }
+
     const ext = path.extname(originalName);
     const storedName = `${uuidv4()}${ext}.enc`;
     const fileHash = await generateHashFromPath(req.file.path);
@@ -39,6 +45,11 @@ const uploadFile = async (req, res) => {
       hash: fileHash,
     });
     const block = await createBlock(file._id, fileHash);
+    await recordActivityAudit(req, {
+      action: "file_upload",
+      targetType: "file",
+      targetId: file._id,
+    });
 
     return res.status(201).json({
       message: "File uploaded successfully",
@@ -48,7 +59,6 @@ const uploadFile = async (req, res) => {
         createdAt: file.createdAt,
       },
       receipt: {
-        id: block._id,
         index: block.index,
         timestamp: block.timestamp,
       },
@@ -85,6 +95,10 @@ const getSharedFiles = async (req, res) => {
 
 const downloadFile = async (req, res) => {
   try {
+    if (!isRecordId(req.params.id)) {
+      return res.status(404).json({ message: "File not found" });
+    }
+
     const file = await repositories.files.findById(req.params.id);
     if (!file) {
       return res.status(404).json({ message: "File not found" });
@@ -126,6 +140,11 @@ const downloadFile = async (req, res) => {
       "X-File-Check": "passed",
     });
 
+    await recordActivityAudit(req, {
+      action: "file_download",
+      targetType: "file",
+      targetId: file._id,
+    });
     const decryptedStream = await createDecryptedReadStream(file.storedName);
     decryptedStream.on("error", (streamError) => {
       console.error("Download stream error:", streamError);
@@ -140,6 +159,10 @@ const downloadFile = async (req, res) => {
 
 const verifyFile = async (req, res) => {
   try {
+    if (!isRecordId(req.params.id)) {
+      return res.status(404).json({ message: "File not found" });
+    }
+
     const file = await repositories.files.findById(req.params.id);
     if (!file) {
       return res.status(404).json({ message: "File not found" });
@@ -168,6 +191,11 @@ const verifyFile = async (req, res) => {
     }
 
     const verification = await verifyHashIntegrity(currentHash, file._id);
+    await recordActivityAudit(req, {
+      action: "file_verify",
+      targetType: "file",
+      targetId: file._id,
+    });
     return res.status(200).json({
       filename: file.filename,
       isValid: verification.isValid,
