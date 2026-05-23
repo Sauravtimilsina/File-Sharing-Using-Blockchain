@@ -1,7 +1,6 @@
 const parseOrigins = (value) => {
   const defaults = [
     "http://localhost:5173",
-    "https://file-sharing-using-blockchain.vercel.app",
   ];
 
   if (!value) return defaults;
@@ -30,7 +29,7 @@ const looksLikePlaceholder = (value) => !value
 const requireStrongProductionSecret = (name, value) => {
   if (isProduction && (looksLikePlaceholder(value) || value.length < 32)) {
     throw new Error(
-      `${name} must be set in the deployment environment with at least 32 random characters. `
+      `${name} must be set in the runtime environment with at least 32 random characters. `
       + "Generate one with: npm run generate:secrets",
     );
   }
