@@ -21,6 +21,13 @@ const pool = new Pool({
 });
 
 const restoreBlob = async () => {
+  try {
+    await fs.access(uploadPath);
+    return;
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+
   const encrypted = execFileSync("git", ["show", gitPath]);
   await fs.mkdir(path.dirname(uploadPath), { recursive: true });
   await fs.writeFile(uploadPath, encrypted);

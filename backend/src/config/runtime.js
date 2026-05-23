@@ -12,9 +12,20 @@ const hasSupabaseBackendConfig = Boolean(
   && (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY),
 );
 const hasPostgresConfig = Boolean(process.env.SUPABASE_DB_URL || process.env.POSTGRES_URL);
+const isProduction = process.env.NODE_ENV === "production";
+
+const requireStrongProductionSecret = (name, value) => {
+  if (isProduction && (!value || value.length < 32 || value.includes("replace_with"))) {
+    throw new Error(`${name} must be a strong production secret.`);
+  }
+};
+
+requireStrongProductionSecret("JWT_SECRET", process.env.JWT_SECRET);
+requireStrongProductionSecret("OTP_SECRET", process.env.OTP_SECRET || process.env.JWT_SECRET);
 
 const runtimeConfig = {
   port: Number(process.env.PORT) || 5000,
+  isProduction,
   database: {
     provider: process.env.DB_PROVIDER || (hasPostgresConfig ? "postgres" : hasSupabaseBackendConfig ? "supabase" : "mongodb"),
     url: process.env.DATABASE_URL || process.env.MONGO_URI,

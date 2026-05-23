@@ -34,7 +34,7 @@ Secure File Transfer is an academic web system for encrypted upload, file sharin
 1. Install dependencies in `backend`.
 2. Copy `backend/.env.example` to `backend/.env`.
 3. Set secrets, mail credentials, and `SUPABASE_DB_URL` for the hosted Supabase Postgres adapter.
-4. Run `backend/supabase/schema.sql` once in the Supabase SQL Editor.
+4. Apply the Supabase migrations from the top-level `supabase/migrations` folder.
 5. Run `npm run dev`.
 
 ### Frontend
@@ -47,7 +47,7 @@ Secure File Transfer is an academic web system for encrypted upload, file sharin
 
 The API controllers call a repository layer. `DB_PROVIDER=postgres` uses the direct Supabase Postgres connection, `DB_PROVIDER=supabase` uses the Supabase Data API adapter, and `DB_PROVIDER=mongodb` remains available for local fallback and migration work. When `DB_PROVIDER` is omitted, the backend chooses Postgres when `SUPABASE_DB_URL` exists, otherwise Supabase Data API when both backend Supabase API values exist, and otherwise MongoDB.
 
-The Supabase schema is in `backend/supabase/schema.sql`, and the deployable migration set is in `supabase/migrations`. It creates `users`, `otps`, `files`, `shares`, and `blocks` tables, preserves text IDs so MongoDB ObjectIds can be migrated, enables RLS, keeps browser roles away from those tables because the current app uses its own backend JWT flow, and provisions the private `encrypted-files` Storage bucket.
+The Supabase schema lives in the deployable migration set at `supabase/migrations`. It creates `users`, `otps`, `files`, `shares`, and `blocks` tables, preserves text IDs so MongoDB ObjectIds can be migrated, enables RLS, keeps browser roles away from those tables because the current app uses its own backend JWT flow, and provisions the private `encrypted-files` Storage bucket.
 
 To migrate MongoDB records after the Supabase schema is created:
 
@@ -62,14 +62,14 @@ The local env files keep Supabase server and browser access separate:
 ```env
 # backend/.env
 DB_PROVIDER=postgres
-SUPABASE_URL=https://lqswsjmnlkgwshprtcyp.supabase.co
+SUPABASE_URL=https://faplouuyewkqttpclyzz.supabase.co
 SUPABASE_SECRET_KEY=your_supabase_secret_key
-SUPABASE_DB_URL=postgresql://postgres:your_database_password@db.lqswsjmnlkgwshprtcyp.supabase.co:5432/postgres
+SUPABASE_DB_URL=postgresql://postgres.faplouuyewkqttpclyzz:your_database_password@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres
 ```
 
 ```env
 # frontend/.env
-VITE_SUPABASE_URL=https://lqswsjmnlkgwshprtcyp.supabase.co
+VITE_SUPABASE_URL=https://faplouuyewkqttpclyzz.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 ```
 
@@ -98,6 +98,8 @@ Apply the storage migration with `supabase db push` after linking the project, o
 - `MAX_UPLOAD_BYTES`: backend file upload cap; example uses `1073741824` for 1 GB
 - `FILE_STORAGE_PROVIDER`: `local` by default or `supabase` for the private Storage bucket
 - `SUPABASE_STORAGE_BUCKET`: private Storage bucket used when `FILE_STORAGE_PROVIDER=supabase`
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`: mail transport settings for verification and sharing messages
+- `JWT_SECRET` and `OTP_SECRET`: backend-only random secrets; production startup rejects short placeholder values
 - `VITE_API_BASE_URL`: frontend API base URL
 
 ## Large File Note

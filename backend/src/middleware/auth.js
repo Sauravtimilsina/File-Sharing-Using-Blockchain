@@ -9,7 +9,15 @@ const auth = (req, res, next) => {
     }
 
     const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ["HS256"] });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
+      algorithms: ["HS256"],
+      audience: "secure-transfer-web",
+      issuer: "secure-transfer-api",
+    });
+
+    if (typeof decoded.id !== "string" || !decoded.id) {
+      return res.status(401).json({ message: "Token is not valid" });
+    }
 
     req.user = { id: decoded.id };
     next();

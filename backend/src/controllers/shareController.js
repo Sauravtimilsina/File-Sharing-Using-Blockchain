@@ -1,16 +1,16 @@
 const repositories = require("../repositories");
 const { sendShareNotification } = require("../utils/email");
+const { recordActivityAudit } = require("../utils/audit");
+const { cleanEmail, isEmail, isRecordId } = require("../utils/validation");
 
 
 
 const shareFile = async (req, res) => {
   try {
     const fileId = typeof req.body.fileId === "string" ? req.body.fileId : "";
-    const sharedWithEmail = typeof req.body.sharedWithEmail === "string"
-      ? req.body.sharedWithEmail.trim().toLowerCase()
-      : "";
+    const sharedWithEmail = cleanEmail(req.body.sharedWithEmail);
 
-    if (!fileId || !sharedWithEmail) {
+    if (!isRecordId(fileId) || !isEmail(sharedWithEmail)) {
       return res.status(400).json({ message: "Please provide fileId and sharedWithEmail" });
     }
 
@@ -45,6 +45,11 @@ const shareFile = async (req, res) => {
       fileId,
       owner: req.user.id,
       sharedWith: recipient._id,
+    });
+    await recordActivityAudit(req, {
+      action: "file_share",
+      targetType: "share",
+      targetId: share._id,
     });
 
     

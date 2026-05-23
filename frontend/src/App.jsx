@@ -7,6 +7,7 @@ import Navbar from './components/Navbar';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import VerifyOTPPage from './pages/VerifyOTPPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import UploadPage from './pages/UploadPage';
 import SharedFilesPage from './pages/SharedFilesPage';
@@ -28,6 +29,7 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/verify-otp" element={<VerifyOTPPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
               <Route path="/dashboard" element={
                 <ProtectedRoute>

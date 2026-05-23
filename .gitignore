@@ -3,12 +3,38 @@
 .env.*
 !.env.example
 !**/.env.example
+*.pem
+*.key
 
 # Dependency and build output
 node_modules/
 **/node_modules/
 dist/
 **/dist/
+dist-ssr/
+**/dist-ssr/
+coverage/
+**/coverage/
+.vite/
+**/.vite/
+.vercel/
+**/.vercel/
 
 # Local process output
 *.log
+*.local
+*.tmp
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local backend file objects and upload staging
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/uploads/.tmp/
+
+# Supabase local state
+supabase/.branches/
+supabase/.temp/
+supabase/.env.keys

@@ -29,8 +29,15 @@ app.use(cors({
   credentials: true,
   origin: allowOrigin,
 }));
-app.use(helmet());
-app.use(express.json());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "same-site" },
+  hsts: process.env.NODE_ENV === "production",
+}));
+app.use((req, res, next) => {
+  res.setHeader("Permissions-Policy", "camera=(), geolocation=(), microphone=()");
+  next();
+});
+app.use(express.json({ limit: "32kb" }));
 
 
 const authRoutes = require("./routes/authRoutes");

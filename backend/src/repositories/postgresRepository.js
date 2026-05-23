@@ -16,6 +16,10 @@ const mapUser = (user) => user && ({
   email: user.email,
   password: user.password,
   isVerified: user.is_verified,
+  failedLoginAttempts: Number(user.failed_login_attempts || 0),
+  lockedUntil: user.locked_until,
+  lastLoginAt: user.last_login_at,
+  lastLoginIp: user.last_login_ip,
   createdAt: user.created_at,
   updatedAt: user.updated_at,
 });
@@ -36,7 +40,6 @@ const mapShare = (share) => share && ({
     ? {
       _id: share.file_id,
       filename: share.file_id_filename,
-      hash: share.file_id_hash,
     }
     : share.file_id,
   owner: share.owner_username
@@ -93,22 +96,61 @@ module.exports = {
        returning *`,
       [id],
     )),
+    updatePassword: async (id, password) => mapUser(await one(
+      `update public.users
+       set password = $2,
+           failed_login_attempts = 0,
+           locked_until = null,
+           updated_at = now()
+       where id = $1
+       returning *`,
+      [id, password],
+    )),
+    recordLoginFailure: async (id, lockedUntil) => mapUser(await one(
+      `update public.users
+       set failed_login_attempts = failed_login_attempts + 1,
+           locked_until = coalesce($2, locked_until),
+           updated_at = now()
+       where id = $1
+       returning *`,
+      [id, lockedUntil],
+    )),
+    recordLoginSuccess: async (id, ipAddress) => mapUser(await one(
+      `update public.users
+       set failed_login_attempts = 0,
+           locked_until = null,
+           last_login_at = now(),
+           last_login_ip = $2,
+           updated_at = now()
+       where id = $1
+       returning *`,
+      [id, ipAddress],
+    )),
   },
   otps: {
-    deleteByEmail: (email) => pool.query("delete from public.otps where email = $1", [email]),
-    create: (input) => pool.query(
-      "insert into public.otps (email, otp, expires_at) values ($1, $2, $3)",
-      [input.email, input.otp, input.expiresAt],
+    deleteByEmail: (email, purpose = "email_verification") => pool.query(
+      "delete from public.otps where email = $1 and purpose = $2",
+      [email, purpose],
     ),
-    findByEmailAndCode: async (email, otp) => {
+    create: (input) => pool.query(
+      "insert into public.otps (email, purpose, otp_hash, expires_at) values ($1, $2, $3, $4)",
+      [input.email, input.purpose || "email_verification", input.otpHash, input.expiresAt],
+    ),
+    findLatestByEmail: async (email, purpose = "email_verification") => {
       const record = await one(
-        "select email, otp, expires_at from public.otps where email = $1 and otp = $2 order by created_at desc limit 1",
-        [email, otp],
+        `select email, purpose, otp, otp_hash, expires_at
+         from public.otps
+         where email = $1 and purpose = $2
+         order by created_at desc
+         limit 1`,
+        [email, purpose],
       );
 
       return record && {
         email: record.email,
+        purpose: record.purpose,
         otp: record.otp,
+        otpHash: record.otp_hash,
         expiresAt: record.expires_at,
       };
     },
@@ -121,7 +163,7 @@ module.exports = {
       [input.owner, input.filename, input.storedName, input.hash],
     )),
     findByOwner: async (owner) => (await many(
-      "select * from public.files where owner_id = $1 order by created_at desc",
+      "select * from public.files where owner_id = $1 order by created_at desc limit 200",
       [owner],
     )).map(mapFile),
     findById: async (id) => mapFile(await one(
@@ -144,13 +186,13 @@ module.exports = {
       `select
          shares.*,
          files.filename as file_id_filename,
-         files.hash as file_id_hash,
          users.username as owner_username
        from public.shares
        join public.files on files.id = shares.file_id
        join public.users on users.id = shares.owner_id
        where shares.shared_with_id = $1
-       order by shares.created_at desc`,
+       order by shares.created_at desc
+       limit 200`,
       [sharedWith],
     )).map(mapShare),
   },
@@ -168,5 +210,21 @@ module.exports = {
       "select * from public.blocks where file_id = $1 limit 1",
       [fileId],
     )),
+  },
+  loginAuditLogs: {
+    create: (input) => pool.query(
+      `insert into public.login_audit_logs
+         (user_id, identifier, event_type, reason, ip_address, user_agent)
+       values ($1, $2, $3, $4, $5, $6)`,
+      [input.userId, input.identifier, input.eventType, input.reason, input.ipAddress, input.userAgent],
+    ),
+  },
+  activityAuditLogs: {
+    create: (input) => pool.query(
+      `insert into public.activity_audit_logs
+         (actor_id, action, target_type, target_id, ip_address, user_agent)
+       values ($1, $2, $3, $4, $5, $6)`,
+      [input.actorId, input.action, input.targetType, input.targetId, input.ipAddress, input.userAgent],
+    ),
   },
 };

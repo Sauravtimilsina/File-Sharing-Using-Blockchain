@@ -1,5 +1,7 @@
 const Block = require("../models/Block");
+const ActivityAuditLog = require("../models/ActivityAuditLog");
 const File = require("../models/File");
+const LoginAuditLog = require("../models/LoginAuditLog");
 const OTP = require("../models/OTP");
 const Share = require("../models/Share");
 const User = require("../models/User");
@@ -12,6 +14,10 @@ const mapUser = (user) => user && ({
   email: user.email,
   password: user.password,
   isVerified: user.isVerified,
+  failedLoginAttempts: Number(user.failedLoginAttempts || 0),
+  lockedUntil: user.lockedUntil,
+  lastLoginAt: user.lastLoginAt,
+  lastLoginIp: user.lastLoginIp,
   createdAt: user.createdAt,
   updatedAt: user.updatedAt,
 });
@@ -32,7 +38,6 @@ const mapShare = (share) => share && ({
     ? {
       _id: asId(share.fileId._id),
       filename: share.fileId.filename,
-      hash: share.fileId.hash,
     }
     : asId(share.fileId),
   owner: share.owner?.username
@@ -76,15 +81,46 @@ module.exports = {
       await user.save();
       return mapUser(user);
     },
+    updatePassword: async (id, password) => mapUser(await User.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          password,
+          failedLoginAttempts: 0,
+          lockedUntil: null,
+        },
+      },
+      { new: true },
+    )),
+    recordLoginFailure: async (id, lockedUntil) => mapUser(await User.findByIdAndUpdate(
+      id,
+      {
+        $inc: { failedLoginAttempts: 1 },
+        ...(lockedUntil ? { $set: { lockedUntil } } : {}),
+      },
+      { new: true },
+    )),
+    recordLoginSuccess: async (id, ipAddress) => mapUser(await User.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          failedLoginAttempts: 0,
+          lockedUntil: null,
+          lastLoginAt: new Date(),
+          lastLoginIp: ipAddress,
+        },
+      },
+      { new: true },
+    )),
   },
   otps: {
-    deleteByEmail: (email) => OTP.deleteMany({ email }),
+    deleteByEmail: (email, purpose = "email_verification") => OTP.deleteMany({ email, purpose }),
     create: (input) => OTP.create(input),
-    findByEmailAndCode: (email, otp) => OTP.findOne({ email, otp }),
+    findLatestByEmail: (email, purpose = "email_verification") => OTP.findOne({ email, purpose }).sort({ createdAt: -1 }),
   },
   files: {
     create: async (input) => mapFile(await File.create(input)),
-    findByOwner: async (owner) => (await File.find({ owner }).sort({ createdAt: -1 })).map(mapFile),
+    findByOwner: async (owner) => (await File.find({ owner }).sort({ createdAt: -1 }).limit(200)).map(mapFile),
     findById: async (id) => mapFile(await File.findById(id)),
   },
   shares: {
@@ -92,14 +128,21 @@ module.exports = {
     create: async (input) => mapShare(await Share.create(input)),
     findReceivedByUser: async (sharedWith) => (
       await Share.find({ sharedWith })
-        .populate("fileId", "filename hash")
+        .populate("fileId", "filename")
         .populate("owner", "username")
         .sort({ createdAt: -1 })
+        .limit(200)
     ).map(mapShare),
   },
   blocks: {
     findLast: async () => mapBlock(await Block.findOne().sort({ index: -1 })),
     create: async (input) => mapBlock(await Block.create(input)),
     findByFileId: async (fileId) => mapBlock(await Block.findOne({ fileId })),
+  },
+  loginAuditLogs: {
+    create: (input) => LoginAuditLog.create(input),
+  },
+  activityAuditLogs: {
+    create: (input) => ActivityAuditLog.create(input),
   },
 };
