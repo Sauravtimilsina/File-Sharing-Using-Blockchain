@@ -1,7 +1,6 @@
 const runtimeConfig = require("../config/runtime");
 
 const adapters = {
-  mongodb: () => require("./mongoRepository"),
   postgres: () => require("./postgresRepository"),
   supabase: () => require("./supabaseRepository"),
 };

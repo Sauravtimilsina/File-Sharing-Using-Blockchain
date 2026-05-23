@@ -1,4 +1,3 @@
-const mongoose = require("mongoose");
 const runtimeConfig = require("../config/runtime");
 
 const connectDB = async () => {
@@ -16,16 +15,6 @@ const connectDB = async () => {
       }
 
       console.log("Database adapter configured for Supabase");
-      return;
-    }
-
-    if (runtimeConfig.database.provider === "mongodb") {
-      if (!runtimeConfig.database.url) {
-        throw new Error("Missing DATABASE_URL or MONGO_URI for the MongoDB connection.");
-      }
-
-      await mongoose.connect(runtimeConfig.database.url);
-      console.log("Database connected with MongoDB adapter");
       return;
     }
 

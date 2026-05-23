@@ -5,7 +5,12 @@ const os = require("os");
 const path = require("path");
 const { Transform } = require("stream");
 const { pipeline } = require("stream/promises");
-const { createEncryptedReadStream, readEncryptedObject, saveEncryptedObject } = require("./storageService");
+const {
+  assertSafeStoredName,
+  createEncryptedReadStream,
+  readEncryptedObject,
+  saveEncryptedObject,
+} = require("./storageService");
 
 const ALGORITHM = "aes-256-cbc";
 const IV_LENGTH = 16;
@@ -34,6 +39,7 @@ const getIv = (encryptedBuffer) => {
 };
 
 const createDecryptedReadStream = async (storedName) => {
+  assertSafeStoredName(storedName);
   const encryptedBuffer = await readEncryptedObject(storedName);
   const iv = getIv(encryptedBuffer);
   const decipher = crypto.createDecipheriv(ALGORITHM, getKey(), iv);
@@ -56,6 +62,7 @@ const createDecryptedReadStream = async (storedName) => {
 };
 
 const encryptFileFromPath = async (sourcePath, storedName) => {
+  assertSafeStoredName(storedName);
   const iv = crypto.randomBytes(IV_LENGTH);
   const cipher = crypto.createCipheriv(ALGORITHM, getKey(), iv);
   const encryptedPath = path.join(os.tmpdir(), `${storedName}.${crypto.randomUUID()}`);
@@ -76,6 +83,7 @@ const encryptFileFromPath = async (sourcePath, storedName) => {
 };
 
 const hashDecryptedFile = async (storedName) => {
+  assertSafeStoredName(storedName);
   const hash = crypto.createHash("sha256");
 
   try {

@@ -19,8 +19,13 @@ coverage/
 **/coverage/
 .vite/
 **/.vite/
+.cache/
+**/.cache/
+.eslintcache
+**/.eslintcache
 .vercel/
 **/.vercel/
+.agents/
 
 # Local process output
 *.log

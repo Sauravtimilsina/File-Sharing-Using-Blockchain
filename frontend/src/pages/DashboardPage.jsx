@@ -9,6 +9,7 @@ import {
   ArrowUpRight,
   CheckCircle2,
   Download,
+  FileCheck2,
   Fingerprint,
   LayoutGrid,
   List,
@@ -32,6 +33,8 @@ const DashboardPage = () => {
   const [downloading, setDownloading] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [view, setView] = useState(() => localStorage.getItem('fileView') || 'grid');
+  const [chainStatus, setChainStatus] = useState(null);
+  const [chainLoading, setChainLoading] = useState(true);
   const toast = useToast();
 
   const fetchFiles = useCallback(async () => {
@@ -46,6 +49,20 @@ const DashboardPage = () => {
   }, [toast]);
 
   useEffect(() => { fetchFiles(); }, [fetchFiles]);
+
+  const fetchBlockchainStatus = useCallback(async () => {
+    setChainLoading(true);
+    try {
+      const res = await API.get('/files/blockchain/status');
+      setChainStatus(res.data);
+    } catch {
+      toast.error('Failed to load blockchain status');
+    } finally {
+      setChainLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => { fetchBlockchainStatus(); }, [fetchBlockchainStatus]);
 
   const toggleView = (nextView) => {
     setView(nextView);
@@ -282,6 +299,51 @@ const DashboardPage = () => {
                 </div>
               ))}
             </div>
+          </div>
+
+          <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase text-sky-700 dark:text-sky-300">Blockchain ledger</p>
+                <h2 className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">
+                  {chainStatus?.status === 'valid' ? 'Chain verified' : chainStatus ? 'Review needed' : 'Checking chain'}
+                </h2>
+              </div>
+              <span className={`grid h-10 w-10 place-items-center rounded-2xl ${
+                chainStatus?.status === 'valid'
+                  ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-400/10 dark:text-emerald-200'
+                  : 'bg-amber-50 text-amber-600 dark:bg-amber-400/10 dark:text-amber-200'
+              }`}>
+                {chainLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <FileCheck2 className="h-5 w-5" />}
+              </span>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="rounded-2xl border border-slate-200/80 bg-white/70 p-3 dark:border-white/10 dark:bg-slate-950/45">
+                <p className="text-xs text-slate-400">Blocks</p>
+                <p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{chainStatus?.checkedBlocks ?? '-'}</p>
+              </div>
+              <div className="rounded-2xl border border-slate-200/80 bg-white/70 p-3 dark:border-white/10 dark:bg-slate-950/45">
+                <p className="text-xs text-slate-400">Issues</p>
+                <p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{chainStatus?.issues?.length ?? '-'}</p>
+              </div>
+            </div>
+
+            <div className="mt-3 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-3 dark:border-white/10 dark:bg-slate-950/45">
+              <p className="text-xs text-slate-400">Latest block</p>
+              <p className="mt-1 truncate text-sm font-semibold text-slate-950 dark:text-white">
+                {chainStatus?.latestBlock ? `#${chainStatus.latestBlock.index} / ${new Date(chainStatus.latestBlock.timestamp).toLocaleString()}` : 'No blocks yet'}
+              </p>
+            </div>
+
+            <button
+              onClick={fetchBlockchainStatus}
+              disabled={chainLoading}
+              className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white/80 px-4 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:text-sky-800 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-100 dark:hover:text-sky-200"
+            >
+              {chainLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+              Refresh ledger
+            </button>
           </div>
         </div>
       </section>
