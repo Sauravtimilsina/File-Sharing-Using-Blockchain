@@ -32,8 +32,12 @@ const generateOTP = () => {
 };
 
 const smtpFailureMessage = (error) => {
+  if (error?.publicMessage) {
+    return `Failed to send verification email. ${error.publicMessage}`;
+  }
+
   const detail = error?.code || error?.responseCode || error?.command || "SMTP_ERROR";
-  return `Failed to send verification email. Check SMTP settings. (${detail})`;
+  return `Failed to send verification email. Check email settings. (${detail})`;
 };
 
 const sendVerificationOtpInBackground = (email, otp) => {
