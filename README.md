@@ -96,6 +96,7 @@ Apply the storage migration with `supabase db push` after linking the project, o
 - `MONGO_MIGRATION_URL`: source MongoDB URL for the migration script
 - `CLIENT_ORIGINS`: comma-separated frontend origins allowed by CORS
 - `MAX_UPLOAD_BYTES`: backend file upload cap; example uses `1073741824` for 1 GB
+- `UPLOAD_TMP_DIR`: optional temporary upload staging directory; defaults outside the project in the OS temp folder
 - `FILE_STORAGE_PROVIDER`: `local` by default or `supabase` for the private Storage bucket
 - `SUPABASE_STORAGE_BUCKET`: private Storage bucket used when `FILE_STORAGE_PROVIDER=supabase`
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`: mail transport settings for verification and sharing messages

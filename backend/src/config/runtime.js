@@ -35,6 +35,7 @@ const runtimeConfig = {
   },
   corsOrigins: parseOrigins(process.env.CLIENT_ORIGINS || process.env.CLIENT_ORIGIN),
   maxUploadBytes: Number(process.env.MAX_UPLOAD_BYTES) || 1024 * 1024 * 1024,
+  uploadTmpDir: process.env.UPLOAD_TMP_DIR,
   storage: {
     provider: process.env.FILE_STORAGE_PROVIDER || "local",
     bucket: process.env.SUPABASE_STORAGE_BUCKET || "encrypted-files",

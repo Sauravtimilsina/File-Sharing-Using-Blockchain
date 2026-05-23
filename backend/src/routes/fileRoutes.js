@@ -1,13 +1,15 @@
 const express = require("express");
 const multer = require("multer");
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
 const router = express.Router();
 const auth = require("../middleware/auth");
 const runtimeConfig = require("../config/runtime");
 const { uploadFile, getMyFiles, getSharedFiles, downloadFile, verifyFile } = require("../controllers/fileController");
 
-const tempUploadDirectory = path.join(__dirname, "../../uploads/.tmp");
+const tempUploadDirectory = runtimeConfig.uploadTmpDir
+  || path.join(os.tmpdir(), "secure-file-transfer", "uploads");
 fs.mkdirSync(tempUploadDirectory, { recursive: true });
 
 const upload = multer({
