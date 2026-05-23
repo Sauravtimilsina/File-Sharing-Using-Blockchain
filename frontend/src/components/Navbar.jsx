@@ -68,9 +68,13 @@ const Navbar = () => {
             </button>
 
             <Link to="/profile" className="hidden items-center gap-2 rounded-2xl border border-white/80 bg-white/78 px-2.5 py-2 shadow-lg shadow-slate-950/5 transition hover:-translate-y-0.5 hover:border-sky-200 dark:border-white/10 dark:bg-white/[0.07] sm:flex" title="Profile">
-              <div className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-sky-600 via-cyan-500 to-emerald-500 text-xs font-bold text-white shadow-md">
-                {user?.username?.charAt(0).toUpperCase()}
-              </div>
+              {user?.avatarDataUrl ? (
+                <img src={user.avatarDataUrl} alt="" className="h-8 w-8 rounded-xl object-cover shadow-md" />
+              ) : (
+                <div className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-sky-600 via-cyan-500 to-emerald-500 text-xs font-bold text-white shadow-md">
+                  {user?.username?.charAt(0).toUpperCase()}
+                </div>
+              )}
               <ShieldCheck className="hidden h-4 w-4 text-emerald-500 lg:block" />
             </Link>
 

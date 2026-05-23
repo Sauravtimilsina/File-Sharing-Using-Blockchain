@@ -13,10 +13,26 @@ const {
   isUsername,
 } = require("../utils/validation");
 
-const LOGIN_LOCK_HOURS = 4;
 const MAX_FAILED_LOGIN_ATTEMPTS = 5;
 const LOCKED_ACCOUNT_MESSAGE = "Your account is locked due to multiple failed login attempts. Please contact admin.";
 const DUMMY_PASSWORD_HASH = "$2b$10$u1W6mXXzT6vquTTVj33Y8OJL9knczxtWtS68CX/F4lYfEHgIH5wry";
+const LOCK_DURATIONS_MS = [
+  10 * 60 * 1000,
+  30 * 60 * 1000,
+  60 * 60 * 1000,
+  2 * 60 * 60 * 1000,
+  4 * 60 * 60 * 1000,
+  8 * 60 * 60 * 1000,
+  24 * 60 * 60 * 1000,
+];
+const PROFILE_TEXT_LIMITS = {
+  fullName: 80,
+  jobTitle: 80,
+  department: 80,
+  phone: 30,
+  bio: 240,
+};
+const ALLOWED_AVATAR_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 const generateToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
@@ -30,6 +46,40 @@ const generateToken = (userId) => {
 
 const generateOTP = () => {
   return crypto.randomInt(100000, 999999).toString();
+};
+
+const userPayload = (user) => ({
+  id: user._id,
+  username: user.username,
+  email: user.email,
+  fullName: user.fullName || "",
+  jobTitle: user.jobTitle || "",
+  department: user.department || "",
+  phone: user.phone || "",
+  bio: user.bio || "",
+  avatarDataUrl: user.avatarDataUrl || "",
+});
+
+const cleanProfileText = (value, maxLength) => (
+  typeof value === "string"
+    ? value.normalize("NFKC").replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, maxLength)
+    : ""
+);
+
+const todayKey = () => new Date().toISOString().slice(0, 10);
+
+const nextLock = (user) => {
+  const today = todayKey();
+  const sameDay = user.lockCountDate
+    && new Date(user.lockCountDate).toISOString().slice(0, 10) === today;
+  const dailyLockCount = sameDay ? Number(user.dailyLockCount || 0) + 1 : 1;
+  const duration = LOCK_DURATIONS_MS[Math.min(dailyLockCount - 1, LOCK_DURATIONS_MS.length - 1)];
+
+  return {
+    dailyLockCount,
+    lockCountDate: today,
+    lockedUntil: new Date(Date.now() + duration),
+  };
 };
 
 const canExposeDevOtp = () => process.env.NODE_ENV !== "production" && process.env.DEV_SHOW_OTP === "true";
@@ -182,11 +232,7 @@ const verifyOTP = async (req, res) => {
     res.status(200).json({
       message: "Email verified successfully",
       token,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-      },
+      user: userPayload(user),
     });
   } catch (error) {
     console.error("VerifyOTP error:", error);
@@ -341,10 +387,7 @@ const login = async (req, res) => {
     if (!user || !isMatch) {
       if (user) {
         const shouldLock = Number(user.failedLoginAttempts || 0) + 1 >= MAX_FAILED_LOGIN_ATTEMPTS;
-        await repositories.users.recordLoginFailure(
-          user._id,
-          shouldLock ? new Date(Date.now() + LOGIN_LOCK_HOURS * 60 * 60 * 1000) : null,
-        );
+        await repositories.users.recordLoginFailure(user._id, shouldLock ? nextLock(user) : {});
       }
       await recordLoginAudit(req, {
         userId: user?._id,
@@ -380,11 +423,7 @@ const login = async (req, res) => {
 
     res.status(200).json({
       token,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-      },
+      user: userPayload(user),
     });
   } catch (error) {
     console.error("Login error:", error);
@@ -402,11 +441,7 @@ const getMe = async (req, res) => {
     }
 
     res.status(200).json({
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-      },
+      user: userPayload(user),
     });
   } catch (error) {
     console.error("GetMe error:", error);
@@ -417,9 +452,18 @@ const getMe = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const username = cleanUsername(req.body.username);
+    const fullName = cleanProfileText(req.body.fullName, PROFILE_TEXT_LIMITS.fullName);
+    const jobTitle = cleanProfileText(req.body.jobTitle, PROFILE_TEXT_LIMITS.jobTitle);
+    const department = cleanProfileText(req.body.department, PROFILE_TEXT_LIMITS.department);
+    const phone = cleanProfileText(req.body.phone, PROFILE_TEXT_LIMITS.phone);
+    const bio = cleanProfileText(req.body.bio, PROFILE_TEXT_LIMITS.bio);
 
     if (!isUsername(username)) {
       return res.status(400).json({ message: "Use a 3-48 character username with letters, numbers, dots, dashes, or underscores." });
+    }
+
+    if (phone && !/^[0-9+() .-]{7,30}$/.test(phone)) {
+      return res.status(400).json({ message: "Use a valid phone number." });
     }
 
     const existingUser = await repositories.users.findByUsername(username);
@@ -427,18 +471,50 @@ const updateProfile = async (req, res) => {
       return res.status(400).json({ message: "That username is already in use." });
     }
 
-    const user = await repositories.users.updateProfile(req.user.id, { username });
+    const user = await repositories.users.updateProfile(req.user.id, {
+      username,
+      fullName,
+      jobTitle,
+      department,
+      phone,
+      bio,
+    });
 
     return res.status(200).json({
       message: "Profile updated.",
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-      },
+      user: userPayload(user),
     });
   } catch (error) {
     console.error("Update profile error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+const updateAvatar = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "Choose a profile image." });
+    }
+
+    if (!ALLOWED_AVATAR_TYPES.has(req.file.mimetype)) {
+      return res.status(400).json({ message: "Use a JPG, PNG, or WEBP profile image." });
+    }
+
+    const avatarDataUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+    const user = await repositories.users.updateAvatar(req.user.id, avatarDataUrl);
+    await recordLoginAudit(req, {
+      userId: user._id,
+      identifier: user.email,
+      eventType: "success",
+      reason: "avatar_update",
+    });
+
+    return res.status(200).json({
+      message: "Profile picture updated.",
+      user: userPayload(user),
+    });
+  } catch (error) {
+    console.error("Update avatar error:", error);
     return res.status(500).json({ message: "Server error" });
   }
 };
@@ -490,6 +566,7 @@ module.exports = {
   login,
   getMe,
   updateProfile,
+  updateAvatar,
   changePassword,
   verifyOTP,
   resendOTP,

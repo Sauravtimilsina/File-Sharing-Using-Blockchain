@@ -18,6 +18,14 @@ const mapUser = (user) => user && ({
   isVerified: user.is_verified,
   failedLoginAttempts: Number(user.failed_login_attempts || 0),
   lockedUntil: user.locked_until,
+  dailyLockCount: Number(user.daily_lock_count || 0),
+  lockCountDate: user.lock_count_date,
+  fullName: user.full_name || "",
+  jobTitle: user.job_title || "",
+  department: user.department || "",
+  phone: user.phone || "",
+  bio: user.bio || "",
+  avatarDataUrl: user.avatar_data_url || "",
   lastLoginAt: user.last_login_at,
   lastLoginIp: user.last_login_ip,
   createdAt: user.created_at,
@@ -107,10 +115,23 @@ module.exports = {
     updateProfile: async (id, input) => mapUser(await one(
       `update public.users
        set username = $2,
+           full_name = $3,
+           job_title = $4,
+           department = $5,
+           phone = $6,
+           bio = $7,
            updated_at = now()
        where id = $1
        returning *`,
-      [id, input.username],
+      [id, input.username, input.fullName, input.jobTitle, input.department, input.phone, input.bio],
+    )),
+    updateAvatar: async (id, avatarDataUrl) => mapUser(await one(
+      `update public.users
+       set avatar_data_url = $2,
+           updated_at = now()
+       where id = $1
+       returning *`,
+      [id, avatarDataUrl],
     )),
     updatePassword: async (id, password, options = { resetLock: true }) => {
       if (options.resetLock === false) {
@@ -135,15 +156,30 @@ module.exports = {
         [id, password],
       ));
     },
-    recordLoginFailure: async (id, lockedUntil) => mapUser(await one(
-      `update public.users
-       set failed_login_attempts = failed_login_attempts + 1,
-           locked_until = coalesce($2, locked_until),
-           updated_at = now()
-       where id = $1
-       returning *`,
-      [id, lockedUntil],
-    )),
+    recordLoginFailure: async (id, input = {}) => {
+      if (input.lockedUntil) {
+        return mapUser(await one(
+          `update public.users
+           set failed_login_attempts = failed_login_attempts + 1,
+               locked_until = $2,
+               daily_lock_count = $3,
+               lock_count_date = $4,
+               updated_at = now()
+           where id = $1
+           returning *`,
+          [id, input.lockedUntil, input.dailyLockCount, input.lockCountDate],
+        ));
+      }
+
+      return mapUser(await one(
+        `update public.users
+         set failed_login_attempts = failed_login_attempts + 1,
+             updated_at = now()
+         where id = $1
+         returning *`,
+        [id],
+      ));
+    },
     recordLoginSuccess: async (id, ipAddress) => mapUser(await one(
       `update public.users
        set failed_login_attempts = 0,

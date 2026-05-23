@@ -256,6 +256,77 @@ a {
   82%, 100% { transform: translateX(80%) rotate(8deg); opacity: 0; }
 }
 
+.profile-aurora {
+  background:
+    radial-gradient(circle at 18% 20%, rgba(125, 211, 252, 0.42), transparent 28%),
+    radial-gradient(circle at 82% 18%, rgba(52, 211, 153, 0.32), transparent 25%),
+    radial-gradient(circle at 58% 110%, rgba(251, 191, 36, 0.22), transparent 28%),
+    linear-gradient(135deg, #06131f 0%, #075985 46%, #064e3b 100%);
+}
+
+.profile-aurora::before,
+.profile-aurora::after {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  pointer-events: none;
+}
+
+.profile-aurora::before {
+  background:
+    linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.28), transparent 52%),
+    linear-gradient(70deg, transparent 42%, rgba(125, 211, 252, 0.22), transparent 56%);
+  animation: heroPrism 8s ease-in-out infinite alternate;
+}
+
+.profile-aurora::after {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(circle at center, black, transparent 70%);
+  animation: gridBreathe 9s ease-in-out infinite alternate;
+}
+
+.profile-card-luxe {
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-card-luxe::before {
+  content: "";
+  position: absolute;
+  inset: -45%;
+  background:
+    conic-gradient(from 120deg, transparent, rgba(14, 165, 233, 0.1), transparent, rgba(16, 185, 129, 0.1), transparent);
+  animation: haloTurn 14s linear infinite;
+  pointer-events: none;
+}
+
+.profile-card-luxe > * {
+  position: relative;
+}
+
+.avatar-ring {
+  background: conic-gradient(from 90deg, #38bdf8, #34d399, #fbbf24, #fb7185, #38bdf8);
+  filter: blur(0.2px);
+  animation: haloTurn 7s linear infinite;
+}
+
+@keyframes heroPrism {
+  from { transform: translate3d(-7%, -3%, 0) rotate(-4deg); opacity: 0.5; }
+  to { transform: translate3d(7%, 3%, 0) rotate(4deg); opacity: 0.85; }
+}
+
+@keyframes gridBreathe {
+  from { transform: scale(1); opacity: 0.36; }
+  to { transform: scale(1.04); opacity: 0.62; }
+}
+
+@keyframes haloTurn {
+  to { transform: rotate(360deg); }
+}
+
 @media (hover: none) {
   .touch-reveal {
     opacity: 1;
