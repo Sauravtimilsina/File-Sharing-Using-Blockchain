@@ -10,6 +10,7 @@ const VerifyOTPPage = () => {
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [devOtp, setDevOtp] = useState(location.state?.devOtp || '');
   const inputRefs = useRef([]);
   const { verifyOTP, resendOTP } = useAuth();
   const toast = useToast();
@@ -82,7 +83,8 @@ const VerifyOTPPage = () => {
     if (countdown > 0) return;
     setResending(true);
     try {
-      await resendOTP(email);
+      const data = await resendOTP(email);
+      if (data.devOtp) setDevOtp(data.devOtp);
       toast.success('New verification code sent!');
       setCountdown(60);
       setOtp(['', '', '', '', '', '']);
@@ -111,6 +113,12 @@ const VerifyOTPPage = () => {
         <ShieldCheck className="h-5 w-5 shrink-0" />
         Complete this step before accessing the secure workspace.
       </div>
+
+      {devOtp && (
+        <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-100">
+          Local Docker verification code: <span className="font-mono">{devOtp}</span>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-6 gap-2 sm:gap-3">

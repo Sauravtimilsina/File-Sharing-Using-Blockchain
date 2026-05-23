@@ -29,6 +29,7 @@ services:
       SUPABASE_DB_URL: postgresql://postgres:postgres@db:5432/secure_file_transfer
       POSTGRES_URL: postgresql://postgres:postgres@db:5432/secure_file_transfer
       POSTGRES_SSL: "false"
+      DEV_SHOW_OTP: "true"
       CLIENT_ORIGINS: http://localhost:5174
       FILE_STORAGE_PROVIDER: local
       UPLOAD_TMP_DIR: /tmp/secure-file-transfer/uploads
