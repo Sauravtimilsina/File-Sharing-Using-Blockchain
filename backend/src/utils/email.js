@@ -1,5 +1,8 @@
 const nodemailer = require("nodemailer");
 
+const EMAIL_PROVIDER = (process.env.EMAIL_PROVIDER || "smtp").toLowerCase();
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const RESEND_FROM = process.env.RESEND_FROM || process.env.SMTP_FROM || process.env.SMTP_USER;
 const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
 const requestedPort = parseInt(process.env.SMTP_PORT, 10) || 587;
 const isGmailSmtp = SMTP_HOST === "smtp.gmail.com";
@@ -41,7 +44,39 @@ const ensureEmailConfigured = () => {
   }
 };
 
-const sendMail = async (mailOptions) => {
+const sendWithResend = async (mailOptions) => {
+  if (!RESEND_API_KEY) {
+    const error = new Error("RESEND_API_KEY must be configured to send email with Resend.");
+    error.code = "RESEND_NOT_CONFIGURED";
+    throw error;
+  }
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: RESEND_FROM,
+      to: [mailOptions.to],
+      subject: mailOptions.subject,
+      html: mailOptions.html,
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    const error = new Error(body || `Resend API failed with ${response.status}`);
+    error.code = "RESEND_API_ERROR";
+    error.responseCode = response.status;
+    throw error;
+  }
+
+  return response.json();
+};
+
+const sendWithSmtp = async (mailOptions) => {
   ensureEmailConfigured();
 
   try {
@@ -59,7 +94,24 @@ const sendMail = async (mailOptions) => {
   }
 };
 
+const sendMail = async (mailOptions) => {
+  if (EMAIL_PROVIDER === "resend") {
+    return sendWithResend(mailOptions);
+  }
+
+  return sendWithSmtp(mailOptions);
+};
+
 const verifyEmailTransport = async () => {
+  if (EMAIL_PROVIDER === "resend") {
+    if (!RESEND_API_KEY) {
+      const error = new Error("RESEND_API_KEY must be configured to send email with Resend.");
+      error.code = "RESEND_NOT_CONFIGURED";
+      throw error;
+    }
+    return;
+  }
+
   ensureEmailConfigured();
   try {
     await transporter.verify();
@@ -70,6 +122,8 @@ const verifyEmailTransport = async () => {
 };
 
 const getEmailTransportStatus = () => ({
+  provider: EMAIL_PROVIDER,
+  resendConfigured: Boolean(RESEND_API_KEY && RESEND_FROM),
   host: SMTP_HOST,
   port: SMTP_PORT,
   secure: SMTP_SECURE,

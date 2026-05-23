@@ -47,3 +47,9 @@ services:
         value: 5000
       - key: SMTP_EFFECTIVE_PORT
         value: 465
+      - key: EMAIL_PROVIDER
+        value: smtp
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM
+        sync: false
