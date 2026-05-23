@@ -37,6 +37,8 @@ SMTP_EFFECTIVE_PORT=465
 EMAIL_PROVIDER=resend
 RESEND_API_KEY=
 RESEND_FROM=SecureTransfer <noreply@auth.sauravtimilsina.com.np>
+BREVO_API_KEY=
+BREVO_FROM=SecureTransfer <your_verified_sender@example.com>
 ```
 
 For faster OTP delivery on Render, use an HTTP mail provider instead of Gmail SMTP:
@@ -56,6 +58,16 @@ RESEND_FROM=SecureTransfer <noreply@auth.sauravtimilsina.com.np>
 ```
 
 The backend runs on Render, so `RESEND_API_KEY` must be set in Render. Saving the key only in Vercel will not send OTP emails from the API.
+
+Alternative free option: Brevo. Brevo's free plan supports transactional email limits suitable for testing/student projects. To use Brevo's HTTP API from Render:
+
+```env
+EMAIL_PROVIDER=brevo
+BREVO_API_KEY=your_brevo_api_key
+BREVO_FROM=SecureTransfer <your_verified_sender@example.com>
+```
+
+Create and verify the sender in Brevo first. The app keeps the same styled OTP email template for Brevo, Resend, and SMTP.
 
 Render already gets these non-secret defaults from `render.yaml`:
 

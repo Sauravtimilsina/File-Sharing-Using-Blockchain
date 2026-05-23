@@ -53,3 +53,7 @@ services:
         sync: false
       - key: RESEND_FROM
         value: SecureTransfer <noreply@auth.sauravtimilsina.com.np>
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_FROM
+        sync: false
