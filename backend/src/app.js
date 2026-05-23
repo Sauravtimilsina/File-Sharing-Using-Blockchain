@@ -8,8 +8,26 @@ const runtimeConfig = require("./config/runtime");
 const isLocalBrowserOrigin = (origin) => process.env.NODE_ENV !== "production"
   && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
 
+const isAllowedVercelOrigin = (origin) => {
+  try {
+    const { hostname, protocol } = new URL(origin);
+    return protocol === "https:"
+      && (
+        hostname === "file-sharing-using-blockchain.vercel.app"
+        || hostname.endsWith("-sauravtimilsinas-projects.vercel.app")
+      );
+  } catch {
+    return false;
+  }
+};
+
 const allowOrigin = (origin, callback) => {
-  if (!origin || runtimeConfig.corsOrigins.includes(origin) || isLocalBrowserOrigin(origin)) {
+  if (
+    !origin
+    || runtimeConfig.corsOrigins.includes(origin)
+    || isLocalBrowserOrigin(origin)
+    || isAllowedVercelOrigin(origin)
+  ) {
     callback(null, true);
     return;
   }

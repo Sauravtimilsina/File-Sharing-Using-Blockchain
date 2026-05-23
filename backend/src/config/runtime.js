@@ -1,10 +1,18 @@
 const parseOrigins = (value) => {
-  if (!value) return ["http://localhost:5173"];
+  const defaults = [
+    "http://localhost:5173",
+    "https://file-sharing-using-blockchain.vercel.app",
+  ];
 
-  return value
+  if (!value) return defaults;
+
+  return [...new Set([
+    ...defaults,
+    ...value
     .split(",")
     .map((origin) => origin.trim())
-    .filter(Boolean);
+    .filter(Boolean),
+  ])];
 };
 
 const hasSupabaseBackendConfig = Boolean(
