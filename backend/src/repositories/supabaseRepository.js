@@ -13,6 +13,14 @@ const mapUser = (user) => user && ({
   isVerified: user.is_verified,
   failedLoginAttempts: Number(user.failed_login_attempts || 0),
   lockedUntil: user.locked_until,
+  dailyLockCount: Number(user.daily_lock_count || 0),
+  lockCountDate: user.lock_count_date,
+  fullName: user.full_name || "",
+  jobTitle: user.job_title || "",
+  department: user.department || "",
+  phone: user.phone || "",
+  bio: user.bio || "",
+  avatarDataUrl: user.avatar_data_url || "",
   lastLoginAt: user.last_login_at,
   lastLoginIp: user.last_login_ip,
   createdAt: user.created_at,
@@ -118,6 +126,20 @@ module.exports = {
       .from("users")
       .update({
         username: input.username,
+        full_name: input.fullName,
+        job_title: input.jobTitle,
+        department: input.department,
+        phone: input.phone,
+        bio: input.bio,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .select("*")
+      .single())),
+    updateAvatar: async (id, avatarDataUrl) => mapUser(failOnError(await supabase
+      .from("users")
+      .update({
+        avatar_data_url: avatarDataUrl,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
@@ -141,15 +163,22 @@ module.exports = {
         .select("*")
         .single()));
     },
-    recordLoginFailure: async (id, lockedUntil) => {
+    recordLoginFailure: async (id, input = {}) => {
       const user = await singleOrNull(supabase.from("users").select("failed_login_attempts").eq("id", id));
+      const update = {
+        failed_login_attempts: Number(user?.failed_login_attempts || 0) + 1,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (input.lockedUntil) {
+        update.locked_until = input.lockedUntil;
+        update.daily_lock_count = input.dailyLockCount;
+        update.lock_count_date = input.lockCountDate;
+      }
+
       return mapUser(failOnError(await supabase
         .from("users")
-        .update({
-          failed_login_attempts: Number(user?.failed_login_attempts || 0) + 1,
-          ...(lockedUntil ? { locked_until: lockedUntil } : {}),
-          updated_at: new Date().toISOString(),
-        })
+        .update(update)
         .eq("id", id)
         .select("*")
         .single()));

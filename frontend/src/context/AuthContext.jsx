@@ -51,8 +51,20 @@ export const AuthProvider = ({ children }) => {
     return res.data;
   };
 
-  const updateProfile = async (username) => {
-    const res = await API.put('/auth/profile', { username });
+  const updateProfile = async (profile) => {
+    const res = await API.put('/auth/profile', profile);
+    const nextUser = res.data.user;
+    localStorage.setItem('user', JSON.stringify(nextUser));
+    setUser(nextUser);
+    return res.data;
+  };
+
+  const updateAvatar = async (file) => {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    const res = await API.put('/auth/profile/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     const nextUser = res.data.user;
     localStorage.setItem('user', JSON.stringify(nextUser));
     setUser(nextUser);
@@ -72,7 +84,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, verifyOTP, resendOTP, updateProfile, changePassword, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, verifyOTP, resendOTP, updateProfile, updateAvatar, changePassword, logout }}>
       {children}
     </AuthContext.Provider>
   );
