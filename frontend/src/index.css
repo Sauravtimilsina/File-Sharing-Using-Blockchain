@@ -48,15 +48,17 @@ a {
   isolation: isolate;
   overflow-x: hidden;
   background:
-    linear-gradient(135deg, rgba(14, 165, 233, 0.09), transparent 28rem),
-    linear-gradient(225deg, rgba(16, 185, 129, 0.07), transparent 32rem),
+    linear-gradient(135deg, rgba(14, 165, 233, 0.14), transparent 28rem),
+    linear-gradient(225deg, rgba(16, 185, 129, 0.1), transparent 32rem),
+    linear-gradient(180deg, rgba(244, 114, 182, 0.055), transparent 34rem),
     #f8fafc;
 }
 
 .dark .app-shell {
   background:
-    linear-gradient(135deg, rgba(14, 165, 233, 0.11), transparent 30rem),
-    linear-gradient(225deg, rgba(16, 185, 129, 0.08), transparent 34rem),
+    linear-gradient(135deg, rgba(14, 165, 233, 0.18), transparent 30rem),
+    linear-gradient(225deg, rgba(16, 185, 129, 0.12), transparent 34rem),
+    linear-gradient(180deg, rgba(244, 114, 182, 0.06), transparent 36rem),
     #07111f;
 }
 
@@ -74,9 +76,9 @@ a {
 .app-shell::before,
 .auth-stage::before {
   background:
-    repeating-linear-gradient(122deg, transparent 0 10rem, rgba(14, 165, 233, 0.055) 10rem 10.08rem, transparent 10.08rem 18rem),
-    repeating-linear-gradient(58deg, transparent 0 12rem, rgba(16, 185, 129, 0.045) 12rem 12.06rem, transparent 12.06rem 20rem);
-  animation: packetFlow 42s linear infinite;
+    linear-gradient(115deg, transparent 0 18%, rgba(14, 165, 233, 0.11) 18.4%, rgba(255, 255, 255, 0.3) 18.8%, transparent 19.4% 44%, rgba(16, 185, 129, 0.08) 44.4%, transparent 45.4%),
+    linear-gradient(63deg, transparent 0 34%, rgba(244, 114, 182, 0.065) 34.4%, transparent 35.5% 72%, rgba(234, 179, 8, 0.07) 72.4%, transparent 73.2%);
+  animation: ribbonDrift 18s ease-in-out infinite alternate;
   mask-image: linear-gradient(to bottom, transparent, black 14%, black 86%, transparent);
 }
 
@@ -84,10 +86,10 @@ a {
 .auth-stage::after {
   z-index: -1;
   background:
-    linear-gradient(180deg, transparent 0 22%, rgba(14, 165, 233, 0.06) 22.4%, transparent 23% 62%, rgba(16, 185, 129, 0.045) 62.4%, transparent 63%),
-    linear-gradient(90deg, rgba(14, 165, 233, 0.04), transparent 28%, transparent 72%, rgba(16, 185, 129, 0.035));
-  opacity: 0.52;
-  animation: scanField 24s ease-in-out infinite alternate;
+    radial-gradient(ellipse at top, rgba(255, 255, 255, 0.62), transparent 42%),
+    linear-gradient(90deg, rgba(14, 165, 233, 0.07), transparent 28%, transparent 72%, rgba(16, 185, 129, 0.055));
+  opacity: 0.7;
+  animation: satinSweep 12s ease-in-out infinite alternate;
 }
 
 .security-grid {
@@ -106,7 +108,7 @@ a {
 .surface-glass {
   background: rgba(255, 255, 255, 0.88);
   box-shadow:
-    0 18px 60px rgba(15, 23, 42, 0.08),
+    0 20px 70px rgba(15, 23, 42, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(16px);
 }
@@ -120,7 +122,7 @@ a {
 
 .premium-shadow {
   box-shadow:
-    0 14px 46px rgba(2, 6, 23, 0.09),
+    0 18px 58px rgba(2, 6, 23, 0.12),
     0 2px 10px rgba(2, 6, 23, 0.06);
 }
 
@@ -184,6 +186,16 @@ a {
   to { transform: translate3d(8rem, 6rem, 0); }
 }
 
+@keyframes ribbonDrift {
+  from { transform: translate3d(-3rem, -1.5rem, 0) scale(1); opacity: 0.55; }
+  to { transform: translate3d(4rem, 2rem, 0) scale(1.04); opacity: 0.85; }
+}
+
+@keyframes satinSweep {
+  from { transform: translate3d(-2%, -3%, 0); opacity: 0.42; }
+  to { transform: translate3d(2%, 4%, 0); opacity: 0.72; }
+}
+
 @keyframes scanField {
   from { transform: translate3d(0, -5%, 0); opacity: 0.42; }
   to { transform: translate3d(0, 5%, 0); opacity: 0.86; }
@@ -192,6 +204,56 @@ a {
 @keyframes signalSweep {
   from { transform: translateY(0) scaleY(0.92); opacity: 0.58; }
   to { transform: translateY(-4px) scaleY(1.05); opacity: 1; }
+}
+
+.nav-luxe {
+  box-shadow:
+    0 16px 50px rgba(15, 23, 42, 0.08),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.dark .nav-luxe {
+  box-shadow:
+    0 18px 58px rgba(0, 0, 0, 0.34),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.brand-mark {
+  position: relative;
+  overflow: hidden;
+}
+
+.brand-mark::after,
+.nav-item::after {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.78), transparent 58%);
+  transform: translateX(-80%) rotate(8deg);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.brand-mark::after {
+  animation: softGleam 5.5s ease-in-out infinite;
+}
+
+.nav-item.is-active::after {
+  animation: softGleam 4.2s ease-in-out infinite;
+}
+
+.nav-item {
+  transform: translateZ(0);
+}
+
+.nav-item:hover {
+  transform: translateY(-1px);
+}
+
+@keyframes softGleam {
+  0%, 52% { transform: translateX(-80%) rotate(8deg); opacity: 0; }
+  62% { opacity: 0.65; }
+  82%, 100% { transform: translateX(80%) rotate(8deg); opacity: 0; }
 }
 
 @media (hover: none) {
