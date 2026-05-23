@@ -6,6 +6,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
+    "check:smtp": "node scripts/checkSmtp.js",
+    "resend:otp": "node scripts/resendVerificationOtp.js",
     "migrate:local-files-to-storage": "node scripts/migrateLocalFilesToStorage.js",
     "migrate:mongo-to-supabase": "node scripts/migrateMongoToSupabase.js",
     "migrate:mongo-to-postgres": "node scripts/migrateMongoToPostgres.js",

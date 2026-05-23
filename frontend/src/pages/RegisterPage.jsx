@@ -30,7 +30,7 @@ const RegisterPage = () => {
       const offline = !err.response;
       setError(
         err.response?.data?.message
-        || (timedOut ? 'The server took too long to respond. Please try again.' : null)
+        || (timedOut ? 'The server is taking longer than usual. Please try again, then use Resend code if the account was created.' : null)
         || (offline ? 'Cannot reach the server right now. Please check the backend and try again.' : null)
         || 'Registration failed',
       );
@@ -125,7 +125,7 @@ const RegisterPage = () => {
           className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-600 via-cyan-600 to-emerald-600 px-4 py-3.5 font-semibold text-white shadow-lg shadow-sky-900/15 transition hover:-translate-y-0.5 hover:shadow-xl disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
+            <><Loader2 className="h-5 w-5 animate-spin" /> Creating account...</>
           ) : (
             <>
               Create account

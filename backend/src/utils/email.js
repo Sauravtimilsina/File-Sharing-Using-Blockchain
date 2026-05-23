@@ -5,7 +5,7 @@ const SMTP_TIMEOUT_MS = Number(process.env.SMTP_TIMEOUT_MS) || 10000;
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || "smtp.gmail.com",
   port: parseInt(process.env.SMTP_PORT, 10) || 587,
-  secure: false,
+  secure: Number(process.env.SMTP_PORT) === 465,
   connectionTimeout: SMTP_TIMEOUT_MS,
   greetingTimeout: SMTP_TIMEOUT_MS,
   socketTimeout: SMTP_TIMEOUT_MS,
@@ -26,6 +26,11 @@ const ensureEmailConfigured = () => {
 const sendMail = async (mailOptions) => {
   ensureEmailConfigured();
   return transporter.sendMail(mailOptions);
+};
+
+const verifyEmailTransport = async () => {
+  ensureEmailConfigured();
+  await transporter.verify();
 };
 
 const escapeHtml = (value) => String(value)
@@ -170,4 +175,4 @@ const sendShareNotification = async (recipientEmail, ownerName, filename) => sen
   }),
 });
 
-module.exports = { sendOTP, sendPasswordResetOTP, sendShareNotification };
+module.exports = { sendOTP, sendPasswordResetOTP, sendShareNotification, verifyEmailTransport };
