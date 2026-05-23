@@ -3,6 +3,8 @@ const nodemailer = require("nodemailer");
 const EMAIL_PROVIDER = (process.env.EMAIL_PROVIDER || "smtp").toLowerCase();
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const RESEND_FROM = process.env.RESEND_FROM || process.env.SMTP_FROM || process.env.SMTP_USER;
+const BREVO_API_KEY = process.env.BREVO_API_KEY;
+const BREVO_FROM = process.env.BREVO_FROM || process.env.RESEND_FROM || process.env.SMTP_FROM || process.env.SMTP_USER;
 const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
 const requestedPort = parseInt(process.env.SMTP_PORT, 10) || 587;
 const isGmailSmtp = SMTP_HOST === "smtp.gmail.com";
@@ -84,6 +86,52 @@ const sendWithResend = async (mailOptions) => {
   return response.json();
 };
 
+const sendWithBrevo = async (mailOptions) => {
+  if (!BREVO_API_KEY) {
+    const error = new Error("BREVO_API_KEY must be configured to send email with Brevo.");
+    error.code = "BREVO_NOT_CONFIGURED";
+    throw error;
+  }
+
+  const fromMatch = String(BREVO_FROM || "").match(/^(.*)<(.+)>$/);
+  const sender = fromMatch
+    ? { name: fromMatch[1].trim(), email: fromMatch[2].trim() }
+    : { name: "SecureTransfer", email: BREVO_FROM };
+
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "api-key": BREVO_API_KEY,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      sender,
+      to: [{ email: mailOptions.to }],
+      subject: mailOptions.subject,
+      htmlContent: mailOptions.html,
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    let message = body || `Brevo API failed with ${response.status}`;
+    try {
+      message = JSON.parse(body).message || message;
+    } catch {
+      // Keep the raw provider response when it is not JSON.
+    }
+
+    const error = new Error(message);
+    error.code = "BREVO_API_ERROR";
+    error.responseCode = response.status;
+    error.publicMessage = message;
+    throw error;
+  }
+
+  return response.json();
+};
+
 const sendWithSmtp = async (mailOptions) => {
   ensureEmailConfigured();
 
@@ -107,10 +155,23 @@ const sendMail = async (mailOptions) => {
     return sendWithResend(mailOptions);
   }
 
+  if (EMAIL_PROVIDER === "brevo") {
+    return sendWithBrevo(mailOptions);
+  }
+
   return sendWithSmtp(mailOptions);
 };
 
 const verifyEmailTransport = async () => {
+  if (EMAIL_PROVIDER === "brevo") {
+    if (!BREVO_API_KEY) {
+      const error = new Error("BREVO_API_KEY must be configured to send email with Brevo.");
+      error.code = "BREVO_NOT_CONFIGURED";
+      throw error;
+    }
+    return;
+  }
+
   if (EMAIL_PROVIDER === "resend") {
     if (!RESEND_API_KEY) {
       const error = new Error("RESEND_API_KEY must be configured to send email with Resend.");
@@ -134,6 +195,9 @@ const getEmailTransportStatus = () => ({
   resendConfigured: Boolean(RESEND_API_KEY && RESEND_FROM),
   resendApiKeyConfigured: Boolean(RESEND_API_KEY),
   resendFromConfigured: Boolean(RESEND_FROM),
+  brevoConfigured: Boolean(BREVO_API_KEY && BREVO_FROM),
+  brevoApiKeyConfigured: Boolean(BREVO_API_KEY),
+  brevoFromConfigured: Boolean(BREVO_FROM),
   host: SMTP_HOST,
   port: SMTP_PORT,
   secure: SMTP_SECURE,
