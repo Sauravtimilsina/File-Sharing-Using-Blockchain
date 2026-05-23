@@ -47,7 +47,7 @@ Secure File Transfer is an academic web system for encrypted upload, file sharin
 
 The API controllers call a repository layer. `DB_PROVIDER=postgres` uses the direct Supabase Postgres connection, `DB_PROVIDER=supabase` uses the Supabase Data API adapter, and `DB_PROVIDER=mongodb` remains available for local fallback and migration work. When `DB_PROVIDER` is omitted, the backend chooses Postgres when `SUPABASE_DB_URL` exists, otherwise Supabase Data API when both backend Supabase API values exist, and otherwise MongoDB.
 
-The Supabase schema lives in the deployable migration set at `supabase/migrations`. It creates `users`, `otps`, `files`, `shares`, and `blocks` tables, preserves text IDs so MongoDB ObjectIds can be migrated, enables RLS, keeps browser roles away from those tables because the current app uses its own backend JWT flow, and provisions the private `encrypted-files` Storage bucket.
+The Supabase schema lives in the migration set at `supabase/migrations`. It creates `users`, `otps`, `files`, `shares`, and `blocks` tables, preserves text IDs so MongoDB ObjectIds can be migrated, enables RLS, keeps browser roles away from those tables because the current app uses its own backend JWT flow, and provisions the private `encrypted-files` Storage bucket.
 
 To migrate MongoDB records after the Supabase schema is created:
 
@@ -69,7 +69,7 @@ SUPABASE_DB_URL=postgresql://postgres.faplouuyewkqttpclyzz:your_database_passwor
 
 ```env
 # frontend/.env
-VITE_API_BASE_URL=https://secure-file-transfer-api.onrender.com/api
+VITE_API_BASE_URL=http://localhost:5000/api
 VITE_SUPABASE_URL=https://faplouuyewkqttpclyzz.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 ```
