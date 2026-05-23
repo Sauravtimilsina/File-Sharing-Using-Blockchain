@@ -26,7 +26,7 @@ services:
       - key: SUPABASE_DB_URL
         sync: false
       - key: CLIENT_ORIGINS
-        sync: false
+        value: https://file-sharing-using-blockchain.vercel.app
       - key: JWT_SECRET
         sync: false
       - key: OTP_SECRET
