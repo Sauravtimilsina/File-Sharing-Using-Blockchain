@@ -6,12 +6,32 @@ const runtimeConfig = require("../config/runtime");
 
 const uploadDirectory = path.join(__dirname, "../../uploads");
 
-const getLocalPath = (storedName) => path.join(uploadDirectory, storedName);
+const assertSafeStoredName = (storedName) => {
+  if (
+    typeof storedName !== "string"
+    || !storedName
+    || storedName.includes("/")
+    || storedName.includes("\\")
+    || storedName.includes("..")
+    || path.basename(storedName) !== storedName
+  ) {
+    const error = new Error("Stored file name is not valid.");
+    error.code = "INVALID_STORED_NAME";
+    throw error;
+  }
+};
+
+const getLocalPath = (storedName) => {
+  assertSafeStoredName(storedName);
+  return path.join(uploadDirectory, storedName);
+};
 
 const getSupabaseStorage = () => require("../repositories/supabaseClient").storage
   .from(runtimeConfig.storage.bucket);
 
 const saveEncryptedObject = async (storedName, sourcePath) => {
+  assertSafeStoredName(storedName);
+
   if (runtimeConfig.storage.provider === "supabase") {
     const content = await fsPromises.readFile(sourcePath);
     const { error } = await getSupabaseStorage().upload(storedName, content, {
@@ -28,6 +48,8 @@ const saveEncryptedObject = async (storedName, sourcePath) => {
 };
 
 const readEncryptedObject = async (storedName) => {
+  assertSafeStoredName(storedName);
+
   if (runtimeConfig.storage.provider === "supabase") {
     const { data, error } = await getSupabaseStorage().download(storedName);
 
@@ -56,6 +78,7 @@ const uploadLocalEncryptedObject = async (storedName) => {
 };
 
 module.exports = {
+  assertSafeStoredName,
   createEncryptedReadStream,
   getLocalPath,
   readEncryptedObject,

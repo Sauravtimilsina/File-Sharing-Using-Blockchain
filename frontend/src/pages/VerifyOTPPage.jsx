@@ -10,14 +10,13 @@ const VerifyOTPPage = () => {
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const location = useLocation();
   const [devOtp, setDevOtp] = useState(location.state?.devOtp || '');
   const inputRefs = useRef([]);
   const { verifyOTP, resendOTP } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
-  const location = useLocation();
   const email = location.state?.email;
-  const isDockerLocal = window.location.hostname === 'localhost' && window.location.port === '5174';
 
   useEffect(() => {
     if (!email) navigate('/register', { replace: true });
@@ -117,13 +116,7 @@ const VerifyOTPPage = () => {
 
       {devOtp && (
         <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-100">
-          Local Docker verification code: <span className="font-mono">{devOtp}</span>
-        </div>
-      )}
-
-      {!devOtp && isDockerLocal && (
-        <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-100">
-          Docker local mode: click Resend to show the verification code here.
+          Local verification code: <span className="font-mono">{devOtp}</span>
         </div>
       )}
 

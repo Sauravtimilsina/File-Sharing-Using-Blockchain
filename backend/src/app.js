@@ -1,10 +1,12 @@
 require("dotenv").config();
+require("dns").setDefaultResultOrder("ipv4first");
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const connectDB = require("./utils/db");
 const runtimeConfig = require("./config/runtime");
 const { getEmailTransportStatus } = require("./utils/email");
+const { checkSupabaseHealth } = require("./utils/supabaseHealth");
 
 const isLocalBrowserOrigin = (origin) => process.env.NODE_ENV !== "production"
   && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
@@ -63,6 +65,24 @@ app.get("/api/health", (req, res) => {
     version: process.env.RENDER_GIT_COMMIT || process.env.COMMIT_SHA || "local",
     smtp: emailStatus,
   });
+});
+
+app.get("/api/health/ready", async (req, res) => {
+  try {
+    const supabase = await checkSupabaseHealth();
+
+    res.status(supabase.ok ? 200 : 503).json({
+      status: supabase.ok ? "ready" : "degraded",
+      version: process.env.RENDER_GIT_COMMIT || process.env.COMMIT_SHA || "local",
+      supabase,
+      smtp: getEmailTransportStatus(),
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: "degraded",
+      message: error.message,
+    });
+  }
 });
 
 app.get("/", (req, res) => {

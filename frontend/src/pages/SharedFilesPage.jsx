@@ -11,6 +11,7 @@ import {
   List,
   Loader2,
   Package,
+  Search,
   ShieldCheck,
   UserRound,
   Users,
@@ -22,6 +23,7 @@ const SharedFilesPage = () => {
   const [downloading, setDownloading] = useState(null);
   const [verifying, setVerifying] = useState(null);
   const [verifyResult, setVerifyResult] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [view, setView] = useState(() => localStorage.getItem('sharedView') || 'grid');
   const toast = useToast();
 
@@ -103,6 +105,14 @@ const SharedFilesPage = () => {
   };
 
   const getExtension = (filename) => filename?.split('.').pop()?.toUpperCase() || '';
+  const filteredFiles = files.filter((share) => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return true;
+
+    const filename = share.fileId?.filename || share.filename || '';
+    const ownerName = share.owner?.username || '';
+    return `${filename} ${ownerName}`.toLowerCase().includes(query);
+  });
 
   if (loading) {
     return (
@@ -131,7 +141,7 @@ const SharedFilesPage = () => {
           </div>
           <div className="rounded-[24px] border border-white/80 bg-white/70 p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Available shares</p>
-            <p className="mt-1 text-3xl font-semibold text-slate-950 dark:text-white">{files.length}</p>
+            <p className="mt-1 text-3xl font-semibold text-slate-950 dark:text-white">{filteredFiles.length}</p>
           </div>
         </div>
       </section>
@@ -140,23 +150,37 @@ const SharedFilesPage = () => {
         <header className="flex flex-col gap-4 border-b border-slate-200/80 px-5 py-5 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div>
             <p className="text-sm font-semibold uppercase text-fuchsia-700 dark:text-fuchsia-300">Collaborative access</p>
-            <h2 className="mt-1 text-xl font-semibold text-slate-950 dark:text-white">Incoming files</h2>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <h2 className="text-xl font-semibold text-slate-950 dark:text-white">Incoming files</h2>
+              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500 dark:bg-white/10 dark:text-slate-300">{filteredFiles.length}/{files.length}</span>
+            </div>
           </div>
-          <div className="inline-flex w-fit items-center gap-1 rounded-2xl border border-slate-200 bg-slate-100/80 p-1 dark:border-white/10 dark:bg-white/[0.06]">
-            <button
-              onClick={() => toggleView('grid')}
-              className={`grid h-10 w-10 place-items-center rounded-2xl transition ${view === 'grid' ? 'bg-white text-slate-950 shadow-sm dark:bg-white dark:text-slate-950' : 'text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
-              title="Grid view"
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => toggleView('list')}
-              className={`grid h-10 w-10 place-items-center rounded-2xl transition ${view === 'list' ? 'bg-white text-slate-950 shadow-sm dark:bg-white dark:text-slate-950' : 'text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
-              title="List view"
-            >
-              <List className="h-4 w-4" />
-            </button>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <label className="relative block min-w-0 sm:w-72">
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search shared files"
+                className="h-12 w-full rounded-2xl border border-slate-200 bg-white/80 pl-11 pr-4 text-sm text-slate-950 outline-none transition focus:border-fuchsia-400 focus:ring-4 focus:ring-fuchsia-500/10 dark:border-white/10 dark:bg-slate-950/55 dark:text-white"
+              />
+            </label>
+            <div className="inline-flex w-fit items-center gap-1 rounded-2xl border border-slate-200 bg-slate-100/80 p-1 dark:border-white/10 dark:bg-white/[0.06]">
+              <button
+                onClick={() => toggleView('grid')}
+                className={`grid h-10 w-10 place-items-center rounded-2xl transition ${view === 'grid' ? 'bg-white text-slate-950 shadow-sm dark:bg-white dark:text-slate-950' : 'text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
+                title="Grid view"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => toggleView('list')}
+                className={`grid h-10 w-10 place-items-center rounded-2xl transition ${view === 'list' ? 'bg-white text-slate-950 shadow-sm dark:bg-white dark:text-slate-950' : 'text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
+                title="List view"
+              >
+                <List className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </header>
 
@@ -170,9 +194,14 @@ const SharedFilesPage = () => {
               Shared files appear here after another verified user grants access.
             </p>
           </div>
+        ) : filteredFiles.length === 0 ? (
+          <div className="px-5 py-14 text-center">
+            <Search className="mx-auto h-9 w-9 text-fuchsia-500" />
+            <h3 className="mt-4 text-lg font-semibold text-slate-950 dark:text-white">No shared file matches that search</h3>
+          </div>
         ) : view === 'grid' ? (
           <div className="grid gap-4 p-4 sm:grid-cols-2 md:p-5 lg:grid-cols-3 xl:grid-cols-4">
-            {files.map((share) => {
+            {filteredFiles.map((share) => {
               const fileId = share.fileId?._id || share.fileId;
               const filename = share.fileId?.filename || 'Unknown file';
               const ownerName = share.owner?.username || 'Unknown';
@@ -223,7 +252,7 @@ const SharedFilesPage = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/70 dark:divide-white/10">
-                {files.map((share) => {
+                {filteredFiles.map((share) => {
                   const fileId = share.fileId?._id || share.fileId;
                   const filename = share.fileId?.filename || 'Unknown file';
                   const ownerName = share.owner?.username || 'Unknown';

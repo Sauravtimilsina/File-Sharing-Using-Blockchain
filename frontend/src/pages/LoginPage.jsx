@@ -12,7 +12,6 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
-  const isDockerLocal = window.location.hostname === 'localhost' && window.location.port === '5174';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,11 +26,7 @@ const LoginPage = () => {
         return;
       }
       const message = err.response?.data?.message || 'Login failed';
-      setError(
-        isDockerLocal && message === 'Invalid login credentials.'
-          ? 'Invalid login credentials. Docker uses its own local database; create the account again or use the password you registered with in Docker.'
-          : message,
-      );
+      setError(message);
     } finally {
       setLoading(false);
     }

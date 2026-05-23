@@ -210,6 +210,10 @@ module.exports = {
       "select * from public.blocks where file_id = $1 limit 1",
       [fileId],
     )),
+    findRecent: async (limit = 200) => (await many(
+      "select * from public.blocks order by block_index desc limit $1",
+      [limit],
+    )).map(mapBlock),
   },
   loginAuditLogs: {
     create: (input) => pool.query(

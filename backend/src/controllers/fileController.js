@@ -3,7 +3,7 @@ const fs = require("fs/promises");
 const path = require("path");
 const repositories = require("../repositories");
 const { createDecryptedReadStream, encryptFileFromPath, hashDecryptedFile } = require("../services/fileService");
-const { createBlock, generateHashFromPath, verifyHashIntegrity } = require("../services/blockchainService");
+const { auditBlockchain, createBlock, generateHashFromPath, verifyHashIntegrity } = require("../services/blockchainService");
 const { recordActivityAudit } = require("../utils/audit");
 const { cleanFilename, isRecordId } = require("../utils/validation");
 
@@ -210,4 +210,23 @@ const verifyFile = async (req, res) => {
   }
 };
 
-module.exports = { uploadFile, getMyFiles, getSharedFiles, downloadFile, verifyFile };
+const getBlockchainStatus = async (req, res) => {
+  try {
+    const audit = await auditBlockchain();
+    await recordActivityAudit(req, {
+      action: "blockchain_audit",
+      targetType: "blockchain",
+      targetId: audit.latestBlock?.fileId || null,
+    });
+
+    return res.status(200).json({
+      status: audit.isValid ? "valid" : "needs_review",
+      ...audit,
+    });
+  } catch (error) {
+    console.error("Blockchain status error:", error);
+    return res.status(500).json({ message: "Server error during blockchain audit" });
+  }
+};
+
+module.exports = { uploadFile, getMyFiles, getSharedFiles, downloadFile, verifyFile, getBlockchainStatus };

@@ -29,41 +29,14 @@ Secure File Transfer is an academic web system for encrypted upload, file sharin
 
 ## Local Setup
 
-### Docker
-
-Run the full local stack without entering the frontend or backend folders:
-
-```bash
-docker compose up --build
-```
-
-This starts:
-
-- Frontend: http://localhost:5174
-- Backend API: http://localhost:5001
-- Postgres with the Supabase-compatible schema: localhost:5432
-
-Docker mode uses the same backend `.env` for app secrets and mail settings, but overrides the database to the local `db` container and stores encrypted uploads locally in a Docker volume. Your normal non-Docker setup can still use the hosted Supabase Postgres connection from `backend/.env`.
-
-To stop the stack:
-
-```bash
-docker compose down
-```
-
-To reset the Docker database and uploaded Docker files:
-
-```bash
-docker compose down -v
-```
-
 ### Backend
 
 1. Install dependencies in `backend`.
 2. Copy `backend/.env.example` to `backend/.env`.
-3. Set secrets, mail credentials, and `SUPABASE_DB_URL` for the hosted Supabase Postgres adapter.
+3. Set secrets, mail credentials, and Supabase values in `backend/.env`.
 4. Apply the Supabase migrations from the top-level `supabase/migrations` folder.
 5. Run `npm run dev`.
+6. Run `npm run check:supabase` to verify the database tables, private Storage bucket, and Supabase API access.
 
 ### Frontend
 
@@ -73,15 +46,9 @@ docker compose down -v
 
 ## Database Configuration
 
-The API controllers call a repository layer. `DB_PROVIDER=postgres` uses the direct Supabase Postgres connection, `DB_PROVIDER=supabase` uses the Supabase Data API adapter, and `DB_PROVIDER=mongodb` remains available for local fallback and migration work. When `DB_PROVIDER` is omitted, the backend chooses Postgres when `SUPABASE_DB_URL` exists, otherwise Supabase Data API when both backend Supabase API values exist, and otherwise MongoDB.
+The API controllers call a repository layer. `DB_PROVIDER=supabase` uses the Supabase Data API adapter and is the safest local default on IPv4-only networks. `DB_PROVIDER=postgres` uses the direct Supabase Postgres connection when your network supports it or when you use a Supabase pooler connection string.
 
-The Supabase schema lives in the migration set at `supabase/migrations`. It creates `users`, `otps`, `files`, `shares`, and `blocks` tables, preserves text IDs so MongoDB ObjectIds can be migrated, enables RLS, keeps browser roles away from those tables because the current app uses its own backend JWT flow, and provisions the private `encrypted-files` Storage bucket.
-
-To migrate MongoDB records after the Supabase schema is created:
-
-1. Set `SUPABASE_DB_URL` and `MONGO_MIGRATION_URL` in `backend/.env`.
-2. Run `npm run migrate:mongo-to-postgres` in `backend`.
-3. Keep `DB_PROVIDER=postgres` for normal API traffic after the migration succeeds.
+The Supabase schema lives in the migration set at `supabase/migrations`. It creates `users`, `otps`, `files`, `shares`, and `blocks` tables, enables RLS, keeps browser roles away from those tables because the current app uses its own backend JWT flow, and provisions the private `encrypted-files` Storage bucket.
 
 The browser Supabase publishable key is only needed for future direct frontend Supabase features. The API adapter uses a backend secret key or legacy service-role key and that value must never be exposed in `VITE_*` variables.
 
@@ -89,16 +56,16 @@ The local env files keep Supabase server and browser access separate:
 
 ```env
 # backend/.env
-DB_PROVIDER=postgres
-SUPABASE_URL=https://faplouuyewkqttpclyzz.supabase.co
+DB_PROVIDER=supabase
+SUPABASE_URL=https://your-project-ref.supabase.co
 SUPABASE_SECRET_KEY=your_supabase_secret_key
-SUPABASE_DB_URL=postgresql://postgres.faplouuyewkqttpclyzz:your_database_password@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres
+SUPABASE_DB_URL=postgresql://postgres:your_database_password@db.your-project-ref.supabase.co:5432/postgres
 ```
 
 ```env
 # frontend/.env
 VITE_API_BASE_URL=http://localhost:5000/api
-VITE_SUPABASE_URL=https://faplouuyewkqttpclyzz.supabase.co
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 ```
 
@@ -118,11 +85,10 @@ Apply the storage migration with `supabase db push` after linking the project, o
 ## Runtime Configuration
 
 - `PORT`: backend port
-- `DB_PROVIDER`: `postgres` for direct Supabase Postgres, `supabase` for the Data API adapter, or `mongodb` for fallback/migration
+- `DB_PROVIDER`: `supabase` for the Supabase Data API adapter, or `postgres` for direct Supabase Postgres/pooler access
 - `SUPABASE_DB_URL`: hosted Supabase Postgres connection string used by the direct Postgres adapter
 - `SUPABASE_URL`: Supabase project URL for the backend adapter
 - `SUPABASE_SECRET_KEY`: backend-only Supabase secret key
-- `MONGO_MIGRATION_URL`: source MongoDB URL for the migration script
 - `CLIENT_ORIGINS`: comma-separated frontend origins allowed by CORS
 - `MAX_UPLOAD_BYTES`: backend file upload cap; example uses `1073741824` for 1 GB
 - `UPLOAD_TMP_DIR`: optional temporary upload staging directory; defaults outside the project in the OS temp folder
@@ -131,6 +97,13 @@ Apply the storage migration with `supabase db push` after linking the project, o
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`: mail transport settings for verification and sharing messages
 - `JWT_SECRET` and `OTP_SECRET`: backend-only random secrets; production startup rejects short placeholder values
 - `VITE_API_BASE_URL`: frontend API base URL
+
+## Health Checks
+
+- `GET /api/health`: lightweight process and SMTP status
+- `GET /api/health/ready`: readiness check for Supabase Postgres tables, private Storage bucket, and Supabase API access
+- `npm run check:supabase`: command-line version of the readiness check
+- `npm run check:file-storage`: verifies encryption, configured storage upload/download, decryption hash, and cleanup
 
 ## Large File Note
 

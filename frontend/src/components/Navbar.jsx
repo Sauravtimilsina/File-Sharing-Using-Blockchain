@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/authStore';
 import { useTheme } from '../context/themeStore';
+import SystemStatus from './SystemStatus';
 import { Activity, LayoutDashboard, LogOut, Moon, ShieldCheck, Sun, Upload, Users } from 'lucide-react';
 
 const Navbar = () => {
@@ -35,7 +36,7 @@ const Navbar = () => {
                 SecureTransfer
               </span>
               <span className="hidden text-xs font-medium text-cyan-700 dark:text-cyan-300 sm:block">
-                Workspace ready
+                Secure workspace
               </span>
             </span>
           </Link>
@@ -58,6 +59,8 @@ const Navbar = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            <SystemStatus compact />
+
             <Link
               to="/upload"
               className="hidden items-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-600 via-sky-600 to-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-900/15 transition hover:-translate-y-0.5 sm:flex md:hidden lg:flex"

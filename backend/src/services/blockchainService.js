@@ -62,7 +62,51 @@ const verifyHashIntegrity = async (currentHash, fileId) => {
   };
 };
 
+const auditBlockchain = async (limit = 200) => {
+  const blocks = await repositories.blocks.findRecent(limit);
+  const orderedBlocks = [...blocks].sort((first, second) => first.index - second.index);
+  const issues = [];
+
+  orderedBlocks.forEach((block, index) => {
+    const previousBlock = orderedBlocks[index - 1];
+
+    if (block.index < 0) {
+      issues.push({ index: block.index, type: "invalid_index" });
+    }
+
+    if (index === 0 && block.index === 0 && block.previousHash !== "0") {
+      issues.push({ index: block.index, type: "invalid_genesis_previous_hash" });
+    }
+
+    if (previousBlock) {
+      if (block.index !== previousBlock.index + 1) {
+        issues.push({ index: block.index, type: "index_gap", expected: previousBlock.index + 1 });
+      }
+
+      if (block.previousHash !== previousBlock.fileHash) {
+        issues.push({ index: block.index, type: "previous_hash_mismatch" });
+      }
+    }
+  });
+
+  const latestBlock = orderedBlocks[orderedBlocks.length - 1] || null;
+
+  return {
+    isValid: issues.length === 0,
+    checkedBlocks: orderedBlocks.length,
+    latestBlock: latestBlock && {
+      index: latestBlock.index,
+      fileId: latestBlock.fileId,
+      fileHash: latestBlock.fileHash,
+      previousHash: latestBlock.previousHash,
+      timestamp: latestBlock.timestamp,
+    },
+    issues,
+  };
+};
+
 module.exports = {
+  auditBlockchain,
   generateHash,
   generateHashFromPath,
   getLastBlock,

@@ -243,6 +243,11 @@ module.exports = {
     findByFileId: async (fileId) => mapBlock(await singleOrNull(
       supabase.from("blocks").select("*").eq("file_id", fileId),
     )),
+    findRecent: async (limit = 200) => failOnError(await supabase
+      .from("blocks")
+      .select("*")
+      .order("block_index", { ascending: false })
+      .limit(limit)).map(mapBlock),
   },
   loginAuditLogs: {
     create: async (input) => failOnError(await supabase.from("login_audit_logs").insert({
