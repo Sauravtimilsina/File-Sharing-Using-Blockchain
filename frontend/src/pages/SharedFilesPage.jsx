@@ -105,6 +105,12 @@ const SharedFilesPage = () => {
   };
 
   const getExtension = (filename) => filename?.split('.').pop()?.toUpperCase() || '';
+  const formatSize = (bytes = 0) => {
+    if (!bytes) return 'Unknown size';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  };
   const filteredFiles = files.filter((share) => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) return true;
@@ -225,7 +231,7 @@ const SharedFilesPage = () => {
                   </div>
                   <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-400">
                     <Clock className="h-3.5 w-3.5" />
-                    {new Date(share.createdAt).toLocaleDateString()}
+                    {formatSize(share.fileId?.fileSize)}
                   </div>
                   <div className="touch-reveal mt-4 grid grid-cols-2 gap-2 opacity-100 transition md:opacity-0 md:group-hover:opacity-100">
                     <button onClick={() => handleDownload(share)} disabled={downloading === fileId} className="grid min-h-10 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:border-sky-200 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Download">
@@ -246,6 +252,7 @@ const SharedFilesPage = () => {
                 <tr className="border-b border-slate-200/80 text-left text-xs font-bold uppercase text-slate-500 dark:border-white/10 dark:text-slate-400">
                   <th className="px-6 py-4">Name</th>
                   <th className="px-6 py-4">Shared by</th>
+                  <th className="px-6 py-4">Size</th>
                   <th className="px-6 py-4">Date</th>
                   <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4 text-right">Actions</th>
@@ -272,6 +279,7 @@ const SharedFilesPage = () => {
                           {ownerName}
                         </div>
                       </td>
+                      <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-300">{formatSize(share.fileId?.fileSize)}</td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-300">
                           <Clock className="h-4 w-4" />

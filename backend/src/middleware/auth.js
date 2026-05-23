@@ -1,6 +1,9 @@
 const jwt = require("jsonwebtoken");
+const repositories = require("../repositories");
 
-const auth = (req, res, next) => {
+const lockedMessage = "Your account is locked due to multiple failed login attempts. Please contact admin.";
+
+const auth = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -19,7 +22,24 @@ const auth = (req, res, next) => {
       return res.status(401).json({ message: "Token is not valid" });
     }
 
-    req.user = { id: decoded.id };
+    const user = await repositories.users.findById(decoded.id);
+    if (!user) {
+      return res.status(401).json({ message: "Token is not valid" });
+    }
+
+    if (user.lockedUntil && new Date(user.lockedUntil) > new Date()) {
+      return res.status(423).json({ message: lockedMessage });
+    }
+
+    if (!user.isVerified) {
+      return res.status(403).json({ message: "Please verify your email before continuing." });
+    }
+
+    req.user = {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+    };
     next();
   } catch (error) {
     return res.status(401).json({ message: "Token is not valid" });

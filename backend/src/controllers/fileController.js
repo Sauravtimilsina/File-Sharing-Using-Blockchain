@@ -10,6 +10,8 @@ const { cleanFilename, isRecordId } = require("../utils/validation");
 const clientFile = (file) => ({
   _id: file._id,
   filename: file.filename,
+  fileSize: file.fileSize,
+  mimeType: file.mimeType,
   createdAt: file.createdAt,
   updatedAt: file.updatedAt,
 });
@@ -43,6 +45,8 @@ const uploadFile = async (req, res) => {
       filename: originalName,
       storedName,
       hash: fileHash,
+      fileSize: req.file.size,
+      mimeType: req.file.mimetype || "application/octet-stream",
     });
     const block = await createBlock(file._id, fileHash);
     await recordActivityAudit(req, {
@@ -56,6 +60,8 @@ const uploadFile = async (req, res) => {
       file: {
         id: file._id,
         filename: file.filename,
+        fileSize: file.fileSize,
+        mimeType: file.mimeType,
         createdAt: file.createdAt,
       },
       receipt: {

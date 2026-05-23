@@ -14,7 +14,8 @@ const {
 } = require("../utils/validation");
 
 const LOGIN_LOCK_HOURS = 4;
-const MAX_FAILED_LOGIN_ATTEMPTS = 3;
+const MAX_FAILED_LOGIN_ATTEMPTS = 5;
+const LOCKED_ACCOUNT_MESSAGE = "Your account is locked due to multiple failed login attempts. Please contact admin.";
 const DUMMY_PASSWORD_HASH = "$2b$10$u1W6mXXzT6vquTTVj33Y8OJL9knczxtWtS68CX/F4lYfEHgIH5wry";
 
 const generateToken = (userId) => {
@@ -166,6 +167,9 @@ const verifyOTP = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+    if (user.lockedUntil && new Date(user.lockedUntil) > new Date()) {
+      return res.status(423).json({ message: LOCKED_ACCOUNT_MESSAGE });
+    }
 
     await repositories.users.markVerified(user._id);
 
@@ -294,7 +298,7 @@ const resetPassword = async (req, res) => {
     }
 
     const salt = await bcrypt.genSalt(10);
-    await repositories.users.updatePassword(user._id, await bcrypt.hash(password, salt));
+    await repositories.users.updatePassword(user._id, await bcrypt.hash(password, salt), { resetLock: false });
     await repositories.otps.deleteByEmail(email, "password_reset");
     await recordLoginAudit(req, {
       userId: user._id,
@@ -330,7 +334,7 @@ const login = async (req, res) => {
         eventType: "locked",
         reason: "account_locked",
       });
-      return res.status(423).json({ message: "Too many failed login attempts. Please try again later." });
+      return res.status(423).json({ message: LOCKED_ACCOUNT_MESSAGE });
     }
 
     const isMatch = await bcrypt.compare(password, user?.password || DUMMY_PASSWORD_HASH);
@@ -410,10 +414,83 @@ const getMe = async (req, res) => {
   }
 };
 
+const updateProfile = async (req, res) => {
+  try {
+    const username = cleanUsername(req.body.username);
+
+    if (!isUsername(username)) {
+      return res.status(400).json({ message: "Use a 3-48 character username with letters, numbers, dots, dashes, or underscores." });
+    }
+
+    const existingUser = await repositories.users.findByUsername(username);
+    if (existingUser && existingUser._id !== req.user.id) {
+      return res.status(400).json({ message: "That username is already in use." });
+    }
+
+    const user = await repositories.users.updateProfile(req.user.id, { username });
+
+    return res.status(200).json({
+      message: "Profile updated.",
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    console.error("Update profile error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (
+      typeof currentPassword !== "string"
+      || !currentPassword
+      || currentPassword.length > 128
+      || !isPassword(newPassword)
+    ) {
+      return res.status(400).json({ message: "Use your current password and a new password of 8-128 characters." });
+    }
+
+    const user = await repositories.users.findById(req.user.id);
+    const isMatch = await bcrypt.compare(currentPassword, user?.password || DUMMY_PASSWORD_HASH);
+
+    if (!user || !isMatch) {
+      await recordLoginAudit(req, {
+        userId: req.user.id,
+        identifier: req.user.email,
+        eventType: "failure",
+        reason: "password_change_invalid_current",
+      });
+      return res.status(400).json({ message: "Current password is not valid." });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    await repositories.users.updatePassword(user._id, await bcrypt.hash(newPassword, salt), { resetLock: false });
+    await recordLoginAudit(req, {
+      userId: user._id,
+      identifier: user.email,
+      eventType: "success",
+      reason: "password_change",
+    });
+
+    return res.status(200).json({ message: "Password updated." });
+  } catch (error) {
+    console.error("Change password error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
 module.exports = {
   register,
   login,
   getMe,
+  updateProfile,
+  changePassword,
   verifyOTP,
   resendOTP,
   requestPasswordReset,

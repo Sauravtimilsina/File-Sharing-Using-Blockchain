@@ -30,6 +30,8 @@ const mapFile = (file) => file && ({
   filename: file.filename,
   storedName: file.stored_name,
   hash: file.hash,
+  fileSize: Number(file.file_size || 0),
+  mimeType: file.mime_type,
   createdAt: file.created_at,
   updatedAt: file.updated_at,
 });
@@ -40,6 +42,8 @@ const mapShare = (share) => share && ({
     ? {
       _id: share.file_id,
       filename: share.file_id_filename,
+      fileSize: Number(share.file_id_file_size || 0),
+      mimeType: share.file_id_mime_type,
     }
     : share.file_id,
   owner: share.owner_username
@@ -72,6 +76,10 @@ module.exports = {
       "select * from public.users where email = $1 limit 1",
       [email],
     )),
+    findByUsername: async (username) => mapUser(await one(
+      "select * from public.users where username = $1 limit 1",
+      [username],
+    )),
     findById: async (id) => mapUser(await one(
       "select * from public.users where id = $1 limit 1",
       [id],
@@ -96,16 +104,37 @@ module.exports = {
        returning *`,
       [id],
     )),
-    updatePassword: async (id, password) => mapUser(await one(
+    updateProfile: async (id, input) => mapUser(await one(
       `update public.users
-       set password = $2,
-           failed_login_attempts = 0,
-           locked_until = null,
+       set username = $2,
            updated_at = now()
        where id = $1
        returning *`,
-      [id, password],
+      [id, input.username],
     )),
+    updatePassword: async (id, password, options = { resetLock: true }) => {
+      if (options.resetLock === false) {
+        return mapUser(await one(
+          `update public.users
+           set password = $2,
+               updated_at = now()
+           where id = $1
+           returning *`,
+          [id, password],
+        ));
+      }
+
+      return mapUser(await one(
+        `update public.users
+         set password = $2,
+             failed_login_attempts = 0,
+             locked_until = null,
+             updated_at = now()
+         where id = $1
+         returning *`,
+        [id, password],
+      ));
+    },
     recordLoginFailure: async (id, lockedUntil) => mapUser(await one(
       `update public.users
        set failed_login_attempts = failed_login_attempts + 1,
@@ -157,10 +186,10 @@ module.exports = {
   },
   files: {
     create: async (input) => mapFile(await one(
-      `insert into public.files (owner_id, filename, stored_name, hash)
-       values ($1, $2, $3, $4)
+      `insert into public.files (owner_id, filename, stored_name, hash, file_size, mime_type)
+       values ($1, $2, $3, $4, $5, $6)
        returning *`,
-      [input.owner, input.filename, input.storedName, input.hash],
+      [input.owner, input.filename, input.storedName, input.hash, input.fileSize, input.mimeType],
     )),
     findByOwner: async (owner) => (await many(
       "select * from public.files where owner_id = $1 order by created_at desc limit 200",
@@ -186,6 +215,8 @@ module.exports = {
       `select
          shares.*,
          files.filename as file_id_filename,
+         files.file_size as file_id_file_size,
+         files.mime_type as file_id_mime_type,
          users.username as owner_username
        from public.shares
        join public.files on files.id = shares.file_id

@@ -38,7 +38,12 @@ const UploadPage = () => {
     e.stopPropagation();
     setDragActive(false);
     if (e.dataTransfer.files?.[0]) {
-      setSelectedFile(e.dataTransfer.files[0]);
+      const nextFile = e.dataTransfer.files[0];
+      if (nextFile.size <= 0) {
+        setError('Choose a non-empty file.');
+        return;
+      }
+      setSelectedFile(nextFile);
       setResult(null);
       setError('');
     }
@@ -46,7 +51,12 @@ const UploadPage = () => {
 
   const handleFileSelect = (e) => {
     if (e.target.files?.[0]) {
-      setSelectedFile(e.target.files[0]);
+      const nextFile = e.target.files[0];
+      if (nextFile.size <= 0) {
+        setError('Choose a non-empty file.');
+        return;
+      }
+      setSelectedFile(nextFile);
       setResult(null);
       setError('');
     }
@@ -214,6 +224,14 @@ const UploadPage = () => {
 
               <div className="mt-4 rounded-[24px] border border-slate-200 bg-slate-50/80 p-4 dark:border-white/10 dark:bg-white/[0.05]">
                 <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl bg-white p-3 dark:bg-slate-950">
+                    <p className="text-xs font-semibold text-slate-400">File size</p>
+                    <p className="mt-1 font-semibold text-slate-950 dark:text-white">{formatSize(result.file.fileSize || 0)}</p>
+                  </div>
+                  <div className="rounded-2xl bg-white p-3 dark:bg-slate-950">
+                    <p className="text-xs font-semibold text-slate-400">File type</p>
+                    <p className="mt-1 truncate font-semibold text-slate-950 dark:text-white">{result.file.mimeType || 'application/octet-stream'}</p>
+                  </div>
                   <div className="rounded-2xl bg-white p-3 dark:bg-slate-950">
                     <p className="text-xs font-semibold text-slate-400">Library receipt</p>
                     <p className="mt-1 font-semibold text-slate-950 dark:text-white">#{result.receipt?.index}</p>
