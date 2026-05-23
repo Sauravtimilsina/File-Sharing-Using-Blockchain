@@ -68,6 +68,15 @@ app.use("/api/auth", authRoutes);
 app.use("/api/files", fileRoutes);
 app.use("/api/share", shareRoutes);
 
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    version: process.env.RENDER_GIT_COMMIT || process.env.COMMIT_SHA || "local",
+    smtpTimeoutMs: Number(process.env.SMTP_TIMEOUT_MS) || 10000,
+    emailConfigured: Boolean(process.env.SMTP_USER && process.env.SMTP_PASS),
+  });
+});
+
 app.get("/", (req, res) => {
   res.send("API is running");
 });
