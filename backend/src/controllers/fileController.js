@@ -3,6 +3,7 @@ const fs = require("fs/promises");
 const path = require("path");
 const repositories = require("../repositories");
 const { createDecryptedReadStream, encryptFileFromPath, hashDecryptedFile } = require("../services/fileService");
+const { deleteEncryptedObject } = require("../services/storageService");
 const { auditBlockchain, createBlock, generateHashFromPath, verifyHashIntegrity } = require("../services/blockchainService");
 const { recordActivityAudit } = require("../utils/audit");
 const { cleanFilename, isRecordId } = require("../utils/validation");
@@ -22,6 +23,11 @@ const canAccessFile = async (file, userId) => {
 };
 
 const downloadName = (filename) => filename.replace(/[\r\n"]/g, "_");
+const canPreview = (mimeType = "") => (
+  mimeType.startsWith("image/")
+  || mimeType === "application/pdf"
+  || mimeType.startsWith("text/")
+);
 
 const uploadFile = async (req, res) => {
   try {
@@ -216,6 +222,94 @@ const verifyFile = async (req, res) => {
   }
 };
 
+const previewFile = async (req, res) => {
+  try {
+    if (!isRecordId(req.params.id)) return res.status(404).json({ message: "File not found" });
+
+    const file = await repositories.files.findById(req.params.id);
+    if (!file) return res.status(404).json({ message: "File not found" });
+    if (!(await canAccessFile(file, req.user.id))) return res.status(403).json({ message: "Access denied" });
+    if (!canPreview(file.mimeType)) return res.status(415).json({ message: "Preview is not available for this file type." });
+
+    const currentHash = await hashDecryptedFile(file.storedName);
+    const verification = await verifyHashIntegrity(currentHash, file._id);
+    if (!verification.isValid) {
+      return res.status(422).json({ message: "This file failed its safety check.", tampered: true });
+    }
+
+    res.set({
+      "Content-Type": file.mimeType,
+      "Content-Disposition": `inline; filename="${downloadName(file.filename)}"`,
+      "X-File-Check": "passed",
+    });
+
+    await recordActivityAudit(req, {
+      action: "file_preview",
+      targetType: "file",
+      targetId: file._id,
+    });
+
+    const decryptedStream = await createDecryptedReadStream(file.storedName);
+    decryptedStream.on("error", (streamError) => res.destroy(streamError));
+    return decryptedStream.pipe(res);
+  } catch (error) {
+    console.error("Preview file error:", error);
+    return res.status(500).json({ message: "Server error during preview" });
+  }
+};
+
+const renameFile = async (req, res) => {
+  try {
+    if (!isRecordId(req.params.id)) return res.status(404).json({ message: "File not found" });
+    const filename = cleanFilename(req.body.filename);
+    if (!filename) return res.status(400).json({ message: "Use a valid filename." });
+
+    const file = await repositories.files.findById(req.params.id);
+    if (!file) return res.status(404).json({ message: "File not found" });
+    if (file.owner.toString() !== req.user.id) return res.status(403).json({ message: "Access denied" });
+
+    const updatedFile = await repositories.files.updateFilename(file._id, filename);
+    await recordActivityAudit(req, {
+      action: "file_rename",
+      targetType: "file",
+      targetId: file._id,
+    });
+
+    return res.status(200).json({ message: "File renamed.", file: clientFile(updatedFile) });
+  } catch (error) {
+    console.error("Rename file error:", error);
+    return res.status(500).json({ message: "Server error while renaming file" });
+  }
+};
+
+const deleteFile = async (req, res) => {
+  try {
+    if (!isRecordId(req.params.id)) return res.status(404).json({ message: "File not found" });
+
+    const file = await repositories.files.findById(req.params.id);
+    if (!file) return res.status(404).json({ message: "File not found" });
+    if (file.owner.toString() !== req.user.id) return res.status(403).json({ message: "Access denied" });
+
+    const deletedFile = await repositories.files.markDeleted(file._id, req.user.id);
+    try {
+      await deleteEncryptedObject(file.storedName);
+    } catch (storageError) {
+      console.error("Encrypted object delete failed:", storageError.message);
+    }
+
+    await recordActivityAudit(req, {
+      action: "file_delete",
+      targetType: "file",
+      targetId: file._id,
+    });
+
+    return res.status(200).json({ message: "File archived and storage object removed.", file: clientFile(deletedFile) });
+  } catch (error) {
+    console.error("Delete file error:", error);
+    return res.status(500).json({ message: "Server error while deleting file" });
+  }
+};
+
 const getBlockchainStatus = async (req, res) => {
   try {
     const audit = await auditBlockchain();
@@ -241,4 +335,4 @@ const getBlockchainStatus = async (req, res) => {
   }
 };
 
-module.exports = { uploadFile, getMyFiles, getSharedFiles, downloadFile, verifyFile, getBlockchainStatus };
+module.exports = { uploadFile, getMyFiles, getSharedFiles, renameFile, deleteFile, downloadFile, previewFile, verifyFile, getBlockchainStatus };

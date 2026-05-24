@@ -22,18 +22,29 @@ const getLastBlock = async () => {
   return lastBlock;
 };
 
+const createBlockHash = ({ index, fileId, fileHash, previousBlockHash, timestamp }) => (
+  crypto
+    .createHash("sha256")
+    .update(`${index}:${fileId}:${fileHash}:${previousBlockHash}:${new Date(timestamp).toISOString()}`)
+    .digest("hex")
+);
 
 const createBlock = async (fileId, fileHash) => {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const lastBlock = await getLastBlock();
+    const index = lastBlock ? lastBlock.index + 1 : 0;
+    const timestamp = new Date();
+    const previousBlockHash = lastBlock?.blockHash || lastBlock?.fileHash || "0";
 
     try {
       return await repositories.blocks.create({
-        index: lastBlock ? lastBlock.index + 1 : 0,
+        index,
         fileId,
         fileHash,
-        previousHash: lastBlock ? lastBlock.fileHash : "0",
-        timestamp: new Date(),
+        previousHash: previousBlockHash,
+        previousBlockHash,
+        blockHash: createBlockHash({ index, fileId, fileHash, previousBlockHash, timestamp }),
+        timestamp,
       });
     } catch (error) {
       const duplicateIndex = error.code === "23505" || error.code === 11000 || error.status === 409;
@@ -84,7 +95,28 @@ const auditBlockchain = async (limit = 200) => {
       }
 
       if (block.previousHash !== previousBlock.fileHash) {
-        issues.push({ index: block.index, type: "previous_hash_mismatch" });
+        const legacyPreviousMatches = block.previousHash === previousBlock.fileHash;
+        const strengthenedPreviousMatches = block.previousBlockHash && previousBlock.blockHash
+          ? block.previousBlockHash === previousBlock.blockHash
+          : false;
+
+        if (!legacyPreviousMatches && !strengthenedPreviousMatches) {
+          issues.push({ index: block.index, type: "previous_hash_mismatch" });
+        }
+      }
+
+      if (block.blockHash) {
+        const expectedBlockHash = createBlockHash({
+          index: block.index,
+          fileId: block.fileId,
+          fileHash: block.fileHash,
+          previousBlockHash: block.previousBlockHash || block.previousHash,
+          timestamp: block.timestamp,
+        });
+
+        if (block.blockHash !== expectedBlockHash) {
+          issues.push({ index: block.index, type: "block_hash_mismatch" });
+        }
       }
     }
   });
@@ -99,6 +131,8 @@ const auditBlockchain = async (limit = 200) => {
       fileId: latestBlock.fileId,
       fileHash: latestBlock.fileHash,
       previousHash: latestBlock.previousHash,
+      blockHash: latestBlock.blockHash,
+      previousBlockHash: latestBlock.previousBlockHash,
       timestamp: latestBlock.timestamp,
     },
     issues,
@@ -111,6 +145,7 @@ module.exports = {
   generateHashFromPath,
   getLastBlock,
   createBlock,
+  createBlockHash,
   verifyFileIntegrity,
   verifyHashIntegrity,
 };

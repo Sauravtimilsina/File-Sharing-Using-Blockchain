@@ -6,7 +6,7 @@ const path = require("path");
 const router = express.Router();
 const auth = require("../middleware/auth");
 const runtimeConfig = require("../config/runtime");
-const { uploadFile, getMyFiles, getSharedFiles, downloadFile, verifyFile, getBlockchainStatus } = require("../controllers/fileController");
+const { uploadFile, getMyFiles, getSharedFiles, renameFile, deleteFile, downloadFile, previewFile, verifyFile, getBlockchainStatus } = require("../controllers/fileController");
 
 const tempUploadDirectory = runtimeConfig.uploadTmpDir
   || path.join(os.tmpdir(), "secure-file-transfer", "uploads");
@@ -50,6 +50,9 @@ router.post("/upload", auth, handleUpload, uploadFile);
 router.get("/my-files", auth, getMyFiles);
 router.get("/shared", auth, getSharedFiles);
 router.get("/blockchain/status", auth, getBlockchainStatus);
+router.put("/:id/rename", auth, renameFile);
+router.delete("/:id", auth, deleteFile);
+router.get("/preview/:id", auth, previewFile);
 router.get("/download/:id", auth, downloadFile);
 router.get("/verify/:id", auth, verifyFile);
 
