@@ -1,4 +1,5 @@
 const supabase = require("./supabaseClient");
+const { decryptField, encryptField } = require("../utils/fieldCrypto");
 
 const failOnError = (result) => {
   if (result.error) throw result.error;
@@ -15,12 +16,12 @@ const mapUser = (user) => user && ({
   lockedUntil: user.locked_until,
   dailyLockCount: Number(user.daily_lock_count || 0),
   lockCountDate: user.lock_count_date,
-  fullName: user.full_name || "",
-  jobTitle: user.job_title || "",
-  department: user.department || "",
-  phone: user.phone || "",
-  bio: user.bio || "",
-  avatarDataUrl: user.avatar_data_url || "",
+  fullName: decryptField(user.full_name),
+  jobTitle: decryptField(user.job_title),
+  department: decryptField(user.department),
+  phone: decryptField(user.phone),
+  bio: decryptField(user.bio),
+  avatarDataUrl: decryptField(user.avatar_data_url),
   lastLoginAt: user.last_login_at,
   lastLoginIp: user.last_login_ip,
   createdAt: user.created_at,
@@ -126,11 +127,11 @@ module.exports = {
       .from("users")
       .update({
         username: input.username,
-        full_name: input.fullName,
-        job_title: input.jobTitle,
-        department: input.department,
-        phone: input.phone,
-        bio: input.bio,
+        full_name: encryptField(input.fullName),
+        job_title: encryptField(input.jobTitle),
+        department: encryptField(input.department),
+        phone: encryptField(input.phone),
+        bio: encryptField(input.bio),
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
@@ -139,7 +140,7 @@ module.exports = {
     updateAvatar: async (id, avatarDataUrl) => mapUser(failOnError(await supabase
       .from("users")
       .update({
-        avatar_data_url: avatarDataUrl,
+        avatar_data_url: encryptField(avatarDataUrl),
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)

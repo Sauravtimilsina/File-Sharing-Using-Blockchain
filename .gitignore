@@ -7,6 +7,16 @@
 !**/.env.production.example
 *.pem
 *.key
+*.p12
+*.pfx
+*.crt
+*.csr
+*.bak
+*.backup
+*.orig
+*.secret
+secrets/
+**/secrets/
 
 # Dependency and build output
 node_modules/
@@ -26,6 +36,7 @@ coverage/
 .vercel/
 **/.vercel/
 .agents/
+.mcp.json
 
 # Local process output
 *.log
@@ -45,3 +56,5 @@ backend/uploads/.tmp/
 supabase/.branches/
 supabase/.temp/
 supabase/.env.keys
+supabase/.env
+supabase/.env.*

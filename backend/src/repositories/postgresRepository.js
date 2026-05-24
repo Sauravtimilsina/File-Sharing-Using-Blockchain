@@ -1,4 +1,5 @@
 const pool = require("./postgresPool");
+const { decryptField, encryptField } = require("../utils/fieldCrypto");
 
 const one = async (text, values = []) => {
   const result = await pool.query(text, values);
@@ -20,12 +21,12 @@ const mapUser = (user) => user && ({
   lockedUntil: user.locked_until,
   dailyLockCount: Number(user.daily_lock_count || 0),
   lockCountDate: user.lock_count_date,
-  fullName: user.full_name || "",
-  jobTitle: user.job_title || "",
-  department: user.department || "",
-  phone: user.phone || "",
-  bio: user.bio || "",
-  avatarDataUrl: user.avatar_data_url || "",
+  fullName: decryptField(user.full_name),
+  jobTitle: decryptField(user.job_title),
+  department: decryptField(user.department),
+  phone: decryptField(user.phone),
+  bio: decryptField(user.bio),
+  avatarDataUrl: decryptField(user.avatar_data_url),
   lastLoginAt: user.last_login_at,
   lastLoginIp: user.last_login_ip,
   createdAt: user.created_at,
@@ -123,7 +124,15 @@ module.exports = {
            updated_at = now()
        where id = $1
        returning *`,
-      [id, input.username, input.fullName, input.jobTitle, input.department, input.phone, input.bio],
+      [
+        id,
+        input.username,
+        encryptField(input.fullName),
+        encryptField(input.jobTitle),
+        encryptField(input.department),
+        encryptField(input.phone),
+        encryptField(input.bio),
+      ],
     )),
     updateAvatar: async (id, avatarDataUrl) => mapUser(await one(
       `update public.users
@@ -131,7 +140,7 @@ module.exports = {
            updated_at = now()
        where id = $1
        returning *`,
-      [id, avatarDataUrl],
+      [id, encryptField(avatarDataUrl)],
     )),
     updatePassword: async (id, password, options = { resetLock: true }) => {
       if (options.resetLock === false) {

@@ -1,24 +1,34 @@
-import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail, ShieldCheck } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowRight, CheckCircle2, Eye, EyeOff, Info, Loader2, Lock, Mail, ShieldCheck } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthShell from '../components/AuthShell';
 import { useAuth } from '../context/authStore';
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => localStorage.getItem('rememberedEmail') || '');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberEmail, setRememberEmail] = useState(() => Boolean(localStorage.getItem('rememberedEmail')));
+  const [capsLock, setCapsLock] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (rememberEmail && email.trim()) {
+      localStorage.setItem('rememberedEmail', email.trim());
+    } else if (!rememberEmail) {
+      localStorage.removeItem('rememberedEmail');
+    }
+  }, [email, rememberEmail]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
+      await login(email.trim(), password);
       navigate('/dashboard');
     } catch (err) {
       if (err.response?.data?.requiresVerification) {
@@ -49,6 +59,15 @@ const LoginPage = () => {
       <div className="mb-6 flex items-center gap-3 rounded-2xl border border-emerald-200/80 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-400/15 dark:bg-emerald-400/10 dark:text-emerald-200">
         <ShieldCheck className="h-5 w-5 shrink-0" />
         Your workspace is ready after a quick sign in.
+      </div>
+
+      <div className="mb-5 grid gap-2 sm:grid-cols-3">
+        {['Encrypted files', 'OTP verified', 'Integrity checks'].map((item) => (
+          <div key={item} className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 text-xs font-semibold text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-300">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+            {item}
+          </div>
+        ))}
       </div>
 
       {error && (
@@ -86,6 +105,7 @@ const LoginPage = () => {
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onKeyUp={(e) => setCapsLock(e.getModifierState('CapsLock'))}
               placeholder="Enter your password"
               required
               maxLength={128}
@@ -100,7 +120,23 @@ const LoginPage = () => {
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
+          {capsLock && (
+            <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300">
+              <Info className="h-3.5 w-3.5" />
+              Caps Lock is on
+            </p>
+          )}
         </div>
+
+        <label className="flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm font-semibold text-slate-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300">
+          Remember this email
+          <input
+            type="checkbox"
+            checked={rememberEmail}
+            onChange={(event) => setRememberEmail(event.target.checked)}
+            className="h-4 w-4 accent-sky-600"
+          />
+        </label>
 
         <button
           type="submit"
