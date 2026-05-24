@@ -4,8 +4,14 @@ const runtimeConfig = require("../src/config/runtime");
 const { encryptField } = require("../src/utils/fieldCrypto");
 
 const PROFILE_COLUMNS = ["full_name", "job_title", "department", "phone", "bio", "avatar_data_url"];
+const FILE_COLUMNS = ["filename", "mime_type"];
 
 const encryptProfileRow = (row) => PROFILE_COLUMNS.reduce((update, column) => {
+  update[column] = encryptField(row[column] || "");
+  return update;
+}, {});
+
+const encryptFileRow = (row) => FILE_COLUMNS.reduce((update, column) => {
   update[column] = encryptField(row[column] || "");
   return update;
 }, {});
@@ -13,6 +19,7 @@ const encryptProfileRow = (row) => PROFILE_COLUMNS.reduce((update, column) => {
 const runPostgres = async () => {
   const pool = require("../src/repositories/postgresPool");
   const { rows } = await pool.query(`select id, ${PROFILE_COLUMNS.join(", ")} from public.users`);
+  const files = await pool.query(`select id, ${FILE_COLUMNS.join(", ")} from public.files`);
 
   for (const row of rows) {
     const update = encryptProfileRow(row);
@@ -38,8 +45,20 @@ const runPostgres = async () => {
     );
   }
 
+  for (const row of files.rows) {
+    const update = encryptFileRow(row);
+    await pool.query(
+      `update public.files
+       set filename = $2,
+           mime_type = $3,
+           updated_at = now()
+       where id = $1`,
+      [row.id, update.filename, update.mime_type],
+    );
+  }
+
   await pool.end();
-  return rows.length;
+  return { users: rows.length, files: files.rows.length };
 };
 
 const failOnError = (result) => {
@@ -50,6 +69,7 @@ const failOnError = (result) => {
 const runSupabase = async () => {
   const supabase = require("../src/repositories/supabaseClient");
   const rows = failOnError(await supabase.from("users").select(`id,${PROFILE_COLUMNS.join(",")}`));
+  const files = failOnError(await supabase.from("files").select(`id,${FILE_COLUMNS.join(",")}`));
 
   for (const row of rows) {
     failOnError(await supabase
@@ -61,7 +81,17 @@ const runSupabase = async () => {
       .eq("id", row.id));
   }
 
-  return rows.length;
+  for (const row of files) {
+    failOnError(await supabase
+      .from("files")
+      .update({
+        ...encryptFileRow(row),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", row.id));
+  }
+
+  return { users: rows.length, files: files.length };
 };
 
 const main = async () => {
@@ -69,7 +99,8 @@ const main = async () => {
     ? await runSupabase()
     : await runPostgres();
 
-  console.log(`Encrypted profile fields for ${count} user${count === 1 ? "" : "s"}.`);
+  console.log(`Encrypted profile fields for ${count.users} user${count.users === 1 ? "" : "s"}.`);
+  console.log(`Encrypted file metadata for ${count.files} file${count.files === 1 ? "" : "s"}.`);
 };
 
 main().catch((error) => {

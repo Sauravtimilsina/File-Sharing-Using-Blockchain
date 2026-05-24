@@ -70,7 +70,7 @@ VITE_API_BASE_URL=http://localhost:5000/api
 
 `SUPABASE_DB_URL` must be the Postgres connection string, not a Supabase API key.
 
-Profile fields (`fullName`, `jobTitle`, `department`, `phone`, `bio`, and avatar data) are encrypted by the backend before storage. Existing rows can be converted with:
+Profile fields (`fullName`, `jobTitle`, `department`, `phone`, `bio`, and avatar data) and file metadata (`filename`, `mimeType`) are encrypted by the backend before storage. Existing rows can be converted with:
 
 ```bash
 cd backend

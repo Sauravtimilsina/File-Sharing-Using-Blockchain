@@ -111,7 +111,7 @@ const VerifyOTPPage = () => {
     >
       <div className="mb-6 flex items-center gap-3 rounded-2xl border border-sky-200/80 bg-sky-50/80 px-4 py-3 text-sm text-sky-800 dark:border-sky-400/15 dark:bg-sky-400/10 dark:text-sky-100">
         <ShieldCheck className="h-5 w-5 shrink-0" />
-        Complete this step before accessing the secure workspace.
+        Complete this step before opening your account.
       </div>
 
       {devOtp && (

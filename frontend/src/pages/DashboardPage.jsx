@@ -10,6 +10,7 @@ import {
   CalendarDays,
   CheckCircle2,
   Download,
+  Eye,
   FileCheck2,
   Filter,
   Fingerprint,
@@ -24,6 +25,8 @@ import {
   Share2,
   ShieldCheck,
   Signal,
+  SquarePen,
+  Trash2,
   UploadCloud,
   Users,
 } from 'lucide-react';
@@ -35,6 +38,11 @@ const DashboardPage = () => {
   const [verifying, setVerifying] = useState(null);
   const [verifyResult, setVerifyResult] = useState(null);
   const [downloading, setDownloading] = useState(null);
+  const [deleting, setDeleting] = useState(null);
+  const [renaming, setRenaming] = useState(null);
+  const [previewing, setPreviewing] = useState(null);
+  const [activity, setActivity] = useState([]);
+  const [myShares, setMyShares] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [view, setView] = useState(() => localStorage.getItem('fileView') || 'grid');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -55,6 +63,21 @@ const DashboardPage = () => {
   }, [toast]);
 
   useEffect(() => { fetchFiles(); }, [fetchFiles]);
+
+  const fetchExtras = useCallback(async () => {
+    try {
+      const [activityRes, sharesRes] = await Promise.all([
+        API.get('/auth/activity'),
+        API.get('/share/my-shares'),
+      ]);
+      setActivity(activityRes.data.activity || []);
+      setMyShares(sharesRes.data.shares || []);
+    } catch {
+      toast.error('Failed to load activity details');
+    }
+  }, [toast]);
+
+  useEffect(() => { fetchExtras(); }, [fetchExtras]);
 
   const fetchBlockchainStatus = useCallback(async () => {
     setChainLoading(true);
@@ -136,6 +159,63 @@ const DashboardPage = () => {
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   };
+
+  const handleRename = async (file) => {
+    const filename = window.prompt('Rename file', file.filename);
+    if (!filename || filename.trim() === file.filename) return;
+    setRenaming(file._id);
+    try {
+      await API.put(`/files/${file._id}/rename`, { filename });
+      toast.success('File renamed');
+      fetchFiles();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Rename failed');
+    } finally {
+      setRenaming(null);
+    }
+  };
+
+  const handleDelete = async (file) => {
+    if (!window.confirm(`Archive and remove "${file.filename}"? Shared access will stop.`)) return;
+    setDeleting(file._id);
+    try {
+      await API.delete(`/files/${file._id}`);
+      toast.success('File archived');
+      fetchFiles();
+      fetchExtras();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Delete failed');
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  const handlePreview = async (file) => {
+    setPreviewing(file._id);
+    try {
+      const res = await API.get(`/files/preview/${file._id}`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: file.mimeType }));
+      window.open(url, '_blank', 'noopener,noreferrer');
+      window.setTimeout(() => window.URL.revokeObjectURL(url), 30000);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Preview failed');
+    } finally {
+      setPreviewing(null);
+    }
+  };
+
+  const handleRevokeShare = async (share) => {
+    setDeleting(share._id);
+    try {
+      await API.delete(`/share/${share._id}`);
+      toast.success('Share revoked');
+      fetchExtras();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Revoke failed');
+    } finally {
+      setDeleting(null);
+    }
+  };
   const recentFiles = [...files]
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     .slice(0, 4);
@@ -176,7 +256,7 @@ const DashboardPage = () => {
       <div className="flex min-h-[70vh] items-center justify-center">
         <div className="surface-glass flex items-center gap-3 rounded-3xl border border-white/80 px-6 py-5 text-slate-500 dark:border-white/10 dark:text-slate-300">
           <Loader2 className="h-6 w-6 animate-spin text-sky-500" />
-          Loading secure workspace
+          Loading dashboard
         </div>
       </div>
     );
@@ -215,7 +295,7 @@ const DashboardPage = () => {
               <ArrowUpRight className="h-4 w-4" />
             </Link>
             <button
-              onClick={() => { setLoading(true); fetchFiles(); fetchBlockchainStatus(); }}
+              onClick={() => { setLoading(true); fetchFiles(); fetchBlockchainStatus(); fetchExtras(); }}
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white/80 px-5 font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:text-emerald-800 dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-100 dark:hover:text-emerald-200"
             >
               <RefreshCcw className="h-4 w-4" />
@@ -345,6 +425,37 @@ const DashboardPage = () => {
                     <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{file.filename}</p>
                     <p className="text-xs text-slate-400">{file.createdAt ? new Date(file.createdAt).toLocaleDateString() : 'Waiting for upload'}</p>
                   </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
+            <p className="text-xs font-bold uppercase text-fuchsia-700 dark:text-fuchsia-300">Shared by me</p>
+            <div className="mt-4 space-y-2">
+              {(myShares.length ? myShares.slice(0, 4) : [{ _id: 'empty-share', fileId: { filename: 'No active shares' } }]).map((share) => (
+                <div key={share._id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white/70 p-2.5 dark:border-white/10 dark:bg-slate-950/45">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{share.fileId?.filename || 'Shared file'}</p>
+                    <p className="text-xs text-slate-400">{share.expiresAt ? `Expires ${new Date(share.expiresAt).toLocaleDateString()}` : 'No expiry'}</p>
+                  </div>
+                  {share._id !== 'empty-share' && (
+                    <button onClick={() => handleRevokeShare(share)} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-danger transition hover:bg-danger/10" title="Revoke share">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
+            <p className="text-xs font-bold uppercase text-slate-500 dark:text-slate-300">My activity</p>
+            <div className="mt-4 space-y-2">
+              {(activity.length ? activity.slice(0, 4) : [{ _id: 'empty-activity', action: 'No recent activity', createdAt: null }]).map((item) => (
+                <div key={item._id} className="rounded-2xl border border-slate-200/80 bg-white/70 p-3 dark:border-white/10 dark:bg-slate-950/45">
+                  <p className="text-sm font-semibold text-slate-950 dark:text-white">{item.action.replaceAll('_', ' ')}</p>
+                  <p className="mt-1 text-xs text-slate-400">{item.createdAt ? new Date(item.createdAt).toLocaleString() : 'Waiting'}</p>
                 </div>
               ))}
             </div>
@@ -501,15 +612,24 @@ const DashboardPage = () => {
                   </span>
                 </div>
 
-                <div className="touch-reveal mt-4 grid grid-cols-3 gap-2 opacity-100 transition md:opacity-0 md:group-hover:opacity-100">
+                <div className="touch-reveal mt-4 grid grid-cols-6 gap-2 opacity-100 transition md:opacity-0 md:group-hover:opacity-100">
                   <button onClick={() => handleDownload(file)} disabled={downloading === file._id} className="grid min-h-10 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:border-sky-200 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Download">
                     {downloading === file._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                  </button>
+                  <button onClick={() => handlePreview(file)} disabled={previewing === file._id} className="grid min-h-10 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:border-sky-200 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Preview">
+                    {previewing === file._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
                   </button>
                   <button onClick={() => setShareFile(file)} className="grid min-h-10 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:border-cyan-200 hover:text-cyan-700 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Share">
                     <Share2 className="h-4 w-4" />
                   </button>
                   <button onClick={() => handleVerify(file)} disabled={verifying === file._id} className="grid min-h-10 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:border-emerald-200 hover:text-emerald-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Verify">
                     {verifying === file._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                  </button>
+                  <button onClick={() => handleRename(file)} disabled={renaming === file._id} className="grid min-h-10 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:border-amber-200 hover:text-amber-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Rename">
+                    {renaming === file._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <SquarePen className="h-4 w-4" />}
+                  </button>
+                  <button onClick={() => handleDelete(file)} disabled={deleting === file._id} className="grid min-h-10 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:border-danger/20 hover:text-danger disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Archive file">
+                    {deleting === file._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                   </button>
                 </div>
               </article>
@@ -560,11 +680,20 @@ const DashboardPage = () => {
                         <button onClick={() => handleDownload(file)} disabled={downloading === file._id} className="grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 text-slate-500 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Download">
                           {downloading === file._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                         </button>
+                        <button onClick={() => handlePreview(file)} disabled={previewing === file._id} className="grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 text-slate-500 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Preview">
+                          {previewing === file._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+                        </button>
                         <button onClick={() => setShareFile(file)} className="grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 text-slate-500 transition hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Share">
                           <Share2 className="h-4 w-4" />
                         </button>
                         <button onClick={() => handleVerify(file)} disabled={verifying === file._id} className="grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 text-slate-500 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Verify">
                           {verifying === file._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                        </button>
+                        <button onClick={() => handleRename(file)} disabled={renaming === file._id} className="grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 text-slate-500 transition hover:border-amber-200 hover:bg-amber-50 hover:text-amber-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Rename">
+                          {renaming === file._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <SquarePen className="h-4 w-4" />}
+                        </button>
+                        <button onClick={() => handleDelete(file)} disabled={deleting === file._id} className="grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 text-slate-500 transition hover:border-danger/20 hover:bg-danger/10 hover:text-danger disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Archive file">
+                          {deleting === file._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                         </button>
                       </div>
                     </td>

@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Clock,
   Download,
+  Eye,
   Filter,
   LayoutGrid,
   List,
@@ -23,6 +24,7 @@ const SharedFilesPage = () => {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(null);
+  const [previewing, setPreviewing] = useState(null);
   const [verifying, setVerifying] = useState(null);
   const [verifyResult, setVerifyResult] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -116,6 +118,22 @@ const SharedFilesPage = () => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  };
+
+  const handlePreview = async (file) => {
+    const fileId = file.fileId?._id || file.fileId;
+    const mimeType = file.fileId?.mimeType || 'application/octet-stream';
+    setPreviewing(fileId);
+    try {
+      const res = await API.get(`/files/preview/${fileId}`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: mimeType }));
+      window.open(url, '_blank', 'noopener,noreferrer');
+      window.setTimeout(() => window.URL.revokeObjectURL(url), 30000);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Preview failed');
+    } finally {
+      setPreviewing(null);
+    }
   };
   const owners = [...new Set(files.map((share) => share.owner?.username || 'Unknown'))].sort();
   const sharedTypes = [...new Set(files.map((share) => getExtension(share.fileId?.filename || share.filename)).filter(Boolean))].sort();
@@ -266,11 +284,14 @@ const SharedFilesPage = () => {
                   </div>
                   <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-400">
                     <Clock className="h-3.5 w-3.5" />
-                    {formatSize(share.fileId?.fileSize)}
+                    {share.expiresAt ? `Expires ${new Date(share.expiresAt).toLocaleDateString()}` : formatSize(share.fileId?.fileSize)}
                   </div>
-                  <div className="touch-reveal mt-4 grid grid-cols-2 gap-2 opacity-100 transition md:opacity-0 md:group-hover:opacity-100">
+                  <div className="touch-reveal mt-4 grid grid-cols-3 gap-2 opacity-100 transition md:opacity-0 md:group-hover:opacity-100">
                     <button onClick={() => handleDownload(share)} disabled={downloading === fileId} className="grid min-h-10 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:border-sky-200 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Download">
                       {downloading === fileId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                    </button>
+                    <button onClick={() => handlePreview(share)} disabled={previewing === fileId} className="grid min-h-10 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:border-sky-200 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Preview">
+                      {previewing === fileId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
                     </button>
                     <button onClick={() => handleVerify(share)} disabled={verifying === fileId} className="grid min-h-10 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:border-emerald-200 hover:text-emerald-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Verify">
                       {verifying === fileId ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
@@ -336,6 +357,9 @@ const SharedFilesPage = () => {
                         <div className="flex items-center justify-end gap-2">
                           <button onClick={() => handleDownload(share)} disabled={downloading === fileId} className="grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 text-slate-500 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Download">
                             {downloading === fileId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                          </button>
+                          <button onClick={() => handlePreview(share)} disabled={previewing === fileId} className="grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 text-slate-500 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Preview">
+                            {previewing === fileId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
                           </button>
                           <button onClick={() => handleVerify(share)} disabled={verifying === fileId} className="grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 text-slate-500 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Verify">
                             {verifying === fileId ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
