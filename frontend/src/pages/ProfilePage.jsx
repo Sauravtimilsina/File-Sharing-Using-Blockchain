@@ -6,6 +6,7 @@ import {
   BriefcaseBusiness,
   Camera,
   CheckCircle2,
+  Copy,
   Fingerprint,
   KeyRound,
   Loader2,
@@ -13,7 +14,6 @@ import {
   Phone,
   Save,
   ShieldCheck,
-  Sparkles,
   UserRound,
 } from 'lucide-react';
 
@@ -33,6 +33,7 @@ const ProfilePage = () => {
   const [profile, setProfile] = useState(() => initialProfile(user));
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingAvatar, setSavingAvatar] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
@@ -92,11 +93,16 @@ const ProfilePage = () => {
 
   const handlePasswordSubmit = async (event) => {
     event.preventDefault();
+    if (newPassword !== confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
     setSavingPassword(true);
     try {
       const data = await changePassword(currentPassword, newPassword);
       setCurrentPassword('');
       setNewPassword('');
+      setConfirmPassword('');
       toast.success(data.message || 'Password updated');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Password update failed');
@@ -104,6 +110,22 @@ const ProfilePage = () => {
       setSavingPassword(false);
     }
   };
+
+  const copyEmail = async () => {
+    try {
+      await navigator.clipboard.writeText(user?.email || '');
+      toast.success('Email copied');
+    } catch {
+      toast.error('Could not copy email');
+    }
+  };
+
+  const passwordChecks = [
+    { label: 'At least 8 characters', valid: newPassword.length >= 8 },
+    { label: 'Upper and lower case', valid: /[a-z]/.test(newPassword) && /[A-Z]/.test(newPassword) },
+    { label: 'Number or symbol', valid: /[\d\W_]/.test(newPassword) },
+  ];
+  const passwordScore = passwordChecks.filter((check) => check.valid).length;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
@@ -165,7 +187,12 @@ const ProfilePage = () => {
 
           <div className="mt-6 grid gap-3">
             <div className="rounded-2xl border border-slate-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.05]">
-              <p className="flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-white"><Mail className="h-4 w-4 text-sky-500" /> Email</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-white"><Mail className="h-4 w-4 text-sky-500" /> Email</p>
+                <button type="button" onClick={copyEmail} className="grid h-8 w-8 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-sky-700 dark:hover:bg-white/10" title="Copy email">
+                  <Copy className="h-3.5 w-3.5" />
+                </button>
+              </div>
               <p className="mt-1 truncate text-sm text-slate-500 dark:text-slate-300">{user?.email}</p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.05]">
@@ -233,14 +260,28 @@ const ProfilePage = () => {
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Current password" type="password" value={currentPassword} onChange={setCurrentPassword} />
               <Field label="New password" type="password" value={newPassword} onChange={setNewPassword} />
+              <Field label="Confirm new password" type="password" value={confirmPassword} onChange={setConfirmPassword} />
             </div>
-            <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-300/15 dark:bg-amber-300/10 dark:text-amber-100 sm:flex-row sm:items-center">
-              <Sparkles className="h-5 w-5 shrink-0" />
-              Extra account protection is active for unusual sign-in activity.
+            <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 dark:border-white/10 dark:bg-white/[0.04]">
+              <div className="mb-3 flex items-center justify-between gap-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                <span>Password strength</span>
+                <span>{passwordScore}/3</span>
+              </div>
+              <div className="mb-3 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-white/10">
+                <div className="h-full rounded-full bg-gradient-to-r from-sky-500 via-cyan-500 to-emerald-500 transition-[width]" style={{ width: `${(passwordScore / 3) * 100}%` }} />
+              </div>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {passwordChecks.map((check) => (
+                  <p key={check.label} className={`flex items-center gap-2 text-xs font-semibold ${check.valid ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-400'}`}>
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    {check.label}
+                  </p>
+                ))}
+              </div>
             </div>
             <button
               type="submit"
-              disabled={savingPassword || !currentPassword || !newPassword}
+              disabled={savingPassword || !currentPassword || !newPassword || newPassword !== confirmPassword}
               className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 font-semibold text-white shadow-lg shadow-slate-950/20 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-slate-950"
             >
               {savingPassword ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShieldCheck className="h-5 w-5" />}

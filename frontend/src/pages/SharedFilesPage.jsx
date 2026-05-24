@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import API from '../api/axios';
 import FileTypeIcon from '../components/FileTypeIcon';
 import { useToast } from '../components/toastContext';
@@ -7,10 +7,12 @@ import {
   CheckCircle2,
   Clock,
   Download,
+  Filter,
   LayoutGrid,
   List,
   Loader2,
   Package,
+  RefreshCcw,
   Search,
   ShieldCheck,
   UserRound,
@@ -25,21 +27,25 @@ const SharedFilesPage = () => {
   const [verifyResult, setVerifyResult] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [view, setView] = useState(() => localStorage.getItem('sharedView') || 'grid');
+  const [ownerFilter, setOwnerFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
   const toast = useToast();
 
-  useEffect(() => {
-    const fetchSharedFiles = async () => {
-      try {
-        const res = await API.get('/files/shared');
-        setFiles(res.data.files);
-      } catch {
-        toast.error('Failed to load shared files');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSharedFiles();
+  const fetchSharedFiles = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await API.get('/files/shared');
+      setFiles(res.data.files);
+    } catch {
+      toast.error('Failed to load shared files');
+    } finally {
+      setLoading(false);
+    }
   }, [toast]);
+
+  useEffect(() => {
+    fetchSharedFiles();
+  }, [fetchSharedFiles]);
 
   const toggleView = (nextView) => {
     setView(nextView);
@@ -111,13 +117,16 @@ const SharedFilesPage = () => {
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   };
+  const owners = [...new Set(files.map((share) => share.owner?.username || 'Unknown'))].sort();
+  const sharedTypes = [...new Set(files.map((share) => getExtension(share.fileId?.filename || share.filename)).filter(Boolean))].sort();
   const filteredFiles = files.filter((share) => {
     const query = searchQuery.trim().toLowerCase();
-    if (!query) return true;
-
     const filename = share.fileId?.filename || share.filename || '';
     const ownerName = share.owner?.username || '';
-    return `${filename} ${ownerName}`.toLowerCase().includes(query);
+    const matchesSearch = !query || `${filename} ${ownerName}`.toLowerCase().includes(query);
+    const matchesOwner = ownerFilter === 'all' || ownerName === ownerFilter;
+    const matchesType = typeFilter === 'all' || getExtension(filename) === typeFilter;
+    return matchesSearch && matchesOwner && matchesType;
   });
 
   if (loading) {
@@ -148,6 +157,13 @@ const SharedFilesPage = () => {
           <div className="rounded-[24px] border border-white/80 bg-white/70 p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Available shares</p>
             <p className="mt-1 text-3xl font-semibold text-slate-950 dark:text-white">{filteredFiles.length}</p>
+            <button
+              onClick={fetchSharedFiles}
+              className="mt-3 inline-flex min-h-10 items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 dark:bg-white dark:text-slate-950"
+            >
+              <RefreshCcw className="h-4 w-4" />
+              Refresh
+            </button>
           </div>
         </div>
       </section>
@@ -171,6 +187,25 @@ const SharedFilesPage = () => {
                 className="h-12 w-full rounded-2xl border border-slate-200 bg-white/80 pl-11 pr-4 text-sm text-slate-950 outline-none transition focus:border-fuchsia-400 focus:ring-4 focus:ring-fuchsia-500/10 dark:border-white/10 dark:bg-slate-950/55 dark:text-white"
               />
             </label>
+            <label className="relative block sm:w-44">
+              <Filter className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <select
+                value={ownerFilter}
+                onChange={(event) => setOwnerFilter(event.target.value)}
+                className="h-12 w-full appearance-none rounded-2xl border border-slate-200 bg-white/80 pl-11 pr-4 text-sm font-semibold text-slate-700 outline-none transition focus:border-fuchsia-400 focus:ring-4 focus:ring-fuchsia-500/10 dark:border-white/10 dark:bg-slate-950/55 dark:text-white"
+              >
+                <option value="all">All owners</option>
+                {owners.map((owner) => <option key={owner} value={owner}>{owner}</option>)}
+              </select>
+            </label>
+            <select
+              value={typeFilter}
+              onChange={(event) => setTypeFilter(event.target.value)}
+              className="h-12 rounded-2xl border border-slate-200 bg-white/80 px-4 text-sm font-semibold text-slate-700 outline-none transition focus:border-fuchsia-400 focus:ring-4 focus:ring-fuchsia-500/10 dark:border-white/10 dark:bg-slate-950/55 dark:text-white"
+            >
+              <option value="all">All types</option>
+              {sharedTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+            </select>
             <div className="inline-flex w-fit items-center gap-1 rounded-2xl border border-slate-200 bg-slate-100/80 p-1 dark:border-white/10 dark:bg-white/[0.06]">
               <button
                 onClick={() => toggleView('grid')}

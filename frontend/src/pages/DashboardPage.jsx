@@ -7,15 +7,19 @@ import { useToast } from '../components/toastContext';
 import {
   AlertTriangle,
   ArrowUpRight,
+  CalendarDays,
   CheckCircle2,
   Download,
   FileCheck2,
+  Filter,
   Fingerprint,
+  HardDrive,
   LayoutGrid,
   List,
   LockKeyhole,
   Loader2,
   Package,
+  RefreshCcw,
   Search,
   Share2,
   ShieldCheck,
@@ -33,6 +37,8 @@ const DashboardPage = () => {
   const [downloading, setDownloading] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [view, setView] = useState(() => localStorage.getItem('fileView') || 'grid');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
   const [chainStatus, setChainStatus] = useState(null);
   const [chainLoading, setChainLoading] = useState(true);
   const toast = useToast();
@@ -130,7 +136,6 @@ const DashboardPage = () => {
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   };
-  const filteredFiles = files.filter((file) => file.filename?.toLowerCase().includes(searchQuery.trim().toLowerCase()));
   const recentFiles = [...files]
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     .slice(0, 4);
@@ -142,13 +147,28 @@ const DashboardPage = () => {
   const extensionSignals = Object.entries(extensionCounts)
     .sort(([, firstCount], [, secondCount]) => secondCount - firstCount)
     .slice(0, 4);
+  const fileTypes = Object.keys(extensionCounts).sort();
+  const filteredFiles = files
+    .filter((file) => file.filename?.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+    .filter((file) => typeFilter === 'all' || getExtension(file.filename) === typeFilter)
+    .sort((a, b) => {
+      if (sortBy === 'name') return (a.filename || '').localeCompare(b.filename || '');
+      if (sortBy === 'size') return Number(b.fileSize || 0) - Number(a.fileSize || 0);
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
   const lastUpload = recentFiles[0];
+  const largestFile = [...files].sort((a, b) => Number(b.fileSize || 0) - Number(a.fileSize || 0))[0];
 
   const stats = [
     { label: 'My files', value: files.length, icon: Package, tone: 'from-sky-500 to-cyan-400' },
     { label: 'Stored data', value: formatSize(files.reduce((total, file) => total + Number(file.fileSize || 0), 0)), icon: ShieldCheck, tone: 'from-emerald-500 to-lime-400' },
     { label: 'File formats', value: Object.keys(extensionCounts).length, icon: Signal, tone: 'from-cyan-500 to-blue-500' },
     { label: 'Sharing', value: 'Ready', icon: Users, tone: 'from-fuchsia-500 to-rose-400' },
+  ];
+  const quickInsights = [
+    { label: 'Newest file', value: lastUpload?.filename || 'No upload yet', icon: CalendarDays },
+    { label: 'Largest file', value: largestFile ? `${largestFile.filename} / ${formatSize(largestFile.fileSize)}` : 'No file yet', icon: HardDrive },
+    { label: 'Ledger state', value: chainStatus?.status === 'valid' ? 'Verified' : chainStatus ? 'Needs review' : 'Checking', icon: FileCheck2 },
   ];
 
   if (loading) {
@@ -194,6 +214,13 @@ const DashboardPage = () => {
               Shared files
               <ArrowUpRight className="h-4 w-4" />
             </Link>
+            <button
+              onClick={() => { setLoading(true); fetchFiles(); fetchBlockchainStatus(); }}
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white/80 px-5 font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:text-emerald-800 dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-100 dark:hover:text-emerald-200"
+            >
+              <RefreshCcw className="h-4 w-4" />
+              Refresh
+            </button>
           </div>
         </div>
       </section>
@@ -208,6 +235,22 @@ const DashboardPage = () => {
               </div>
               <div className={`grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br ${stat.tone} text-white shadow-lg transition group-hover:scale-105`}>
                 <stat.icon className="h-6 w-6" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </section>
+
+      <section className="mt-5 grid gap-4 md:grid-cols-3">
+        {quickInsights.map((item) => (
+          <div key={item.label} className="rounded-[24px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
+            <div className="flex items-center gap-3">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-slate-950 text-white dark:bg-white dark:text-slate-950">
+                <item.icon className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs font-bold uppercase text-slate-400">{item.label}</p>
+                <p className="mt-1 truncate text-sm font-semibold text-slate-950 dark:text-white" title={item.value}>{item.value}</p>
               </div>
             </div>
           </div>
@@ -374,6 +417,28 @@ const DashboardPage = () => {
                 className="h-12 w-full rounded-2xl border border-slate-200 bg-white/80 pl-11 pr-4 text-sm text-slate-950 outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/10 dark:border-white/10 dark:bg-slate-950/55 dark:text-white"
               />
             </label>
+            <label className="relative block sm:w-44">
+              <Filter className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <select
+                value={typeFilter}
+                onChange={(event) => setTypeFilter(event.target.value)}
+                className="h-12 w-full appearance-none rounded-2xl border border-slate-200 bg-white/80 pl-11 pr-4 text-sm font-semibold text-slate-700 outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/10 dark:border-white/10 dark:bg-slate-950/55 dark:text-white"
+                title="Filter by file type"
+              >
+                <option value="all">All types</option>
+                {fileTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+              </select>
+            </label>
+            <select
+              value={sortBy}
+              onChange={(event) => setSortBy(event.target.value)}
+              className="h-12 rounded-2xl border border-slate-200 bg-white/80 px-4 text-sm font-semibold text-slate-700 outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/10 dark:border-white/10 dark:bg-slate-950/55 dark:text-white"
+              title="Sort files"
+            >
+              <option value="newest">Newest first</option>
+              <option value="name">Name A-Z</option>
+              <option value="size">Largest first</option>
+            </select>
             <div className="inline-flex w-fit items-center gap-1 rounded-2xl border border-slate-200 bg-slate-100/80 p-1 dark:border-white/10 dark:bg-white/[0.06]">
               <button
                 onClick={() => toggleView('grid')}

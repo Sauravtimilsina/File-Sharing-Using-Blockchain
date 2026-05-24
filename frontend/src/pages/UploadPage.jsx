@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../api/axios';
 import { useToast } from '../components/toastContext';
@@ -8,7 +8,10 @@ import {
   File as FileIcon,
   FileUp,
   Fingerprint,
+  Image as ImageIcon,
+  Info,
   Loader2,
+  RotateCcw,
   ScanLine,
   ScanSearch,
   Upload,
@@ -22,6 +25,7 @@ const UploadPage = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [previewUrl, setPreviewUrl] = useState('');
   const inputRef = useRef(null);
   const navigate = useNavigate();
   const toast = useToast();
@@ -62,6 +66,16 @@ const UploadPage = () => {
     }
   };
 
+  useEffect(() => {
+    if (!selectedFile || !selectedFile.type?.startsWith('image/')) {
+      setPreviewUrl('');
+      return undefined;
+    }
+    const objectUrl = URL.createObjectURL(selectedFile);
+    setPreviewUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [selectedFile]);
+
   const formatSize = (bytes) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -95,6 +109,11 @@ const UploadPage = () => {
       setUploadProgress(0);
     }
   };
+
+  const fileExtension = selectedFile?.name?.split('.').pop()?.toUpperCase() || 'FILE';
+  const selectedType = selectedFile?.type || 'Unknown type';
+  const selectedSize = selectedFile ? formatSize(selectedFile.size) : 'No file';
+  const uploadReadiness = selectedFile ? 100 : 0;
 
   const uploadSteps = [
     { icon: FileUp, title: 'Add', text: 'Select a file from desktop, tablet, or mobile.' },
@@ -153,21 +172,28 @@ const UploadPage = () => {
               </div>
 
               {selectedFile && (
-                <div className="mt-4 flex flex-col gap-3 rounded-[24px] border border-slate-200 bg-slate-50/80 p-4 dark:border-white/10 dark:bg-white/[0.05] sm:flex-row sm:items-center">
-                  <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-sky-500 to-emerald-500 text-white shadow-lg">
-                    <FileIcon className="h-6 w-6" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold text-slate-950 dark:text-white">{selectedFile.name}</p>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{formatSize(selectedFile.size)} / {selectedFile.type || 'Unknown type'}</p>
+                <div className="mt-4 rounded-[24px] border border-slate-200 bg-slate-50/80 p-4 dark:border-white/10 dark:bg-white/[0.05]">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-sky-500 to-emerald-500 text-white shadow-lg">
+                      {previewUrl ? <img src={previewUrl} alt="" className="h-full w-full object-cover" /> : <FileIcon className="h-7 w-7" />}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold text-slate-950 dark:text-white">{selectedFile.name}</p>
+                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{selectedSize} / {selectedType}</p>
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setSelectedFile(null); }}
+                      className="grid h-10 w-10 place-items-center rounded-2xl text-slate-400 transition hover:bg-white hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-white"
+                      title="Remove selected file"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
                   </div>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setSelectedFile(null); }}
-                    className="grid h-10 w-10 place-items-center rounded-2xl text-slate-400 transition hover:bg-white hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-white"
-                    title="Remove selected file"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                    <MiniStat label="Type" value={fileExtension} />
+                    <MiniStat label="Readiness" value={`${uploadReadiness}%`} />
+                    <MiniStat label="Preview" value={previewUrl ? 'Available' : 'Not image'} />
+                  </div>
                 </div>
               )}
 
@@ -252,11 +278,32 @@ const UploadPage = () => {
                 Return to dashboard
                 <ArrowRight className="h-4 w-4" />
               </button>
+              <button
+                onClick={() => { setResult(null); setSelectedFile(null); setError(''); }}
+                className="mt-3 flex min-h-12 w-full items-center justify-center gap-2 rounded-[22px] border border-slate-200 bg-white/80 px-5 font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-800 dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-100"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Upload another file
+              </button>
             </div>
           )}
         </section>
 
         <aside className="space-y-4">
+          <div className="rounded-[24px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
+            <div className="flex items-center gap-3">
+              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-cyan-50 text-cyan-700 dark:bg-cyan-300/10 dark:text-cyan-200">
+                {previewUrl ? <ImageIcon className="h-5 w-5" /> : <Info className="h-5 w-5" />}
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs font-bold uppercase text-cyan-700 dark:text-cyan-300">Selected file</p>
+                <p className="mt-1 truncate text-sm font-semibold text-slate-950 dark:text-white">{selectedFile?.name || result?.file?.filename || 'Waiting for file'}</p>
+              </div>
+            </div>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-white/10">
+              <div className="h-full rounded-full bg-gradient-to-r from-sky-500 to-emerald-500 transition-[width]" style={{ width: `${result ? 100 : uploadReadiness}%` }} />
+            </div>
+          </div>
           {uploadSteps.map((step, index) => (
             <div key={step.title} className="rounded-[24px] border border-white/80 bg-white/80 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-white/10 dark:bg-white/[0.06]">
               <div className="flex items-start gap-4">
@@ -276,5 +323,12 @@ const UploadPage = () => {
     </div>
   );
 };
+
+const MiniStat = ({ label, value }) => (
+  <div className="rounded-2xl border border-slate-200 bg-white/70 p-3 dark:border-white/10 dark:bg-slate-950/45">
+    <p className="text-xs font-semibold text-slate-400">{label}</p>
+    <p className="mt-1 truncate text-sm font-semibold text-slate-950 dark:text-white">{value}</p>
+  </div>
+);
 
 export default UploadPage;
