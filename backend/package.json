@@ -1,7 +1,8 @@
 {
-  "name": "backend",
+  "name": "secure-file-transfer-backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Express API for encrypted file transfer, OTP authentication, Supabase storage, and SHA-256 integrity verification.",
+  "main": "src/server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon src/server.js",
@@ -18,10 +19,20 @@
     "encrypt:metadata": "node scripts/encryptExistingProfiles.js",
     "restore:tracked-html-upload": "node scripts/restoreTrackedEncryptedFile.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "keywords": [
+    "secure-file-transfer",
+    "encrypted-file-sharing",
+    "nodejs",
+    "express",
+    "supabase",
+    "jwt",
+    "otp",
+    "aes-encryption",
+    "sha256",
+    "cybersecurity"
+  ],
+  "author": "Saurav Timilsina",
+  "license": "MIT",
   "dependencies": {
     "@supabase/supabase-js": "^2.106.1",
     "bcrypt": "^6.0.0",

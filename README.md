@@ -1,131 +1,295 @@
 # Secure File Transfer
 
-Secure File Transfer is an academic web system for encrypted upload, file sharing, download, and integrity verification.
+Secure File Transfer is a full-stack web application for encrypted file upload, controlled sharing, download, and integrity verification. It is built as an academic cybersecurity project, but the repository is organized like a production-ready starter for secure document exchange workflows.
 
-## Core Flow
+## Project Idea
 
-1. A user registers and verifies the account with OTP.
-2. The user signs in with JWT-backed authentication.
-3. Uploaded files are encrypted with AES-256-CBC.
-4. SHA-256 hashes are stored with a blockchain-style integrity ledger.
-5. Users can verify files, share them with another account, and download authorized files.
+Most file-sharing examples stop at uploading and downloading. This project adds the security layer around the workflow:
+
+- Users register, verify their account with OTP, and sign in with JWT authentication.
+- Files are encrypted before storage with AES-256-CBC.
+- SHA-256 fingerprints are stored in a blockchain-style integrity ledger.
+- Owners can share files with other registered users and revoke access.
+- Recipients can preview, download, and verify files they are allowed to access.
+- Profile fields and file metadata are encrypted before being persisted.
 
 ## Features
 
-- OTP account verification
-- JWT authentication
+- OTP account verification and password reset flow
+- JWT authentication with protected API routes
 - Password hashing with bcrypt
-- Encrypted file upload
-- SHA-256 integrity fingerprints
-- Tamper verification checks
-- Controlled sharing between users
+- Encrypted file upload and download
+- Private Supabase Storage support for encrypted file objects
+- Supabase Postgres schema with migrations and RLS enabled
+- SHA-256 integrity verification
+- Blockchain-style block records for file integrity history
+- Controlled user-to-user file sharing
+- Share expiry and lifecycle fields in the schema
 - Responsive React interface with light and dark themes
-- Encrypted profile fields stored by the backend
+- Backend health and readiness checks
 
-## Stack
+## Tech Stack
 
-- Frontend: React, Vite, Tailwind CSS, Lucide icons
-- Backend: Node.js, Express
-- Current data adapter: Supabase Postgres through a repository adapter
+| Area | Technology |
+| --- | --- |
+| Frontend | React, Vite, Tailwind CSS, Lucide React |
+| Backend | Node.js, Express, Multer, Helmet, CORS |
+| Database | Supabase Postgres |
+| Storage | Supabase Storage or local encrypted file storage |
+| Security | JWT, bcrypt, AES-256-CBC, SHA-256, OTP |
+| Tooling | Supabase CLI migrations, ESLint, npm |
 
-## Local Setup
+## Repository Structure
 
-### Backend
-
-1. Install dependencies in `backend`.
-2. Copy `backend/.env.example` to `backend/.env`.
-3. Set secrets, mail credentials, and Supabase values in `backend/.env`.
-4. Apply the Supabase migrations from the top-level `supabase/migrations` folder.
-5. Run `npm run dev`.
-6. Run `npm run check:supabase` to verify the database tables, private Storage bucket, and Supabase API access.
-
-### Frontend
-
-1. Install dependencies in `frontend`.
-2. Copy `frontend/.env.example` to `frontend/.env` when the API URL differs from the default local URL.
-3. Run `npm run dev`.
-
-## Database Configuration
-
-The API controllers call a repository layer. `DB_PROVIDER=supabase` uses the Supabase Data API adapter and is the safest local default on IPv4-only networks. `DB_PROVIDER=postgres` uses the direct Supabase Postgres connection when your network supports it or when you use a Supabase pooler connection string.
-
-The Supabase schema lives in the migration set at `supabase/migrations`. It creates `users`, `otps`, `files`, `shares`, and `blocks` tables, enables RLS, keeps browser roles away from those tables because the current app uses its own backend JWT flow, and provisions the private `encrypted-files` Storage bucket.
-
-The frontend is a public browser app and talks only to the backend API. Do not place Supabase keys, database URLs, JWT/OTP secrets, SMTP credentials, or `ENCRYPTION_KEY` in `frontend/.env` or any `VITE_*` variable.
-
-The backend owns Supabase, storage, mail, JWT, OTP, and encryption configuration:
-
-```env
-# backend/.env
-DB_PROVIDER=supabase
-SUPABASE_URL=https://your-project-ref.supabase.co
-SUPABASE_SECRET_KEY=your_supabase_secret_key
-SUPABASE_DB_URL=postgresql://postgres:your_database_password@db.your-project-ref.supabase.co:5432/postgres
+```text
+.
+├── backend/              # Express API, auth, encryption, storage, repositories
+├── frontend/             # React + Vite client
+├── supabase/             # Supabase config and database/storage migrations
+├── .github/              # CI workflow and contribution templates
+├── CHANGELOG.md          # Release history
+├── CONTRIBUTING.md       # Development and pull request guide
+├── SECURITY.md           # Security and secret handling policy
+└── README.md
 ```
 
-```env
-# frontend/.env
-VITE_API_BASE_URL=http://localhost:5000/api
+## Quick Start
+
+### Prerequisites
+
+- Node.js 20 or newer
+- npm
+- A Supabase project, or Supabase CLI for local development
+- SMTP credentials for OTP email delivery
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/Sauravtimilsina/File-Sharing-Using-Blockchain.git
+cd File-Sharing-Using-Blockchain
 ```
 
-`SUPABASE_DB_URL` must be the Postgres connection string, not a Supabase API key.
-
-Profile fields (`fullName`, `jobTitle`, `department`, `phone`, `bio`, and avatar data) and file metadata (`filename`, `mimeType`) are encrypted by the backend before storage. Existing rows can be converted with:
+### 2. Install Dependencies
 
 ```bash
 cd backend
-npm run encrypt:profiles
+npm install
+
+cd ../frontend
+npm install
 ```
 
-## File Object Storage
+### 3. Configure Environment Variables
 
-Metadata lives in Supabase Postgres. File objects can live in the private Supabase Storage bucket by setting:
+Copy the example files:
 
-- `FILE_STORAGE_PROVIDER=supabase`
-- `SUPABASE_STORAGE_BUCKET=encrypted-files`
-- `SUPABASE_URL`
-- `SUPABASE_SECRET_KEY`
+```bash
+cd backend
+copy .env.example .env
 
-Apply the storage migration with `supabase db push` after linking the project, or push it with the hosted database URL. To copy already-encrypted local objects from `backend/uploads` into the bucket, run `npm run migrate:local-files-to-storage` in `backend` after the backend-only Supabase values are set.
+cd ../frontend
+copy .env.example .env
+```
 
-## Runtime Configuration
+On macOS or Linux, use `cp` instead of `copy`.
 
-- `PORT`: backend port
-- `DB_PROVIDER`: `supabase` for the Supabase Data API adapter, or `postgres` for direct Supabase Postgres/pooler access
-- `SUPABASE_DB_URL`: hosted Supabase Postgres connection string used by the direct Postgres adapter
-- `SUPABASE_URL`: Supabase project URL for the backend adapter
-- `SUPABASE_SECRET_KEY`: backend-only Supabase secret key
-- `CLIENT_ORIGINS`: comma-separated frontend origins allowed by CORS
-- `MAX_UPLOAD_BYTES`: backend file upload cap; example uses `1073741824` for 1 GB
-- `UPLOAD_TMP_DIR`: optional temporary upload staging directory; defaults outside the project in the OS temp folder
-- `FILE_STORAGE_PROVIDER`: `local` by default or `supabase` for the private Storage bucket
-- `SUPABASE_STORAGE_BUCKET`: private Storage bucket used when `FILE_STORAGE_PROVIDER=supabase`
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`: mail transport settings for verification and sharing messages
-- `JWT_SECRET` and `OTP_SECRET`: backend-only random secrets; production startup rejects short placeholder values
-- `ENCRYPTION_KEY`: backend-only 32-byte hex key used for encrypted file objects and encrypted profile fields
-- `VITE_API_BASE_URL`: frontend API base URL
+Generate backend secrets:
 
-## Health Checks
+```bash
+cd backend
+npm run generate:secrets
+```
 
-- `GET /api/health`: lightweight process and SMTP status
-- `GET /api/health/ready`: readiness check for Supabase Postgres tables, private Storage bucket, and Supabase API access
-- `npm run check:supabase`: command-line version of the readiness check
-- `npm run check:file-storage`: verifies encryption, configured storage upload/download, decryption hash, and cleanup
+Paste the generated values into `backend/.env`.
 
-## Large File Note
+### 4. Configure Supabase
 
-The backend upload pipeline stages multipart uploads on disk and streams processing for local storage.
+Create a Supabase project, then set these backend-only values in `backend/.env`:
 
-The current upload endpoint still receives a single HTTP request. When a hosting service, load balancer, or gateway has a smaller request-body cap, large-file support should move to chunked uploads or direct object-storage uploads with a resumable upload flow.
+```env
+DB_PROVIDER=supabase
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_SECRET_KEY=your_backend_only_supabase_secret_key
+SUPABASE_DB_URL=postgresql://postgres:your_database_password@db.your-project-ref.supabase.co:5432/postgres
+FILE_STORAGE_PROVIDER=supabase
+SUPABASE_STORAGE_BUCKET=encrypted-files
+```
 
-## Next Security Work
+Apply the migrations from `supabase/migrations` using the Supabase CLI:
+
+```bash
+npx supabase link --project-ref your-project-ref
+npx supabase db push
+```
+
+Then verify backend access:
+
+```bash
+cd backend
+npm run check:supabase
+```
+
+### 5. Run the App
+
+Start the backend:
+
+```bash
+cd backend
+npm run dev
+```
+
+Start the frontend in a second terminal:
+
+```bash
+cd frontend
+npm run dev
+```
+
+Open the frontend URL shown by Vite, usually `http://localhost:5173`.
+
+## Environment Variables
+
+### Backend
+
+The backend owns all private configuration:
+
+| Variable | Purpose |
+| --- | --- |
+| `PORT` | API port, defaults to `5000` |
+| `NODE_ENV` | Runtime mode, use `production` in deployed environments |
+| `DB_PROVIDER` | `supabase` for Supabase Data API or `postgres` for direct Postgres |
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_SECRET_KEY` | Backend-only Supabase secret/service key |
+| `SUPABASE_DB_URL` | Supabase Postgres connection string |
+| `CLIENT_ORIGINS` | Comma-separated allowed frontend origins |
+| `MAX_UPLOAD_BYTES` | Upload size limit |
+| `UPLOAD_TMP_DIR` | Optional temporary upload directory |
+| `FILE_STORAGE_PROVIDER` | `supabase` or `local` |
+| `SUPABASE_STORAGE_BUCKET` | Private bucket for encrypted objects |
+| `JWT_SECRET` | Random JWT signing secret |
+| `OTP_SECRET` | Random OTP signing secret |
+| `ENCRYPTION_KEY` | 32-byte hex encryption key |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | Email transport settings |
+
+### Frontend
+
+The frontend must only contain public browser-safe values:
+
+```env
+VITE_API_BASE_URL=http://localhost:5000/api
+```
+
+Never put Supabase secret keys, database URLs, JWT secrets, OTP secrets, SMTP passwords, tokens, or `ENCRYPTION_KEY` in `frontend/.env` or any `VITE_*` variable.
+
+## Useful Commands
+
+### Backend
+
+```bash
+npm run dev                         # Start API with nodemon
+npm start                           # Start API with node
+npm run generate:secrets            # Generate JWT, OTP, and encryption secrets
+npm run check:supabase              # Verify Supabase tables, bucket, and API access
+npm run check:file-storage          # Verify encrypted upload/download storage flow
+npm run check:smtp                  # Verify SMTP configuration
+npm run encrypt:profiles            # Encrypt existing profile and metadata fields
+npm run migrate:local-files-to-storage
+```
+
+### Frontend
+
+```bash
+npm run dev       # Start Vite dev server
+npm run build     # Build production assets
+npm run lint      # Run ESLint
+npm run preview   # Preview production build
+```
+
+## API Overview
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `GET` | `/api/health` | Process and SMTP health |
+| `GET` | `/api/health/ready` | Supabase and storage readiness |
+| `POST` | `/api/auth/register` | Register a new account |
+| `POST` | `/api/auth/login` | Sign in |
+| `POST` | `/api/auth/verify-otp` | Verify OTP |
+| `POST` | `/api/auth/forgot-password` | Request password reset |
+| `GET` | `/api/auth/me` | Current authenticated user |
+| `PUT` | `/api/auth/profile` | Update profile |
+| `POST` | `/api/files/upload` | Upload encrypted file |
+| `GET` | `/api/files/my-files` | List owner files |
+| `GET` | `/api/files/shared` | List files shared with current user |
+| `GET` | `/api/files/verify/:id` | Verify file integrity |
+| `GET` | `/api/files/download/:id` | Download an authorized file |
+| `POST` | `/api/share/file` | Share a file |
+| `DELETE` | `/api/share/:id` | Revoke a share |
+
+## Security Notes
+
+- `.env` files are ignored and must never be committed.
+- Only `.env.example` files should be public.
+- Backend secrets must stay in `backend/.env` or the deployment provider's secret manager.
+- Frontend `VITE_*` variables are shipped to the browser and are not secret.
+- The current app uses its own backend JWT flow. Supabase keys and database credentials must remain backend-only.
+- Rotate any key immediately if it was ever committed, pasted into an issue, or exposed in a screenshot.
+- Before publishing, enable GitHub secret scanning and Dependabot alerts in the repository settings.
+
+## GitHub Discovery Setup
+
+Recommended repository description:
+
+```text
+Encrypted file transfer system with OTP auth, Supabase storage, SHA-256 integrity checks, and secure sharing.
+```
+
+Recommended topics:
+
+```text
+secure-file-transfer, encrypted-file-sharing, react, vite, nodejs, express, supabase, postgres, cybersecurity, jwt-authentication, otp-verification, aes-encryption, sha256, file-integrity, final-year-project
+```
+
+Use releases for important milestones such as:
+
+- `v1.0.0` - first public release
+- `v1.1.0` - resumable uploads or improved sharing
+- `v1.2.0` - audit logs or key rotation
+
+For social sharing, use a short post like:
+
+```text
+I published Secure File Transfer, a full-stack cybersecurity project for encrypted uploads, controlled sharing, and SHA-256 integrity verification.
+
+Built with React, Node.js, Express, Supabase Postgres, and Supabase Storage.
+```
+
+## Roadmap
 
 - Role-based access control
-- File expiry and revocation
-- Direct resumable uploads for large objects
-- Audit logs for share and download events
-- Stronger key management and rotation
+- Direct resumable uploads for large encrypted objects
+- Audit logs for share, preview, download, and revoke events
+- Stronger key management and rotation workflow
+- Automated backend tests
+- Deployment guide for Render, Railway, Vercel, and Supabase
+
+## Releases and Updates
+
+This project uses `CHANGELOG.md` for public release notes. When preparing a release:
+
+1. Update `CHANGELOG.md`.
+2. Run frontend lint and build.
+3. Run backend Supabase and storage checks.
+4. Create a GitHub release with a clear title, summary, screenshots if available, and setup notes.
+5. Share the release on your GitHub profile README, LinkedIn, and developer communities.
+
+## Contributing
+
+Contributions are welcome. Read `CONTRIBUTING.md` before opening a pull request.
 
 ## Author
 
 Saurav Timilsina
+
+## License
+
+This project is licensed under the MIT License. See `LICENSE` for details.
