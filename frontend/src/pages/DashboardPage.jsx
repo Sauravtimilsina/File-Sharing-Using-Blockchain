@@ -337,8 +337,8 @@ const DashboardPage = () => {
         ))}
       </section>
 
-      <section className="mt-5 grid items-start gap-4 lg:grid-cols-[1.15fr_0.85fr]">
-        <div className="overflow-hidden rounded-[28px] border border-cyan-200/80 bg-slate-950 p-5 text-white shadow-2xl shadow-cyan-950/15 dark:border-cyan-300/15 sm:p-6">
+      <section className="mt-5 grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="overflow-hidden rounded-[28px] border border-cyan-200/80 bg-slate-950 p-5 text-white shadow-2xl shadow-cyan-950/15 dark:border-cyan-300/15 sm:p-6 md:col-span-2">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-xs font-bold uppercase text-cyan-300">Integrity Channel</p>
@@ -381,8 +381,7 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-          <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
+        <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-bold uppercase text-emerald-700 dark:text-emerald-300">Format map</p>
@@ -438,7 +437,7 @@ const DashboardPage = () => {
           <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
             <p className="text-xs font-bold uppercase text-slate-500 dark:text-slate-300">My activity</p>
             <div className="mt-4 space-y-2">
-              {(activity.length ? activity.slice(0, 4) : [{ _id: 'empty-activity', action: 'No recent activity', createdAt: null }]).map((item) => (
+              {(activity.length ? activity.slice(0, 3) : [{ _id: 'empty-activity', action: 'No recent activity', createdAt: null }]).map((item) => (
                 <div key={item._id} className="rounded-2xl border border-slate-200/80 bg-white/70 p-3 dark:border-white/10 dark:bg-slate-950/45">
                   <p className="text-sm font-semibold text-slate-950 dark:text-white">{item.action.replaceAll('_', ' ')}</p>
                   <p className="mt-1 text-xs text-slate-400">{item.createdAt ? new Date(item.createdAt).toLocaleString() : 'Waiting'}</p>
@@ -447,7 +446,7 @@ const DashboardPage = () => {
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
+          <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06] md:col-span-2 xl:col-span-1">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-bold uppercase text-sky-700 dark:text-sky-300">Blockchain ledger</p>
@@ -491,7 +490,6 @@ const DashboardPage = () => {
               Refresh ledger
             </button>
           </div>
-        </div>
       </section>
 
       <section className="mt-5 overflow-hidden rounded-[28px] border border-white/80 bg-white/80 shadow-sm dark:border-white/10 dark:bg-slate-900/70">
