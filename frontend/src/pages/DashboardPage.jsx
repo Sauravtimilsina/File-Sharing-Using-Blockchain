@@ -87,6 +87,17 @@ const DashboardPage = () => {
     localStorage.setItem('fileView', nextView);
   };
 
+  const readErrorData = async (err) => {
+    if (err.response?.data instanceof Blob) {
+      try {
+        return JSON.parse(await err.response.data.text());
+      } catch {
+        return null;
+      }
+    }
+    return err.response?.data || null;
+  };
+
   const handleDownload = async (file) => {
     setDownloading(file._id);
     try {
@@ -101,21 +112,16 @@ const DashboardPage = () => {
       window.URL.revokeObjectURL(url);
       toast.success(`Downloaded "${file.filename}"`);
     } catch (err) {
-      if (err.response?.data instanceof Blob) {
-        try {
-          const text = await err.response.data.text();
-          const data = JSON.parse(text);
-          if (data.tampered) {
-            toast.error(`Tampering detected! "${file.filename}" has been modified or corrupted.`);
-            setVerifyResult({ fileId: file._id, isValid: false, message: data.message });
-          } else {
-            toast.error(data.message || 'Download failed');
-          }
-        } catch {
-          toast.error('Download failed');
+      const data = await readErrorData(err);
+      if (data?.tampered) {
+        toast.error(data.removed ? `"${file.filename}" failed its check and was removed.` : `Tampering detected! "${file.filename}" has been modified or corrupted.`);
+        setVerifyResult({ fileId: file._id, isValid: false, message: data.message });
+        if (data.removed) {
+          fetchFiles();
+          fetchExtras();
         }
       } else {
-        toast.error(err.response?.data?.message || 'Download failed');
+        toast.error(data?.message || 'Download failed');
       }
     } finally {
       setDownloading(null);
@@ -131,7 +137,11 @@ const DashboardPage = () => {
       if (res.data.isValid) {
         toast.success(`"${file.filename}" passed its check`);
       } else {
-        toast.warning(`"${file.filename}" needs review`);
+        toast.warning(res.data.removed ? `"${file.filename}" failed its check and was removed.` : `"${file.filename}" needs review`);
+        if (res.data.removed) {
+          fetchFiles();
+          fetchExtras();
+        }
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Verification failed');
@@ -187,7 +197,12 @@ const DashboardPage = () => {
       window.open(url, '_blank', 'noopener,noreferrer');
       window.setTimeout(() => window.URL.revokeObjectURL(url), 30000);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Preview failed');
+      const data = await readErrorData(err);
+      toast.error(data?.removed ? `"${file.filename}" failed its check and was removed.` : data?.message || 'Preview failed');
+      if (data?.removed) {
+        fetchFiles();
+        fetchExtras();
+      }
     } finally {
       setPreviewing(null);
     }

@@ -29,6 +29,33 @@ const canPreview = (mimeType = "") => (
   || mimeType.startsWith("text/")
 );
 
+const quarantineUnsafeFile = async (req, file, reason) => {
+  const deletedFile = await repositories.files.markDeleted(file._id, file.owner);
+  try {
+    await deleteEncryptedObject(file.storedName);
+  } catch (storageError) {
+    if (storageError.code !== "FILE_NOT_FOUND") {
+      console.error("Unsafe encrypted object delete failed:", storageError.message);
+    }
+  }
+
+  await recordActivityAudit(req, {
+    action: "file_quarantine",
+    targetType: "file",
+    targetId: file._id,
+  });
+
+  return {
+    deletedFile,
+    response: {
+      message: reason,
+      tampered: true,
+      removed: true,
+      filename: file.filename,
+    },
+  };
+};
+
 const uploadFile = async (req, res) => {
   try {
     if (!req.file) {
@@ -125,25 +152,20 @@ const downloadFile = async (req, res) => {
       currentHash = await hashDecryptedFile(file.storedName);
     } catch (error) {
       if (error.code === "DECRYPTION_FAILED") {
-        return res.status(422).json({
-          message: "This file cannot be opened because its stored copy failed a safety check.",
-          tampered: true,
-          filename: file.filename,
-        });
+        const result = await quarantineUnsafeFile(req, file, "This file failed its safety check and was removed.");
+        return res.status(410).json(result.response);
       }
       if (error.code === "FILE_NOT_FOUND") {
-        return res.status(404).json({ message: "The stored file could not be found." });
+        const result = await quarantineUnsafeFile(req, file, "The stored file was missing and its record was removed.");
+        return res.status(410).json(result.response);
       }
       throw error;
     }
 
     const verification = await verifyHashIntegrity(currentHash, file._id);
     if (!verification.isValid) {
-      return res.status(422).json({
-        message: "This file failed its safety check and cannot be downloaded.",
-        tampered: true,
-        filename: file.filename,
-      });
+      const result = await quarantineUnsafeFile(req, file, "This file failed its safety check and was removed.");
+      return res.status(410).json(result.response);
     }
 
     res.set({
@@ -189,20 +211,22 @@ const verifyFile = async (req, res) => {
       currentHash = await hashDecryptedFile(file.storedName);
     } catch (error) {
       if (error.code === "DECRYPTION_FAILED") {
-        return res.status(200).json({
-          filename: file.filename,
-          isValid: false,
-          tampered: true,
-          message: "This file failed its safety check.",
-        });
+        const result = await quarantineUnsafeFile(req, file, "This file failed its safety check and was removed.");
+        return res.status(200).json({ ...result.response, isValid: false });
       }
       if (error.code === "FILE_NOT_FOUND") {
-        return res.status(404).json({ message: "The stored file could not be found." });
+        const result = await quarantineUnsafeFile(req, file, "The stored file was missing and its record was removed.");
+        return res.status(200).json({ ...result.response, isValid: false });
       }
       throw error;
     }
 
     const verification = await verifyHashIntegrity(currentHash, file._id);
+    if (!verification.isValid) {
+      const result = await quarantineUnsafeFile(req, file, "This file failed its safety check and was removed.");
+      return res.status(200).json({ ...result.response, isValid: false });
+    }
+
     await recordActivityAudit(req, {
       action: "file_verify",
       targetType: "file",
@@ -210,11 +234,10 @@ const verifyFile = async (req, res) => {
     });
     return res.status(200).json({
       filename: file.filename,
-      isValid: verification.isValid,
-      tampered: !verification.isValid,
-      message: verification.isValid
-        ? "File check passed."
-        : "This file failed its safety check.",
+      isValid: true,
+      tampered: false,
+      removed: false,
+      message: "File check passed.",
     });
   } catch (error) {
     console.error("Verify error:", error);
@@ -231,10 +254,24 @@ const previewFile = async (req, res) => {
     if (!(await canAccessFile(file, req.user.id))) return res.status(403).json({ message: "Access denied" });
     if (!canPreview(file.mimeType)) return res.status(415).json({ message: "Preview is not available for this file type." });
 
-    const currentHash = await hashDecryptedFile(file.storedName);
+    let currentHash;
+    try {
+      currentHash = await hashDecryptedFile(file.storedName);
+    } catch (error) {
+      if (error.code === "DECRYPTION_FAILED") {
+        const result = await quarantineUnsafeFile(req, file, "This file failed its safety check and was removed.");
+        return res.status(410).json(result.response);
+      }
+      if (error.code === "FILE_NOT_FOUND") {
+        const result = await quarantineUnsafeFile(req, file, "The stored file was missing and its record was removed.");
+        return res.status(410).json(result.response);
+      }
+      throw error;
+    }
     const verification = await verifyHashIntegrity(currentHash, file._id);
     if (!verification.isValid) {
-      return res.status(422).json({ message: "This file failed its safety check.", tampered: true });
+      const result = await quarantineUnsafeFile(req, file, "This file failed its safety check and was removed.");
+      return res.status(410).json(result.response);
     }
 
     res.set({
