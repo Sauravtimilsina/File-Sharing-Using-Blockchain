@@ -337,15 +337,12 @@ const DashboardPage = () => {
         ))}
       </section>
 
-      <section className="mt-5 grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+      <section className="mt-5 grid items-start gap-4 lg:grid-cols-[1.15fr_0.85fr]">
         <div className="overflow-hidden rounded-[28px] border border-cyan-200/80 bg-slate-950 p-5 text-white shadow-2xl shadow-cyan-950/15 dark:border-cyan-300/15 sm:p-6">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-xs font-bold uppercase text-cyan-300">Integrity Channel</p>
-              <h2 className="mt-2 text-2xl font-semibold">File Check Center</h2>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">
-                This area gives you a fast visual check before you download or share a file.
-              </p>
+              <h2 className="mt-2 text-xl font-semibold">File Check Center</h2>
             </div>
             <span className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-sm font-semibold text-emerald-200">
               <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-300" />
@@ -353,32 +350,21 @@ const DashboardPage = () => {
             </span>
           </div>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-[22px] border border-white/10 bg-white/[0.08] p-4">
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.08] p-3">
               <p className="text-xs text-slate-400">Latest upload</p>
-              <p className="mt-2 truncate text-sm font-semibold">{lastUpload?.filename || 'No file'}</p>
+              <p className="mt-1 truncate text-sm font-semibold">{lastUpload?.filename || 'No file'}</p>
             </div>
-            <div className="rounded-[22px] border border-white/10 bg-white/[0.08] p-4">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.08] p-3">
               <p className="text-xs text-slate-400">Library count</p>
-              <p className="mt-2 text-sm font-semibold">{files.length} file{files.length === 1 ? '' : 's'}</p>
+              <p className="mt-1 text-sm font-semibold">{files.length} file{files.length === 1 ? '' : 's'}</p>
             </div>
-            <div className="rounded-[22px] border border-white/10 bg-white/[0.08] p-4">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.08] p-3">
               <p className="text-xs text-slate-400">Last signal</p>
-              <p className="mt-2 text-sm font-semibold">{lastUpload ? new Date(lastUpload.createdAt).toLocaleDateString() : 'Waiting'}</p>
+              <p className="mt-1 text-sm font-semibold">{lastUpload ? new Date(lastUpload.createdAt).toLocaleDateString() : 'Waiting'}</p>
             </div>
           </div>
 
-          <div className="mt-5 overflow-hidden rounded-[24px] border border-cyan-200/10 bg-black/20 p-4">
-            <div className="flex h-24 items-end gap-2">
-              {[28, 52, 36, 68, 47, 84, 58, 76, 44, 88, 62, 72].map((height, index) => (
-                <span
-                  key={height + index}
-                  className="flex-1 rounded-t-full bg-gradient-to-t from-emerald-400/35 via-cyan-300/75 to-white/90"
-                  style={{ height: `${height}%`, animation: `signalSweep ${10 + index}s ease-in-out infinite alternate` }}
-                />
-              ))}
-            </div>
-          </div>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
             <button
               onClick={() => lastUpload && handleVerify(lastUpload)}
