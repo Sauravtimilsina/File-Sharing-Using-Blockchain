@@ -178,7 +178,7 @@ const ProfilePage = () => {
 
           <div className="mt-6 text-center">
             <h2 className="text-2xl font-semibold text-slate-950 dark:text-white">{profile.fullName || user?.username}</h2>
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-300">{profile.jobTitle || 'Secure workspace member'}</p>
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-300">{profile.jobTitle || 'Team member'}</p>
             <p className="mt-2 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700 dark:border-emerald-300/15 dark:bg-emerald-300/10 dark:text-emerald-100">
               <BadgeCheck className="h-4 w-4" />
               Verified account
@@ -214,7 +214,7 @@ const ProfilePage = () => {
               </span>
               <div>
                 <h2 className="text-xl font-semibold text-slate-950 dark:text-white">Profile details</h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Complete the identity shown in your secure workspace.</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Complete the identity shown in your profile.</p>
               </div>
             </div>
 
