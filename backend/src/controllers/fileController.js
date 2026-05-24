@@ -227,7 +227,13 @@ const getBlockchainStatus = async (req, res) => {
 
     return res.status(200).json({
       status: audit.isValid ? "valid" : "needs_review",
-      ...audit,
+      isValid: audit.isValid,
+      checkedBlocks: audit.checkedBlocks,
+      latestBlock: audit.latestBlock && {
+        index: audit.latestBlock.index,
+        timestamp: audit.latestBlock.timestamp,
+      },
+      issues: audit.issues,
     });
   } catch (error) {
     console.error("Blockchain status error:", error);

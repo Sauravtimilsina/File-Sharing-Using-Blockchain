@@ -20,6 +20,7 @@ Secure File Transfer is an academic web system for encrypted upload, file sharin
 - Tamper verification checks
 - Controlled sharing between users
 - Responsive React interface with light and dark themes
+- Encrypted profile fields stored by the backend
 
 ## Stack
 
@@ -50,9 +51,9 @@ The API controllers call a repository layer. `DB_PROVIDER=supabase` uses the Sup
 
 The Supabase schema lives in the migration set at `supabase/migrations`. It creates `users`, `otps`, `files`, `shares`, and `blocks` tables, enables RLS, keeps browser roles away from those tables because the current app uses its own backend JWT flow, and provisions the private `encrypted-files` Storage bucket.
 
-The browser Supabase publishable key is only needed for future direct frontend Supabase features. The API adapter uses a backend secret key or legacy service-role key and that value must never be exposed in `VITE_*` variables.
+The frontend is a public browser app and talks only to the backend API. Do not place Supabase keys, database URLs, JWT/OTP secrets, SMTP credentials, or `ENCRYPTION_KEY` in `frontend/.env` or any `VITE_*` variable.
 
-The local env files keep Supabase server and browser access separate:
+The backend owns Supabase, storage, mail, JWT, OTP, and encryption configuration:
 
 ```env
 # backend/.env
@@ -65,11 +66,16 @@ SUPABASE_DB_URL=postgresql://postgres:your_database_password@db.your-project-ref
 ```env
 # frontend/.env
 VITE_API_BASE_URL=http://localhost:5000/api
-VITE_SUPABASE_URL=https://your-project-ref.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 ```
 
 `SUPABASE_DB_URL` must be the Postgres connection string, not a Supabase API key.
+
+Profile fields (`fullName`, `jobTitle`, `department`, `phone`, `bio`, and avatar data) are encrypted by the backend before storage. Existing rows can be converted with:
+
+```bash
+cd backend
+npm run encrypt:profiles
+```
 
 ## File Object Storage
 
@@ -96,6 +102,7 @@ Apply the storage migration with `supabase db push` after linking the project, o
 - `SUPABASE_STORAGE_BUCKET`: private Storage bucket used when `FILE_STORAGE_PROVIDER=supabase`
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`: mail transport settings for verification and sharing messages
 - `JWT_SECRET` and `OTP_SECRET`: backend-only random secrets; production startup rejects short placeholder values
+- `ENCRYPTION_KEY`: backend-only 32-byte hex key used for encrypted file objects and encrypted profile fields
 - `VITE_API_BASE_URL`: frontend API base URL
 
 ## Health Checks
