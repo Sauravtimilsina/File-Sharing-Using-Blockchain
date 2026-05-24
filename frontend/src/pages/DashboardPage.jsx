@@ -45,7 +45,6 @@ const DashboardPage = () => {
   const [typeFilter, setTypeFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [chainStatus, setChainStatus] = useState(null);
-  const [chainLoading, setChainLoading] = useState(true);
   const toast = useToast();
 
   const fetchFiles = useCallback(async () => {
@@ -73,14 +72,11 @@ const DashboardPage = () => {
   useEffect(() => { fetchExtras(); }, [fetchExtras]);
 
   const fetchBlockchainStatus = useCallback(async () => {
-    setChainLoading(true);
     try {
       const res = await API.get('/files/blockchain/status');
       setChainStatus(res.data);
     } catch {
       toast.error('Failed to load blockchain status');
-    } finally {
-      setChainLoading(false);
     }
   }, [toast]);
 
@@ -290,178 +286,119 @@ const DashboardPage = () => {
         </div>
       </section>
 
-      <section className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => (
-          <div key={stat.label} className="group rounded-[24px] border border-white/80 bg-white/80 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-white/10 dark:bg-white/[0.06]">
-            <div className="flex items-center justify-between gap-4">
+      <section className="mt-5 overflow-hidden rounded-[34px] border border-white/80 bg-white/86 shadow-2xl shadow-slate-950/8 dark:border-white/10 dark:bg-slate-900/82">
+        <div className="grid gap-0 xl:grid-cols-[1fr_360px]">
+          <div className="bg-slate-950 p-6 text-white sm:p-7">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{stat.label}</p>
-                <p className="mt-2 text-3xl font-semibold text-slate-950 dark:text-white">{stat.value}</p>
+                <p className="text-xs font-bold uppercase text-cyan-300">Integrity Channel</p>
+                <h2 className="mt-2 text-2xl font-semibold sm:text-3xl">File Check Center</h2>
               </div>
-              <div className={`grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br ${stat.tone} text-white shadow-lg transition group-hover:scale-105`}>
-                <stat.icon className="h-6 w-6" />
-              </div>
-            </div>
-          </div>
-        ))}
-      </section>
-
-      <section className="mt-5 grid items-start gap-4 xl:grid-cols-[1fr_1.45fr_1fr]">
-        <div className="grid gap-4">
-          <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-bold uppercase text-emerald-700 dark:text-emerald-300">Format map</p>
-                <h2 className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">Stored types</h2>
-              </div>
-              <LockKeyhole className="h-5 w-5 text-emerald-500" />
-            </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {(extensionSignals.length ? extensionSignals : [['NONE', 0]]).map(([extension, count]) => (
-                <span key={extension} className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800 dark:border-emerald-300/15 dark:bg-emerald-300/10 dark:text-emerald-100">
-                  {extension} / {count}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
-            <p className="text-xs font-bold uppercase text-cyan-700 dark:text-cyan-300">Recent assets</p>
-            <div className="mt-4 space-y-2">
-              {(recentFiles.length ? recentFiles : [{ _id: 'empty', filename: 'No files captured', createdAt: null }]).map((file) => (
-                <div key={file._id} className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/70 p-2.5 dark:border-white/10 dark:bg-slate-950/45">
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-cyan-50 dark:bg-cyan-300/10">
-                    <FileTypeIcon filename={file.filename} className="h-4 w-4" />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{file.filename}</p>
-                    <p className="text-xs text-slate-400">{file.createdAt ? new Date(file.createdAt).toLocaleDateString() : 'Waiting for upload'}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-[32px] border border-cyan-200/70 bg-slate-950 p-6 text-white shadow-xl shadow-cyan-950/15 dark:border-cyan-300/15">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold uppercase text-cyan-300">Integrity Channel</p>
-              <h2 className="mt-1 text-2xl font-semibold">File Check Center</h2>
-            </div>
-            <span className="inline-flex shrink-0 items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-xs font-semibold text-emerald-200">
-              <span className="h-2 w-2 rounded-full bg-emerald-300" />
-              Live
-            </span>
-          </div>
-
-          <div className="mt-5 overflow-hidden rounded-[24px] border border-cyan-200/10 bg-white/[0.06] p-4">
-            <div className="flex h-32 items-end gap-2">
-              {[28, 52, 36, 68, 47, 84, 58, 76, 44, 88, 62, 72].map((height, index) => (
-                <span
-                  key={height + index}
-                  className="flex-1 rounded-t-full bg-gradient-to-t from-emerald-400/35 via-cyan-300/75 to-white/90"
-                  style={{ height: `${height}%`, animation: `signalSweep ${10 + index}s ease-in-out infinite alternate` }}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.08] p-3">
-              <p className="text-xs text-slate-400">Latest upload</p>
-              <p className="mt-1 truncate text-sm font-semibold">{lastUpload?.filename || 'No file selected'}</p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.08] p-3">
-              <p className="text-xs text-slate-400">Library</p>
-              <p className="mt-1 text-sm font-semibold">{files.length} file{files.length === 1 ? '' : 's'}</p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.08] p-3">
-              <p className="text-xs text-slate-400">Ledger</p>
-              <p className="mt-1 text-sm font-semibold">{chainStatus?.status === 'valid' ? 'Verified' : 'Checking'}</p>
-            </div>
-          </div>
-
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-            <button
-              onClick={() => lastUpload && handleVerify(lastUpload)}
-              disabled={!lastUpload || verifying === lastUpload?._id}
-              className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {verifying === lastUpload?._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
-              Check latest file
-            </button>
-            <Link to="/shared" className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/[0.08] px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/[0.14]">
-              Shared files
-              <ArrowUpRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-
-        <div className="grid gap-4">
-          <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
-            <p className="text-xs font-bold uppercase text-fuchsia-700 dark:text-fuchsia-300">Shared by me</p>
-            <div className="mt-4 space-y-2">
-              {(myShares.length ? myShares.slice(0, 4) : [{ _id: 'empty-share', fileId: { filename: 'No active shares' } }]).map((share) => (
-                <div key={share._id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white/70 p-2.5 dark:border-white/10 dark:bg-slate-950/45">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{share.fileId?.filename || 'Shared file'}</p>
-                    <p className="text-xs text-slate-400">{share.expiresAt ? `Expires ${new Date(share.expiresAt).toLocaleDateString()}` : 'No expiry'}</p>
-                  </div>
-                  {share._id !== 'empty-share' && (
-                    <button onClick={() => handleRevokeShare(share)} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-danger transition hover:bg-danger/10" title="Revoke share">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-bold uppercase text-sky-700 dark:text-sky-300">Blockchain ledger</p>
-                <h2 className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">
-                  {chainStatus?.status === 'valid' ? 'Chain verified' : chainStatus ? 'Review needed' : 'Checking chain'}
-                </h2>
-              </div>
-              <span className={`grid h-10 w-10 place-items-center rounded-2xl ${
-                chainStatus?.status === 'valid'
-                  ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-400/10 dark:text-emerald-200'
-                  : 'bg-amber-50 text-amber-600 dark:bg-amber-400/10 dark:text-amber-200'
-              }`}>
-                {chainLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <FileCheck2 className="h-5 w-5" />}
+              <span className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-xs font-semibold text-emerald-200">
+                <span className="h-2 w-2 rounded-full bg-emerald-300" />
+                Live verification
               </span>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <div className="rounded-2xl border border-slate-200/80 bg-white/70 p-3 dark:border-white/10 dark:bg-slate-950/45">
-                <p className="text-xs text-slate-400">Blocks</p>
-                <p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{chainStatus?.checkedBlocks ?? '-'}</p>
-              </div>
-              <div className="rounded-2xl border border-slate-200/80 bg-white/70 p-3 dark:border-white/10 dark:bg-slate-950/45">
-                <p className="text-xs text-slate-400">Issues</p>
-                <p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{chainStatus?.issues?.length ?? '-'}</p>
+            <div className="mt-6 rounded-[28px] border border-cyan-200/10 bg-white/[0.06] p-4 sm:p-5">
+              <div className="relative h-56 overflow-hidden rounded-[22px] bg-slate-900/70">
+                <div className="absolute inset-x-0 bottom-0 top-6 grid grid-rows-4">
+                  {[0, 1, 2, 3].map((line) => (
+                    <span key={line} className="border-t border-white/8" />
+                  ))}
+                </div>
+                <svg className="absolute inset-0 h-full w-full" viewBox="0 0 640 224" preserveAspectRatio="none" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="integrityLine" x1="0" x2="1" y1="0" y2="0">
+                      <stop offset="0%" stopColor="#22d3ee" />
+                      <stop offset="55%" stopColor="#34d399" />
+                      <stop offset="100%" stopColor="#f8fafc" />
+                    </linearGradient>
+                    <linearGradient id="integrityFill" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.35" />
+                      <stop offset="100%" stopColor="#22d3ee" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M0 168 C58 132 88 152 132 112 C178 70 220 94 262 78 C306 60 338 120 382 96 C430 70 454 42 506 62 C560 82 592 50 640 28 L640 224 L0 224 Z" fill="url(#integrityFill)" />
+                  <path d="M0 168 C58 132 88 152 132 112 C178 70 220 94 262 78 C306 60 338 120 382 96 C430 70 454 42 506 62 C560 82 592 50 640 28" fill="none" stroke="url(#integrityLine)" strokeWidth="5" strokeLinecap="round" />
+                </svg>
+                <div className="absolute bottom-4 left-4 right-4 grid grid-cols-3 gap-2">
+                  <div className="rounded-2xl border border-white/10 bg-slate-950/65 px-3 py-2 backdrop-blur">
+                    <p className="text-[11px] text-slate-400">Latest file</p>
+                    <p className="truncate text-sm font-semibold">{lastUpload?.filename || 'No file selected'}</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-slate-950/65 px-3 py-2 backdrop-blur">
+                    <p className="text-[11px] text-slate-400">Ledger</p>
+                    <p className="text-sm font-semibold">{chainStatus?.status === 'valid' ? 'Verified' : 'Checking'}</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-slate-950/65 px-3 py-2 backdrop-blur">
+                    <p className="text-[11px] text-slate-400">Issues</p>
+                    <p className="text-sm font-semibold">{chainStatus?.issues?.length ?? 0}</p>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="mt-3 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-3 dark:border-white/10 dark:bg-slate-950/45">
-              <p className="text-xs text-slate-400">Latest block</p>
-              <p className="mt-1 truncate text-sm font-semibold text-slate-950 dark:text-white">
-                {chainStatus?.latestBlock ? `#${chainStatus.latestBlock.index} / ${new Date(chainStatus.latestBlock.timestamp).toLocaleDateString()}` : 'No blocks yet'}
-              </p>
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <button
+                onClick={() => lastUpload && handleVerify(lastUpload)}
+                disabled={!lastUpload || verifying === lastUpload?._id}
+                className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {verifying === lastUpload?._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                Check latest file
+              </button>
+              <Link to="/shared" className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/[0.08] px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/[0.14]">
+                Shared files
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
             </div>
-
-            <button
-              onClick={fetchBlockchainStatus}
-              disabled={chainLoading}
-              className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white/80 px-4 text-sm font-semibold text-slate-700 transition hover:border-sky-200 hover:text-sky-800 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-100 dark:hover:text-sky-200"
-            >
-              {chainLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
-              Refresh ledger
-            </button>
           </div>
+
+          <aside className="p-5 sm:p-6">
+            <div className="grid gap-3">
+              {stats.map((stat) => (
+                <div key={stat.label} className="flex items-center justify-between gap-4 rounded-[22px] border border-slate-200/80 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.06]">
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-slate-400">{stat.label}</p>
+                    <p className="mt-1 text-2xl font-semibold text-slate-950 dark:text-white">{stat.value}</p>
+                  </div>
+                  <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br ${stat.tone} text-white shadow-lg`}>
+                    <stat.icon className="h-5 w-5" />
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 rounded-[22px] border border-slate-200/80 bg-slate-50/80 p-4 dark:border-white/10 dark:bg-slate-950/45">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <p className="text-xs font-bold uppercase text-emerald-700 dark:text-emerald-300">Workspace Signals</p>
+                <LockKeyhole className="h-4 w-4 text-emerald-500" />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {(extensionSignals.length ? extensionSignals : [['NONE', 0]]).map(([extension, count]) => (
+                  <span key={extension} className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800 dark:border-emerald-300/15 dark:bg-emerald-300/10 dark:text-emerald-100">
+                    {extension} / {count}
+                  </span>
+                ))}
+              </div>
+              <div className="mt-4 space-y-2">
+                {(myShares.length ? myShares.slice(0, 2) : [{ _id: 'empty-share', fileId: { filename: 'No active shares' } }]).map((share) => (
+                  <div key={share._id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white/70 p-2.5 dark:border-white/10 dark:bg-slate-950/45">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{share.fileId?.filename || 'Shared file'}</p>
+                      <p className="text-xs text-slate-400">{share.expiresAt ? `Expires ${new Date(share.expiresAt).toLocaleDateString()}` : 'No expiry'}</p>
+                    </div>
+                    {share._id !== 'empty-share' && (
+                      <button onClick={() => handleRevokeShare(share)} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-danger transition hover:bg-danger/10" title="Revoke share">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </aside>
         </div>
       </section>
 
