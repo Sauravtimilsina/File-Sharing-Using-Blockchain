@@ -1,4 +1,4 @@
-const { v4: uuidv4 } = require("uuid");
+const crypto = require("crypto");
 const fs = require("fs/promises");
 const path = require("path");
 const repositories = require("../repositories");
@@ -68,7 +68,7 @@ const uploadFile = async (req, res) => {
     }
 
     const ext = path.extname(originalName);
-    const storedName = `${uuidv4()}${ext}.enc`;
+    const storedName = `${crypto.randomUUID()}${ext}.enc`;
     const fileHash = await generateHashFromPath(req.file.path);
 
     await encryptFileFromPath(req.file.path, storedName);
