@@ -5,6 +5,7 @@ import { useToast } from './toastContext';
 
 const ShareModal = ({ file, onClose, onShared }) => {
   const [email, setEmail] = useState('');
+  const [expiresIn, setExpiresIn] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -16,7 +17,7 @@ const ShareModal = ({ file, onClose, onShared }) => {
     setSuccess('');
     setLoading(true);
     try {
-      await API.post('/share/file', { fileId: file._id, sharedWithEmail: email });
+      await API.post('/share/file', { fileId: file._id, sharedWithEmail: email, expiresIn: expiresIn || undefined });
       setSuccess(`File shared with ${email} successfully!`);
       toast.success(`File shared with ${email}`);
       setEmail('');
@@ -43,6 +44,19 @@ const ShareModal = ({ file, onClose, onShared }) => {
               <h3 className="text-xl font-semibold text-slate-950 dark:text-white">Share file</h3>
               <p className="truncate text-sm text-slate-500 dark:text-slate-400">{file?.filename}</p>
             </div>
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Access expiry</label>
+            <select
+              value={expiresIn}
+              onChange={(event) => setExpiresIn(event.target.value)}
+              className="w-full rounded-2xl border border-slate-200 bg-white/90 px-4 py-3.5 text-sm text-slate-950 shadow-sm outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/10 dark:border-white/10 dark:bg-slate-950/80 dark:text-white dark:focus:border-cyan-300"
+            >
+              <option value="">No expiry</option>
+              <option value="1h">1 hour</option>
+              <option value="1d">1 day</option>
+              <option value="7d">7 days</option>
+            </select>
           </div>
           <button onClick={onClose} className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-white" title="Close share dialog">
             <X className="h-5 w-5" />

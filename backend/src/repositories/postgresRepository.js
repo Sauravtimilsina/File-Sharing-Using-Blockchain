@@ -36,13 +36,14 @@ const mapUser = (user) => user && ({
 const mapFile = (file) => file && ({
   _id: file.id,
   owner: file.owner_id,
-  filename: file.filename,
+  filename: decryptField(file.filename),
   storedName: file.stored_name,
   hash: file.hash,
   fileSize: Number(file.file_size || 0),
-  mimeType: file.mime_type,
+  mimeType: decryptField(file.mime_type),
   createdAt: file.created_at,
   updatedAt: file.updated_at,
+  deletedAt: file.deleted_at,
 });
 
 const mapShare = (share) => share && ({
@@ -50,9 +51,9 @@ const mapShare = (share) => share && ({
   fileId: share.file_id_filename
     ? {
       _id: share.file_id,
-      filename: share.file_id_filename,
+      filename: decryptField(share.file_id_filename),
       fileSize: Number(share.file_id_file_size || 0),
-      mimeType: share.file_id_mime_type,
+      mimeType: decryptField(share.file_id_mime_type),
     }
     : share.file_id,
   owner: share.owner_username
@@ -62,6 +63,8 @@ const mapShare = (share) => share && ({
     }
     : share.owner_id,
   sharedWith: share.shared_with_id,
+  expiresAt: share.expires_at,
+  revokedAt: share.revoked_at,
   createdAt: share.created_at,
   updatedAt: share.updated_at,
 });
@@ -72,6 +75,8 @@ const mapBlock = (block) => block && ({
   fileId: block.file_id,
   fileHash: block.file_hash,
   previousHash: block.previous_hash,
+  blockHash: block.block_hash,
+  previousBlockHash: block.previous_block_hash,
   timestamp: block.timestamp,
 });
 
@@ -234,28 +239,75 @@ module.exports = {
       `insert into public.files (owner_id, filename, stored_name, hash, file_size, mime_type)
        values ($1, $2, $3, $4, $5, $6)
        returning *`,
-      [input.owner, input.filename, input.storedName, input.hash, input.fileSize, input.mimeType],
+      [input.owner, encryptField(input.filename), input.storedName, input.hash, input.fileSize, encryptField(input.mimeType)],
     )),
     findByOwner: async (owner) => (await many(
-      "select * from public.files where owner_id = $1 order by created_at desc limit 200",
+      "select * from public.files where owner_id = $1 and deleted_at is null order by created_at desc limit 200",
       [owner],
     )).map(mapFile),
     findById: async (id) => mapFile(await one(
-      "select * from public.files where id = $1 limit 1",
+      "select * from public.files where id = $1 and deleted_at is null limit 1",
       [id],
+    )),
+    updateFilename: async (id, filename) => mapFile(await one(
+      `update public.files
+       set filename = $2, updated_at = now()
+       where id = $1 and deleted_at is null
+       returning *`,
+      [id, encryptField(filename)],
+    )),
+    markDeleted: async (id, userId) => mapFile(await one(
+      `update public.files
+       set deleted_at = now(), deleted_by = $2, updated_at = now()
+       where id = $1 and deleted_at is null
+       returning *`,
+      [id, userId],
     )),
   },
   shares: {
+    findById: async (id) => mapShare(await one(
+      "select * from public.shares where id = $1 limit 1",
+      [id],
+    )),
     findByFileAndRecipient: async (fileId, sharedWith) => mapShare(await one(
-      "select * from public.shares where file_id = $1 and shared_with_id = $2 limit 1",
+      `select * from public.shares
+       where file_id = $1
+         and shared_with_id = $2
+         and revoked_at is null
+         and (expires_at is null or expires_at > now())
+       limit 1`,
       [fileId, sharedWith],
     )),
     create: async (input) => mapShare(await one(
-      `insert into public.shares (file_id, owner_id, shared_with_id)
-       values ($1, $2, $3)
+      `insert into public.shares (file_id, owner_id, shared_with_id, expires_at)
+       values ($1, $2, $3, $4)
        returning *`,
-      [input.fileId, input.owner, input.sharedWith],
+      [input.fileId, input.owner, input.sharedWith, input.expiresAt || null],
     )),
+    revoke: async (shareId, ownerId) => mapShare(await one(
+      `update public.shares
+       set revoked_at = now(), revoked_by = $2, updated_at = now()
+       where id = $1 and owner_id = $2 and revoked_at is null
+       returning *`,
+      [shareId, ownerId],
+    )),
+    findSentByOwner: async (ownerId) => (await many(
+      `select
+         shares.*,
+         files.filename as file_id_filename,
+         files.file_size as file_id_file_size,
+         files.mime_type as file_id_mime_type,
+         users.username as owner_username
+       from public.shares
+       join public.files on files.id = shares.file_id
+       join public.users on users.id = shares.owner_id
+       where shares.owner_id = $1
+         and shares.revoked_at is null
+         and files.deleted_at is null
+       order by shares.created_at desc
+       limit 200`,
+      [ownerId],
+    )).map(mapShare),
     findReceivedByUser: async (sharedWith) => (await many(
       `select
          shares.*,
@@ -267,8 +319,11 @@ module.exports = {
        join public.files on files.id = shares.file_id
        join public.users on users.id = shares.owner_id
        where shares.shared_with_id = $1
+         and shares.revoked_at is null
+         and (shares.expires_at is null or shares.expires_at > now())
+         and files.deleted_at is null
        order by shares.created_at desc
-       limit 200`,
+      limit 200`,
       [sharedWith],
     )).map(mapShare),
   },
@@ -277,10 +332,10 @@ module.exports = {
       "select * from public.blocks order by block_index desc limit 1",
     )),
     create: async (input) => mapBlock(await one(
-      `insert into public.blocks (block_index, file_id, file_hash, previous_hash, timestamp)
-       values ($1, $2, $3, $4, $5)
+      `insert into public.blocks (block_index, file_id, file_hash, previous_hash, timestamp, block_hash, previous_block_hash)
+       values ($1, $2, $3, $4, $5, $6, $7)
        returning *`,
-      [input.index, input.fileId, input.fileHash, input.previousHash, input.timestamp],
+      [input.index, input.fileId, input.fileHash, input.previousHash, input.timestamp, input.blockHash, input.previousBlockHash],
     )),
     findByFileId: async (fileId) => mapBlock(await one(
       "select * from public.blocks where file_id = $1 limit 1",
@@ -306,5 +361,19 @@ module.exports = {
        values ($1, $2, $3, $4, $5, $6)`,
       [input.actorId, input.action, input.targetType, input.targetId, input.ipAddress, input.userAgent],
     ),
+    findRecentByActor: async (actorId, limit = 30) => (await many(
+      `select id, action, target_type, target_id, created_at
+       from public.activity_audit_logs
+       where actor_id = $1
+       order by created_at desc
+       limit $2`,
+      [actorId, limit],
+    )).map((log) => ({
+      _id: log.id,
+      action: log.action,
+      targetType: log.target_type,
+      targetId: log.target_id,
+      createdAt: log.created_at,
+    })),
   },
 };

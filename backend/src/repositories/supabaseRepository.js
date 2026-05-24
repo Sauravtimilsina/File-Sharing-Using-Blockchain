@@ -31,13 +31,14 @@ const mapUser = (user) => user && ({
 const mapFile = (file) => file && ({
   _id: file.id,
   owner: file.owner_id,
-  filename: file.filename,
+  filename: decryptField(file.filename),
   storedName: file.stored_name,
   hash: file.hash,
   fileSize: Number(file.file_size || 0),
-  mimeType: file.mime_type,
+  mimeType: decryptField(file.mime_type),
   createdAt: file.created_at,
   updatedAt: file.updated_at,
+  deletedAt: file.deleted_at,
 });
 
 const mapShare = (share, file, owner) => share && ({
@@ -45,9 +46,9 @@ const mapShare = (share, file, owner) => share && ({
   fileId: file
     ? {
       _id: file.id,
-      filename: file.filename,
+      filename: decryptField(file.filename),
       fileSize: Number(file.file_size || 0),
-      mimeType: file.mime_type,
+      mimeType: decryptField(file.mime_type),
     }
     : share.file_id,
   owner: owner
@@ -57,6 +58,8 @@ const mapShare = (share, file, owner) => share && ({
     }
     : share.owner_id,
   sharedWith: share.shared_with_id,
+  expiresAt: share.expires_at,
+  revokedAt: share.revoked_at,
   createdAt: share.created_at,
   updatedAt: share.updated_at,
 });
@@ -67,6 +70,8 @@ const mapBlock = (block) => block && ({
   fileId: block.file_id,
   fileHash: block.file_hash,
   previousHash: block.previous_hash,
+  blockHash: block.block_hash,
+  previousBlockHash: block.previous_block_hash,
   timestamp: block.timestamp,
 });
 
@@ -230,11 +235,11 @@ module.exports = {
       .from("files")
       .insert({
         owner_id: input.owner,
-        filename: input.filename,
+        filename: encryptField(input.filename),
         stored_name: input.storedName,
         hash: input.hash,
         file_size: input.fileSize,
-        mime_type: input.mimeType,
+        mime_type: encryptField(input.mimeType),
       })
       .select("*")
       .single())),
@@ -242,13 +247,44 @@ module.exports = {
       .from("files")
       .select("*")
       .eq("owner_id", owner)
+      .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(200)).map(mapFile),
-    findById: async (id) => mapFile(await singleOrNull(supabase.from("files").select("*").eq("id", id))),
+    findById: async (id) => mapFile(await singleOrNull(supabase.from("files").select("*").eq("id", id).is("deleted_at", null))),
+    updateFilename: async (id, filename) => mapFile(failOnError(await supabase
+      .from("files")
+      .update({
+        filename: encryptField(filename),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .is("deleted_at", null)
+      .select("*")
+      .single())),
+    markDeleted: async (id, userId) => mapFile(failOnError(await supabase
+      .from("files")
+      .update({
+        deleted_at: new Date().toISOString(),
+        deleted_by: userId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .is("deleted_at", null)
+      .select("*")
+      .single())),
   },
   shares: {
+    findById: async (id) => mapShare(await singleOrNull(
+      supabase.from("shares").select("*").eq("id", id),
+    )),
     findByFileAndRecipient: async (fileId, sharedWith) => mapShare(await singleOrNull(
-      supabase.from("shares").select("*").eq("file_id", fileId).eq("shared_with_id", sharedWith),
+      supabase
+        .from("shares")
+        .select("*")
+        .eq("file_id", fileId)
+        .eq("shared_with_id", sharedWith)
+        .is("revoked_at", null)
+        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`),
     )),
     create: async (input) => mapShare(failOnError(await supabase
       .from("shares")
@@ -256,28 +292,68 @@ module.exports = {
         file_id: input.fileId,
         owner_id: input.owner,
         shared_with_id: input.sharedWith,
+        expires_at: input.expiresAt || null,
       })
       .select("*")
       .single())),
-    findReceivedByUser: async (sharedWith) => {
+    revoke: async (shareId, ownerId) => mapShare(failOnError(await supabase
+      .from("shares")
+      .update({
+        revoked_at: new Date().toISOString(),
+        revoked_by: ownerId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", shareId)
+      .eq("owner_id", ownerId)
+      .is("revoked_at", null)
+      .select("*")
+      .single())),
+    findSentByOwner: async (ownerId) => {
       const shares = failOnError(await supabase
         .from("shares")
         .select("*")
-        .eq("shared_with_id", sharedWith)
+        .eq("owner_id", ownerId)
+        .is("revoked_at", null)
         .order("created_at", { ascending: false })
         .limit(200));
 
       if (!shares.length) return [];
 
       const [files, owners] = await Promise.all([
-        supabase.from("files").select("id,filename,file_size,mime_type").in("id", shares.map((share) => share.file_id)),
+        supabase.from("files").select("id,filename,file_size,mime_type").in("id", shares.map((share) => share.file_id)).is("deleted_at", null),
         supabase.from("users").select("id,username").in("id", shares.map((share) => share.owner_id)),
       ]);
 
       const filesById = new Map(failOnError(files).map((file) => [file.id, file]));
       const ownersById = new Map(failOnError(owners).map((owner) => [owner.id, owner]));
 
-      return shares.map((share) => mapShare(share, filesById.get(share.file_id), ownersById.get(share.owner_id)));
+      return shares
+        .filter((share) => filesById.has(share.file_id))
+        .map((share) => mapShare(share, filesById.get(share.file_id), ownersById.get(share.owner_id)));
+    },
+    findReceivedByUser: async (sharedWith) => {
+      const shares = failOnError(await supabase
+        .from("shares")
+        .select("*")
+        .eq("shared_with_id", sharedWith)
+        .is("revoked_at", null)
+        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
+        .order("created_at", { ascending: false })
+        .limit(200));
+
+      if (!shares.length) return [];
+
+      const [files, owners] = await Promise.all([
+        supabase.from("files").select("id,filename,file_size,mime_type").in("id", shares.map((share) => share.file_id)).is("deleted_at", null),
+        supabase.from("users").select("id,username").in("id", shares.map((share) => share.owner_id)),
+      ]);
+
+      const filesById = new Map(failOnError(files).map((file) => [file.id, file]));
+      const ownersById = new Map(failOnError(owners).map((owner) => [owner.id, owner]));
+
+      return shares
+        .filter((share) => filesById.has(share.file_id))
+        .map((share) => mapShare(share, filesById.get(share.file_id), ownersById.get(share.owner_id)));
     },
   },
   blocks: {
@@ -291,6 +367,8 @@ module.exports = {
         file_id: input.fileId,
         file_hash: input.fileHash,
         previous_hash: input.previousHash,
+        block_hash: input.blockHash,
+        previous_block_hash: input.previousBlockHash,
         timestamp: input.timestamp,
       })
       .select("*")
@@ -322,6 +400,18 @@ module.exports = {
       target_id: input.targetId,
       ip_address: input.ipAddress,
       user_agent: input.userAgent,
+    })),
+    findRecentByActor: async (actorId, limit = 30) => failOnError(await supabase
+      .from("activity_audit_logs")
+      .select("id,action,target_type,target_id,created_at")
+      .eq("actor_id", actorId)
+      .order("created_at", { ascending: false })
+      .limit(limit)).map((log) => ({
+      _id: log.id,
+      action: log.action,
+      targetType: log.target_type,
+      targetId: log.target_id,
+      createdAt: log.created_at,
     })),
   },
 };

@@ -47,6 +47,18 @@ const saveEncryptedObject = async (storedName, sourcePath) => {
   await fsPromises.copyFile(sourcePath, getLocalPath(storedName));
 };
 
+const deleteEncryptedObject = async (storedName) => {
+  assertSafeStoredName(storedName);
+
+  if (runtimeConfig.storage.provider === "supabase") {
+    const { error } = await getSupabaseStorage().remove([storedName]);
+    if (error) throw error;
+    return;
+  }
+
+  await fsPromises.rm(getLocalPath(storedName), { force: true });
+};
+
 const readEncryptedObject = async (storedName) => {
   assertSafeStoredName(storedName);
 
@@ -80,6 +92,7 @@ const uploadLocalEncryptedObject = async (storedName) => {
 module.exports = {
   assertSafeStoredName,
   createEncryptedReadStream,
+  deleteEncryptedObject,
   getLocalPath,
   readEncryptedObject,
   saveEncryptedObject,

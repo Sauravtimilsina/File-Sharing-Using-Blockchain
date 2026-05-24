@@ -6,6 +6,7 @@ const {
   register,
   login,
   getMe,
+  getMyActivity,
   verifyOTP,
   resendOTP,
   requestPasswordReset,
@@ -64,6 +65,7 @@ router.post("/reset-password", authLimiter, resetPassword);
 
 
 router.get("/me", auth, getMe);
+router.get("/activity", auth, getMyActivity);
 router.put("/profile", auth, updateProfile);
 router.put("/profile/avatar", auth, handleAvatarUpload, updateAvatar);
 router.put("/change-password", auth, changePassword);
