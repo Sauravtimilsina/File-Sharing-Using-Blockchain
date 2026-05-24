@@ -1,6 +1,6 @@
 # Hi, I'm Saurav Timilsina
 
-I am a software developer focused on secure web applications, backend systems, and practical cybersecurity projects.
+I am a final-year student building academic projects in secure web applications, backend systems, and practical cybersecurity.
 
 ## Featured Project
 
@@ -12,7 +12,7 @@ A full-stack file-sharing system with encrypted uploads, OTP authentication, con
 - Stack: React, Vite, Node.js, Express, Supabase Postgres, Supabase Storage
 - Security: JWT, bcrypt, AES-256-CBC, SHA-256, OTP verification
 
-## What I Work With
+## Areas I Have Worked With
 
 - Frontend: React, Vite, Tailwind CSS
 - Backend: Node.js, Express
@@ -22,10 +22,11 @@ A full-stack file-sharing system with encrypted uploads, OTP authentication, con
 
 ## Current Focus
 
-- Building secure and maintainable full-stack applications
+- Completing and improving my final-year academic project
+- Learning secure full-stack application development
 - Improving backend architecture and database design
-- Learning deeper cybersecurity practices for real-world web systems
-- Publishing clean, well-documented GitHub projects
+- Understanding practical cybersecurity concepts through projects
+- Publishing clean, well-documented academic work on GitHub
 
 ## Connect
 
