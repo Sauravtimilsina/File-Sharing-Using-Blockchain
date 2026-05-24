@@ -7,14 +7,12 @@ import { useToast } from '../components/toastContext';
 import {
   AlertTriangle,
   ArrowUpRight,
-  CalendarDays,
   CheckCircle2,
   Download,
   Eye,
   FileCheck2,
   Filter,
   Fingerprint,
-  HardDrive,
   LayoutGrid,
   List,
   LockKeyhole,
@@ -41,7 +39,6 @@ const DashboardPage = () => {
   const [deleting, setDeleting] = useState(null);
   const [renaming, setRenaming] = useState(null);
   const [previewing, setPreviewing] = useState(null);
-  const [activity, setActivity] = useState([]);
   const [myShares, setMyShares] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [view, setView] = useState(() => localStorage.getItem('fileView') || 'grid');
@@ -66,14 +63,10 @@ const DashboardPage = () => {
 
   const fetchExtras = useCallback(async () => {
     try {
-      const [activityRes, sharesRes] = await Promise.all([
-        API.get('/auth/activity'),
-        API.get('/share/my-shares'),
-      ]);
-      setActivity(activityRes.data.activity || []);
+      const sharesRes = await API.get('/share/my-shares');
       setMyShares(sharesRes.data.shares || []);
     } catch {
-      toast.error('Failed to load activity details');
+      toast.error('Failed to load sharing details');
     }
   }, [toast]);
 
@@ -237,20 +230,12 @@ const DashboardPage = () => {
       return new Date(b.createdAt) - new Date(a.createdAt);
     });
   const lastUpload = recentFiles[0];
-  const largestFile = [...files].sort((a, b) => Number(b.fileSize || 0) - Number(a.fileSize || 0))[0];
-
   const stats = [
     { label: 'My files', value: files.length, icon: Package, tone: 'from-sky-500 to-cyan-400' },
     { label: 'Stored data', value: formatSize(files.reduce((total, file) => total + Number(file.fileSize || 0), 0)), icon: ShieldCheck, tone: 'from-emerald-500 to-lime-400' },
     { label: 'File formats', value: Object.keys(extensionCounts).length, icon: Signal, tone: 'from-cyan-500 to-blue-500' },
     { label: 'Sharing', value: 'Ready', icon: Users, tone: 'from-fuchsia-500 to-rose-400' },
   ];
-  const quickInsights = [
-    { label: 'Newest file', value: lastUpload?.filename || 'No upload yet', icon: CalendarDays },
-    { label: 'Largest file', value: largestFile ? `${largestFile.filename} / ${formatSize(largestFile.fileSize)}` : 'No file yet', icon: HardDrive },
-    { label: 'Ledger state', value: chainStatus?.status === 'valid' ? 'Verified' : chainStatus ? 'Needs review' : 'Checking', icon: FileCheck2 },
-  ];
-
   if (loading) {
     return (
       <div className="flex min-h-[70vh] items-center justify-center">
@@ -321,66 +306,9 @@ const DashboardPage = () => {
         ))}
       </section>
 
-      <section className="mt-5 grid gap-4 md:grid-cols-3">
-        {quickInsights.map((item) => (
-          <div key={item.label} className="rounded-[24px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
-            <div className="flex items-center gap-3">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-slate-950 text-white dark:bg-white dark:text-slate-950">
-                <item.icon className="h-5 w-5" />
-              </span>
-              <div className="min-w-0">
-                <p className="text-xs font-bold uppercase text-slate-400">{item.label}</p>
-                <p className="mt-1 truncate text-sm font-semibold text-slate-950 dark:text-white" title={item.value}>{item.value}</p>
-              </div>
-            </div>
-          </div>
-        ))}
-      </section>
-
-      <section className="mt-5 grid items-start gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <div className="rounded-[28px] border border-cyan-200/70 bg-slate-950 p-5 text-white shadow-sm dark:border-cyan-300/15 md:col-span-2">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold uppercase text-cyan-300">Integrity Channel</p>
-              <h2 className="mt-1 text-lg font-semibold">File Check Center</h2>
-            </div>
-            <span className="inline-flex shrink-0 items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-xs font-semibold text-emerald-200">
-              <span className="h-2 w-2 rounded-full bg-emerald-300" />
-              Live
-            </span>
-          </div>
-
-          <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_0.85fr] sm:items-end">
-            <div className="overflow-hidden rounded-2xl border border-cyan-200/10 bg-white/[0.06] p-3">
-              <div className="flex h-20 items-end gap-1.5">
-                {[28, 52, 36, 68, 47, 84, 58, 76, 44, 88, 62, 72].map((height, index) => (
-                  <span
-                    key={height + index}
-                    className="flex-1 rounded-t-full bg-gradient-to-t from-emerald-400/35 via-cyan-300/75 to-white/90"
-                    style={{ height: `${height}%`, animation: `signalSweep ${10 + index}s ease-in-out infinite alternate` }}
-                  />
-                ))}
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <p className="truncate text-sm font-semibold">{lastUpload?.filename || 'No file selected'}</p>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <span className="rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-2 text-slate-300">{files.length} file{files.length === 1 ? '' : 's'}</span>
-                <span className="rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-2 text-slate-300">{chainStatus?.status === 'valid' ? 'Verified' : 'Checking'}</span>
-              </div>
-              <button
-                onClick={() => lastUpload && handleVerify(lastUpload)}
-                disabled={!lastUpload || verifying === lastUpload?._id}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {verifying === lastUpload?._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
-                Check latest file
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
+      <section className="mt-5 grid items-start gap-4 xl:grid-cols-[1fr_1.45fr_1fr]">
+        <div className="grid gap-4">
+          <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-bold uppercase text-emerald-700 dark:text-emerald-300">Format map</p>
@@ -413,7 +341,64 @@ const DashboardPage = () => {
               ))}
             </div>
           </div>
+        </div>
 
+        <div className="rounded-[32px] border border-cyan-200/70 bg-slate-950 p-6 text-white shadow-xl shadow-cyan-950/15 dark:border-cyan-300/15">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase text-cyan-300">Integrity Channel</p>
+              <h2 className="mt-1 text-2xl font-semibold">File Check Center</h2>
+            </div>
+            <span className="inline-flex shrink-0 items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-xs font-semibold text-emerald-200">
+              <span className="h-2 w-2 rounded-full bg-emerald-300" />
+              Live
+            </span>
+          </div>
+
+          <div className="mt-5 overflow-hidden rounded-[24px] border border-cyan-200/10 bg-white/[0.06] p-4">
+            <div className="flex h-32 items-end gap-2">
+              {[28, 52, 36, 68, 47, 84, 58, 76, 44, 88, 62, 72].map((height, index) => (
+                <span
+                  key={height + index}
+                  className="flex-1 rounded-t-full bg-gradient-to-t from-emerald-400/35 via-cyan-300/75 to-white/90"
+                  style={{ height: `${height}%`, animation: `signalSweep ${10 + index}s ease-in-out infinite alternate` }}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.08] p-3">
+              <p className="text-xs text-slate-400">Latest upload</p>
+              <p className="mt-1 truncate text-sm font-semibold">{lastUpload?.filename || 'No file selected'}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.08] p-3">
+              <p className="text-xs text-slate-400">Library</p>
+              <p className="mt-1 text-sm font-semibold">{files.length} file{files.length === 1 ? '' : 's'}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.08] p-3">
+              <p className="text-xs text-slate-400">Ledger</p>
+              <p className="mt-1 text-sm font-semibold">{chainStatus?.status === 'valid' ? 'Verified' : 'Checking'}</p>
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+            <button
+              onClick={() => lastUpload && handleVerify(lastUpload)}
+              disabled={!lastUpload || verifying === lastUpload?._id}
+              className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {verifying === lastUpload?._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+              Check latest file
+            </button>
+            <Link to="/shared" className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/[0.08] px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/[0.14]">
+              Shared files
+              <ArrowUpRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+
+        <div className="grid gap-4">
           <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
             <p className="text-xs font-bold uppercase text-fuchsia-700 dark:text-fuchsia-300">Shared by me</p>
             <div className="mt-4 space-y-2">
@@ -428,18 +413,6 @@ const DashboardPage = () => {
                       <Trash2 className="h-4 w-4" />
                     </button>
                   )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
-            <p className="text-xs font-bold uppercase text-slate-500 dark:text-slate-300">My activity</p>
-            <div className="mt-4 space-y-2">
-              {(activity.length ? activity.slice(0, 2) : [{ _id: 'empty-activity', action: 'No recent activity', createdAt: null }]).map((item) => (
-                <div key={item._id} className="rounded-2xl border border-slate-200/80 bg-white/70 p-3 dark:border-white/10 dark:bg-slate-950/45">
-                  <p className="text-sm font-semibold text-slate-950 dark:text-white">{item.action.replaceAll('_', ' ')}</p>
-                  <p className="mt-1 text-xs text-slate-400">{item.createdAt ? new Date(item.createdAt).toLocaleString() : 'Waiting'}</p>
                 </div>
               ))}
             </div>
@@ -489,6 +462,7 @@ const DashboardPage = () => {
               Refresh ledger
             </button>
           </div>
+        </div>
       </section>
 
       <section className="mt-5 overflow-hidden rounded-[28px] border border-white/80 bg-white/80 shadow-sm dark:border-white/10 dark:bg-slate-900/70">
