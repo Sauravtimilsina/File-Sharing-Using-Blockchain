@@ -278,11 +278,28 @@ module.exports = {
        limit 1`,
       [fileId, sharedWith],
     )),
+    findAnyByFileAndRecipient: async (fileId, sharedWith) => mapShare(await one(
+      `select * from public.shares
+       where file_id = $1
+         and shared_with_id = $2
+       limit 1`,
+      [fileId, sharedWith],
+    )),
     create: async (input) => mapShare(await one(
       `insert into public.shares (file_id, owner_id, shared_with_id, expires_at)
        values ($1, $2, $3, $4)
        returning *`,
       [input.fileId, input.owner, input.sharedWith, input.expiresAt || null],
+    )),
+    reactivate: async (shareId, ownerId, expiresAt) => mapShare(await one(
+      `update public.shares
+       set revoked_at = null,
+           revoked_by = null,
+           expires_at = $3,
+           updated_at = now()
+       where id = $1 and owner_id = $2
+       returning *`,
+      [shareId, ownerId, expiresAt || null],
     )),
     revoke: async (shareId, ownerId) => mapShare(await one(
       `update public.shares

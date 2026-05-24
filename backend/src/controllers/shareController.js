@@ -13,7 +13,11 @@ const getExpiryDate = (value) => (
   EXPIRY_MS[value] ? new Date(Date.now() + EXPIRY_MS[value]) : null
 );
 
-
+const isShareActive = (share) => (
+  share
+    && !share.revokedAt
+    && (!share.expiresAt || new Date(share.expiresAt) > new Date())
+);
 
 const shareFile = async (req, res) => {
   try {
@@ -46,18 +50,19 @@ const shareFile = async (req, res) => {
     }
 
     
-    const existingShare = await repositories.shares.findByFileAndRecipient(fileId, recipient._id);
-    if (existingShare) {
+    const existingShare = await repositories.shares.findAnyByFileAndRecipient(fileId, recipient._id);
+    if (isShareActive(existingShare)) {
       return res.status(400).json({ message: "File already shared with this user" });
     }
 
-    
-    const share = await repositories.shares.create({
-      fileId,
-      owner: req.user.id,
-      sharedWith: recipient._id,
-      expiresAt,
-    });
+    const share = existingShare
+      ? await repositories.shares.reactivate(existingShare._id, req.user.id, expiresAt)
+      : await repositories.shares.create({
+        fileId,
+        owner: req.user.id,
+        sharedWith: recipient._id,
+        expiresAt,
+      });
     await recordActivityAudit(req, {
       action: "file_share",
       targetType: "share",

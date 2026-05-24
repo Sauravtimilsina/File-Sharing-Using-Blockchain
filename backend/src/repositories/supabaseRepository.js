@@ -286,6 +286,13 @@ module.exports = {
         .is("revoked_at", null)
         .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`),
     )),
+    findAnyByFileAndRecipient: async (fileId, sharedWith) => mapShare(await singleOrNull(
+      supabase
+        .from("shares")
+        .select("*")
+        .eq("file_id", fileId)
+        .eq("shared_with_id", sharedWith),
+    )),
     create: async (input) => mapShare(failOnError(await supabase
       .from("shares")
       .insert({
@@ -294,6 +301,18 @@ module.exports = {
         shared_with_id: input.sharedWith,
         expires_at: input.expiresAt || null,
       })
+      .select("*")
+      .single())),
+    reactivate: async (shareId, ownerId, expiresAt) => mapShare(failOnError(await supabase
+      .from("shares")
+      .update({
+        revoked_at: null,
+        revoked_by: null,
+        expires_at: expiresAt || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", shareId)
+      .eq("owner_id", ownerId)
       .select("*")
       .single())),
     revoke: async (shareId, ownerId) => mapShare(failOnError(await supabase

@@ -256,7 +256,7 @@ const DashboardPage = () => {
       <div className="flex min-h-[70vh] items-center justify-center">
         <div className="surface-glass flex items-center gap-3 rounded-3xl border border-white/80 px-6 py-5 text-slate-500 dark:border-white/10 dark:text-slate-300">
           <Loader2 className="h-6 w-6 animate-spin text-sky-500" />
-          Loading secure workspace
+          Loading dashboard
         </div>
       </div>
     );
