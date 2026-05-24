@@ -337,50 +337,7 @@ const DashboardPage = () => {
         ))}
       </section>
 
-      <section className="mt-5 grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <div className="overflow-hidden rounded-[28px] border border-cyan-200/80 bg-slate-950 p-5 text-white shadow-2xl shadow-cyan-950/15 dark:border-cyan-300/15 sm:p-6 md:col-span-2">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase text-cyan-300">Integrity Channel</p>
-              <h2 className="mt-2 text-xl font-semibold">File Check Center</h2>
-            </div>
-            <span className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-sm font-semibold text-emerald-200">
-              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-300" />
-              Live
-            </span>
-          </div>
-
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.08] p-3">
-              <p className="text-xs text-slate-400">Latest upload</p>
-              <p className="mt-1 truncate text-sm font-semibold">{lastUpload?.filename || 'No file'}</p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.08] p-3">
-              <p className="text-xs text-slate-400">Library count</p>
-              <p className="mt-1 text-sm font-semibold">{files.length} file{files.length === 1 ? '' : 's'}</p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.08] p-3">
-              <p className="text-xs text-slate-400">Last signal</p>
-              <p className="mt-1 text-sm font-semibold">{lastUpload ? new Date(lastUpload.createdAt).toLocaleDateString() : 'Waiting'}</p>
-            </div>
-          </div>
-
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-            <button
-              onClick={() => lastUpload && handleVerify(lastUpload)}
-              disabled={!lastUpload || verifying === lastUpload?._id}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {verifying === lastUpload?._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
-              Check latest file
-            </button>
-            <Link to="/shared" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/[0.08] px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/[0.14]">
-              Open shared files
-              <ArrowUpRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-
+      <section className="mt-5 grid items-start gap-4 md:grid-cols-2 xl:grid-cols-5">
         <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -437,7 +394,7 @@ const DashboardPage = () => {
           <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
             <p className="text-xs font-bold uppercase text-slate-500 dark:text-slate-300">My activity</p>
             <div className="mt-4 space-y-2">
-              {(activity.length ? activity.slice(0, 3) : [{ _id: 'empty-activity', action: 'No recent activity', createdAt: null }]).map((item) => (
+              {(activity.length ? activity.slice(0, 2) : [{ _id: 'empty-activity', action: 'No recent activity', createdAt: null }]).map((item) => (
                 <div key={item._id} className="rounded-2xl border border-slate-200/80 bg-white/70 p-3 dark:border-white/10 dark:bg-slate-950/45">
                   <p className="text-sm font-semibold text-slate-950 dark:text-white">{item.action.replaceAll('_', ' ')}</p>
                   <p className="mt-1 text-xs text-slate-400">{item.createdAt ? new Date(item.createdAt).toLocaleString() : 'Waiting'}</p>
@@ -446,7 +403,7 @@ const DashboardPage = () => {
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06] md:col-span-2 xl:col-span-1">
+          <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-bold uppercase text-sky-700 dark:text-sky-300">Blockchain ledger</p>
@@ -477,7 +434,7 @@ const DashboardPage = () => {
             <div className="mt-3 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-3 dark:border-white/10 dark:bg-slate-950/45">
               <p className="text-xs text-slate-400">Latest block</p>
               <p className="mt-1 truncate text-sm font-semibold text-slate-950 dark:text-white">
-                {chainStatus?.latestBlock ? `#${chainStatus.latestBlock.index} / ${new Date(chainStatus.latestBlock.timestamp).toLocaleString()}` : 'No blocks yet'}
+                {chainStatus?.latestBlock ? `#${chainStatus.latestBlock.index} / ${new Date(chainStatus.latestBlock.timestamp).toLocaleDateString()}` : 'No blocks yet'}
               </p>
             </div>
 
