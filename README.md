@@ -43,14 +43,14 @@ Most file-sharing examples stop at uploading and downloading. This project adds 
 
 ```text
 .
-├── backend/              # Express API, auth, encryption, storage, repositories
-├── frontend/             # React + Vite client
-├── supabase/             # Supabase config and database/storage migrations
-├── .github/              # CI workflow and contribution templates
-├── CHANGELOG.md          # Release history
-├── CONTRIBUTING.md       # Development and pull request guide
-├── SECURITY.md           # Security and secret handling policy
-└── README.md
+|-- backend/              # Express API, auth, encryption, storage, repositories
+|-- frontend/             # React + Vite client
+|-- supabase/             # Supabase config and database/storage migrations
+|-- .github/              # CI workflow and contribution templates
+|-- CHANGELOG.md          # Release history
+|-- CONTRIBUTING.md       # Development and pull request guide
+|-- SECURITY.md           # Security and secret handling policy
+`-- README.md
 ```
 
 ## Quick Start
@@ -102,6 +102,8 @@ npm run generate:secrets
 
 Paste the generated values into `backend/.env`.
 
+Do not reuse values from another developer's machine. Every clone should generate its own `JWT_SECRET`, `OTP_SECRET`, and `ENCRYPTION_KEY`.
+
 ### 4. Configure Supabase
 
 Create a Supabase project, then set these backend-only values in `backend/.env`:
@@ -129,6 +131,8 @@ cd backend
 npm run check:supabase
 ```
 
+If you only want to test file handling locally before connecting Supabase Storage, set `FILE_STORAGE_PROVIDER=local`. The database still needs the Supabase Postgres schema from the migrations.
+
 ### 5. Run the App
 
 Start the backend:
@@ -147,6 +151,23 @@ npm run dev
 
 Open the frontend URL shown by Vite, usually `http://localhost:5173`.
 
+### Fresh Clone Verification
+
+Before sharing or deploying a new copy, run:
+
+```bash
+cd backend
+npm install
+node --check src/server.js
+
+cd ../frontend
+npm install
+npm run lint
+npm run build
+```
+
+The backend also needs a real `backend/.env` before `npm run dev` or `npm start` can connect to the database.
+
 ## Environment Variables
 
 ### Backend
@@ -161,6 +182,7 @@ The backend owns all private configuration:
 | `SUPABASE_URL` | Supabase project URL |
 | `SUPABASE_SECRET_KEY` | Backend-only Supabase secret/service key |
 | `SUPABASE_DB_URL` | Supabase Postgres connection string |
+| `POSTGRES_SSL` | Optional; set to `false` only for local Postgres without SSL |
 | `CLIENT_ORIGINS` | Comma-separated allowed frontend origins |
 | `MAX_UPLOAD_BYTES` | Upload size limit |
 | `UPLOAD_TMP_DIR` | Optional temporary upload directory |
@@ -170,6 +192,8 @@ The backend owns all private configuration:
 | `OTP_SECRET` | Random OTP signing secret |
 | `ENCRYPTION_KEY` | 32-byte hex encryption key |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | Email transport settings |
+| `EMAIL_PROVIDER`, `RESEND_API_KEY`, `RESEND_FROM`, `BREVO_API_KEY`, `BREVO_FROM` | Optional transactional email provider settings |
+| `DEV_SHOW_OTP` | Optional local-only helper; set to `true` to include OTP values in development responses |
 
 ### Frontend
 
@@ -177,6 +201,7 @@ The frontend must only contain public browser-safe values:
 
 ```env
 VITE_API_BASE_URL=http://localhost:5000/api
+VITE_API_TIMEOUT_MS=60000
 ```
 
 Never put Supabase secret keys, database URLs, JWT secrets, OTP secrets, SMTP passwords, tokens, or `ENCRYPTION_KEY` in `frontend/.env` or any `VITE_*` variable.
