@@ -73,13 +73,14 @@ A full-stack academic project for encrypted file sharing with OTP authentication
 
 ## GitHub Activity
 
-<div align="center">
+This profile is focused on academic project work, especially secure file-sharing, backend development, and practical cybersecurity implementation.
 
-![Saurav's GitHub stats](https://github-readme-stats.vercel.app/api?username=Sauravtimilsina&show_icons=true&theme=github_dark&hide_border=true)
+Recent public work:
 
-![Top Languages](https://github-readme-stats.vercel.app/api/top-langs/?username=Sauravtimilsina&layout=compact&theme=github_dark&hide_border=true)
-
-</div>
+- Published `File-Sharing-Using-Blockchain` as a public academic project
+- Added professional project documentation and setup instructions
+- Added GitHub release notes, CI workflow, Dependabot, and security policy
+- Organized the repository for easier discovery through topics and README keywords
 
 ## Connect With Me
 
