@@ -7,11 +7,15 @@ const { execFileSync } = require("child_process");
 const { Pool } = require("pg");
 const { hashDecryptedFile } = require("../src/services/fileService");
 
-const ownerEmail = process.env.RESTORE_FILE_OWNER_EMAIL || "sauravtimilsina7@gmail.com";
+const ownerEmail = process.env.RESTORE_FILE_OWNER_EMAIL;
 const storedName = "c1c81d7e-5c31-4ab1-90cd-e2fd390c1cb7.html.enc";
 const filename = "Restored HTML upload.html";
 const gitPath = `HEAD:backend/uploads/${storedName}`;
 const uploadPath = path.join(__dirname, "../uploads", storedName);
+
+if (!ownerEmail) {
+  throw new Error("Set RESTORE_FILE_OWNER_EMAIL in backend/.env before restoring the tracked encrypted file.");
+}
 
 const pool = new Pool({
   connectionString: process.env.SUPABASE_DB_URL,

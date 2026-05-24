@@ -5,6 +5,8 @@
 !**/.env.example
 !.env.production.example
 !**/.env.production.example
+.envrc
+.npmrc
 *.pem
 *.key
 *.p12
@@ -15,6 +17,11 @@
 *.backup
 *.orig
 *.secret
+*.enc
+*.db
+*.sqlite
+*.sqlite3
+*.dump
 secrets/
 **/secrets/
 
