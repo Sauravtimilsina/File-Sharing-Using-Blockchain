@@ -338,6 +338,48 @@ const DashboardPage = () => {
       </section>
 
       <section className="mt-5 grid items-start gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <div className="rounded-[28px] border border-cyan-200/70 bg-slate-950 p-5 text-white shadow-sm dark:border-cyan-300/15 md:col-span-2">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase text-cyan-300">Integrity Channel</p>
+              <h2 className="mt-1 text-lg font-semibold">File Check Center</h2>
+            </div>
+            <span className="inline-flex shrink-0 items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-xs font-semibold text-emerald-200">
+              <span className="h-2 w-2 rounded-full bg-emerald-300" />
+              Live
+            </span>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_0.85fr] sm:items-end">
+            <div className="overflow-hidden rounded-2xl border border-cyan-200/10 bg-white/[0.06] p-3">
+              <div className="flex h-20 items-end gap-1.5">
+                {[28, 52, 36, 68, 47, 84, 58, 76, 44, 88, 62, 72].map((height, index) => (
+                  <span
+                    key={height + index}
+                    className="flex-1 rounded-t-full bg-gradient-to-t from-emerald-400/35 via-cyan-300/75 to-white/90"
+                    style={{ height: `${height}%`, animation: `signalSweep ${10 + index}s ease-in-out infinite alternate` }}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <p className="truncate text-sm font-semibold">{lastUpload?.filename || 'No file selected'}</p>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <span className="rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-2 text-slate-300">{files.length} file{files.length === 1 ? '' : 's'}</span>
+                <span className="rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-2 text-slate-300">{chainStatus?.status === 'valid' ? 'Verified' : 'Checking'}</span>
+              </div>
+              <button
+                onClick={() => lastUpload && handleVerify(lastUpload)}
+                disabled={!lastUpload || verifying === lastUpload?._id}
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {verifying === lastUpload?._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                Check latest file
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div className="rounded-[28px] border border-white/80 bg-white/80 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
             <div className="flex items-center justify-between gap-3">
               <div>
