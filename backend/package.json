@@ -15,6 +15,7 @@
     "migrate:postgres-to-postgres": "node scripts/migratePostgresToPostgres.js",
     "generate:secrets": "node scripts/generateSecrets.js",
     "encrypt:profiles": "node scripts/encryptExistingProfiles.js",
+    "encrypt:metadata": "node scripts/encryptExistingProfiles.js",
     "restore:tracked-html-upload": "node scripts/restoreTrackedEncryptedFile.js"
   },
   "keywords": [],

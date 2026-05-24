@@ -449,6 +449,16 @@ const getMe = async (req, res) => {
   }
 };
 
+const getMyActivity = async (req, res) => {
+  try {
+    const activity = await repositories.activityAuditLogs.findRecentByActor(req.user.id, 40);
+    return res.status(200).json({ activity });
+  } catch (error) {
+    console.error("Get activity error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
 const updateProfile = async (req, res) => {
   try {
     const username = cleanUsername(req.body.username);
@@ -565,6 +575,7 @@ module.exports = {
   register,
   login,
   getMe,
+  getMyActivity,
   updateProfile,
   updateAvatar,
   changePassword,
