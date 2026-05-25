@@ -274,20 +274,6 @@ Recommended topics:
 secure-file-transfer, encrypted-file-sharing, react, vite, nodejs, express, supabase, postgres, cybersecurity, jwt-authentication, otp-verification, aes-encryption, sha256, file-integrity, final-year-project
 ```
 
-Use releases for important milestones such as:
-
-- `v1.0.0` - first public release
-- `v1.1.0` - resumable uploads or improved sharing
-- `v1.2.0` - audit logs or key rotation
-
-For social sharing, use a short post like:
-
-```text
-I published Secure File Transfer, a full-stack cybersecurity project for encrypted uploads, controlled sharing, and SHA-256 integrity verification.
-
-Built with React, Node.js, Express, Supabase Postgres, and Supabase Storage.
-```
-
 ## Roadmap
 
 - Role-based access control
