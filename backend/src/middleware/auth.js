@@ -1,6 +1,5 @@
 const jwt = require("jsonwebtoken");
 const repositories = require("../repositories");
-const runtimeConfig = require("../config/runtime");
 
 const lockedMessage = "Your account is locked due to multiple failed login attempts. Please contact admin.";
 
@@ -13,7 +12,7 @@ const auth = async (req, res, next) => {
     }
 
     const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, runtimeConfig.requireRuntimeSecret("JWT_SECRET", process.env.JWT_SECRET), {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
       algorithms: ["HS256"],
       audience: "secure-transfer-web",
       issuer: "secure-transfer-api",
