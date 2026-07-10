@@ -1,6 +1,6 @@
 const nodemailer = require("nodemailer");
 
-const EMAIL_PROVIDER = (process.env.EMAIL_PROVIDER || "resend").toLowerCase();
+const EMAIL_PROVIDER = (process.env.EMAIL_PROVIDER || "smtp").toLowerCase();
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const RESEND_FROM = process.env.RESEND_FROM || process.env.SMTP_FROM || process.env.SMTP_USER;
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
@@ -52,11 +52,6 @@ const sendWithResend = async (mailOptions) => {
     error.code = "RESEND_NOT_CONFIGURED";
     throw error;
   }
-  if (!RESEND_FROM) {
-    const error = new Error("RESEND_FROM must be configured with a sender on your verified Resend domain.");
-    error.code = "RESEND_FROM_NOT_CONFIGURED";
-    throw error;
-  }
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -69,7 +64,6 @@ const sendWithResend = async (mailOptions) => {
       to: [mailOptions.to],
       subject: mailOptions.subject,
       html: mailOptions.html,
-      text: mailOptions.text,
     }),
   });
 
@@ -184,11 +178,6 @@ const verifyEmailTransport = async () => {
       error.code = "RESEND_NOT_CONFIGURED";
       throw error;
     }
-    if (!RESEND_FROM) {
-      const error = new Error("RESEND_FROM must be configured with a sender on your verified Resend domain.");
-      error.code = "RESEND_FROM_NOT_CONFIGURED";
-      throw error;
-    }
     return;
   }
 
@@ -285,7 +274,6 @@ const sendOTP = async (email, otp) => sendMail({
   from: process.env.SMTP_FROM || process.env.SMTP_USER,
   to: email,
   subject: "SecureTransfer - Verify your email",
-  text: `Your SecureTransfer verification code is ${otp}. It expires in 5 minutes.`,
   html: emailFrame({
     eyebrow: "Account verification",
     title: "Verify your email",
@@ -314,7 +302,6 @@ const sendPasswordResetOTP = async (email, otp) => sendMail({
   from: process.env.SMTP_FROM || process.env.SMTP_USER,
   to: email,
   subject: "SecureTransfer - Reset your password",
-  text: `Your SecureTransfer password reset code is ${otp}. It expires in 5 minutes.`,
   html: emailFrame({
     eyebrow: "Password recovery",
     title: "Reset your password",

@@ -94,6 +94,17 @@ const smtpFailureMessage = (error) => {
   return `Failed to send verification email. Check email settings. (${detail})`;
 };
 
+const sendVerificationOtpInBackground = (email, otp) => {
+  setImmediate(async () => {
+    try {
+      await sendOTPEmail(email, otp);
+      console.log(`Verification OTP email sent to ${email}`);
+    } catch (emailErr) {
+      console.error(`Verification OTP email failed for ${email}:`, emailErr.message);
+    }
+  });
+};
+
 const register = async (req, res) => {
   try {
     const username = cleanUsername(req.body.username);
@@ -128,12 +139,7 @@ const register = async (req, res) => {
           expiresAt: new Date(Date.now() + 5 * 60 * 1000),
         });
 
-        try {
-          await sendOTPEmail(email, otp);
-        } catch (emailErr) {
-          console.error(`Verification OTP email failed for ${email}:`, emailErr.message);
-          return res.status(502).json({ message: smtpFailureMessage(emailErr) });
-        }
+        sendVerificationOtpInBackground(email, otp);
 
         return res.status(200).json({
           message: "Verification code sent to your email",
@@ -165,12 +171,7 @@ const register = async (req, res) => {
       expiresAt: new Date(Date.now() + 5 * 60 * 1000),
     });
 
-    try {
-      await sendOTPEmail(email, otp);
-    } catch (emailErr) {
-      console.error(`Verification OTP email failed for ${email}:`, emailErr.message);
-      return res.status(502).json({ message: smtpFailureMessage(emailErr) });
-    }
+    sendVerificationOtpInBackground(email, otp);
 
     res.status(201).json({
       message: "Verification code sent to your email",
