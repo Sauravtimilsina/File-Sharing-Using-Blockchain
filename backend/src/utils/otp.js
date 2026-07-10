@@ -1,11 +1,8 @@
 const crypto = require("crypto");
+const runtimeConfig = require("../config/runtime");
 
 const getOtpPepper = () => {
-  const secret = process.env.OTP_SECRET || process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error("OTP_SECRET or JWT_SECRET must be configured.");
-  }
-  return secret;
+  return runtimeConfig.requireRuntimeSecret("OTP_SECRET", process.env.OTP_SECRET || process.env.JWT_SECRET);
 };
 
 const hashOtp = (email, otp) => crypto
