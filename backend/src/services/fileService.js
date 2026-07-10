@@ -10,6 +10,7 @@ const {
   assertSafeStoredName,
   createEncryptedReadStream,
   readEncryptedObject,
+  saveEncryptedBuffer,
   saveEncryptedObject,
 } = require("./storageService");
 
@@ -108,6 +109,16 @@ const encryptFileFromPath = async (sourcePath, storedName) => {
   }
 };
 
+const encryptFileBuffer = async (sourceBuffer, storedName) => {
+  assertSafeStoredName(storedName);
+  const iv = crypto.randomBytes(GCM_IV_LENGTH);
+  const cipher = crypto.createCipheriv(GCM_ALGORITHM, getKey(), iv);
+  const encrypted = Buffer.concat([cipher.update(sourceBuffer), cipher.final()]);
+  const payload = Buffer.concat([GCM_PREFIX, iv, encrypted, cipher.getAuthTag()]);
+  await saveEncryptedBuffer(storedName, payload);
+  return storedName;
+};
+
 const hashDecryptedFile = async (storedName) => {
   assertSafeStoredName(storedName);
   const hash = crypto.createHash("sha256");
@@ -132,6 +143,7 @@ const hashDecryptedFile = async (storedName) => {
 
 module.exports = {
   createDecryptedReadStream,
+  encryptFileBuffer,
   encryptFileFromPath,
   hashDecryptedFile,
 };

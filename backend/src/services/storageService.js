@@ -47,6 +47,21 @@ const saveEncryptedObject = async (storedName, sourcePath) => {
   await fsPromises.copyFile(sourcePath, getLocalPath(storedName));
 };
 
+const saveEncryptedBuffer = async (storedName, content) => {
+  assertSafeStoredName(storedName);
+
+  if (runtimeConfig.storage.provider !== "supabase") {
+    throw new Error("Buffer uploads require FILE_STORAGE_PROVIDER=supabase.");
+  }
+
+  const { error } = await getSupabaseStorage().upload(storedName, content, {
+    contentType: "application/octet-stream",
+    upsert: false,
+  });
+
+  if (error) throw error;
+};
+
 const deleteEncryptedObject = async (storedName) => {
   assertSafeStoredName(storedName);
 
@@ -95,6 +110,7 @@ module.exports = {
   deleteEncryptedObject,
   getLocalPath,
   readEncryptedObject,
+  saveEncryptedBuffer,
   saveEncryptedObject,
   uploadLocalEncryptedObject,
 };
