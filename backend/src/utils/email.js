@@ -33,19 +33,10 @@ const createTransport = ({ port, secure }) => nodemailer.createTransport({
   },
 });
 
-let transporter;
-let fallbackTransporter;
-
-const getSmtpTransporters = () => {
-  if (!transporter) {
-    transporter = createTransport({ port: SMTP_PORT, secure: SMTP_SECURE });
-    fallbackTransporter = isGmailSmtp
-      ? createTransport({ port: SMTP_PORT === 465 ? 587 : 465, secure: SMTP_PORT !== 465 })
-      : null;
-  }
-
-  return { primary: transporter, fallback: fallbackTransporter };
-};
+const transporter = createTransport({ port: SMTP_PORT, secure: SMTP_SECURE });
+const fallbackTransporter = isGmailSmtp
+  ? createTransport({ port: SMTP_PORT === 465 ? 587 : 465, secure: SMTP_PORT !== 465 })
+  : null;
 
 const ensureEmailConfigured = () => {
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
@@ -149,15 +140,14 @@ const sendWithBrevo = async (mailOptions) => {
 
 const sendWithSmtp = async (mailOptions) => {
   ensureEmailConfigured();
-  const { primary, fallback } = getSmtpTransporters();
 
   try {
-    return await primary.sendMail(mailOptions);
+    return await transporter.sendMail(mailOptions);
   } catch (error) {
-    if (!fallback) throw error;
+    if (!fallbackTransporter) throw error;
 
     try {
-      return await fallback.sendMail(mailOptions);
+      return await fallbackTransporter.sendMail(mailOptions);
     } catch (fallbackError) {
       fallbackError.primaryCode = error.code;
       fallbackError.primaryCommand = error.command;
@@ -203,12 +193,11 @@ const verifyEmailTransport = async () => {
   }
 
   ensureEmailConfigured();
-  const { primary, fallback } = getSmtpTransporters();
   try {
-    await primary.verify();
+    await transporter.verify();
   } catch (error) {
-    if (!fallback) throw error;
-    await fallback.verify();
+    if (!fallbackTransporter) throw error;
+    await fallbackTransporter.verify();
   }
 };
 
@@ -223,7 +212,7 @@ const getEmailTransportStatus = () => ({
   host: SMTP_HOST,
   port: SMTP_PORT,
   secure: SMTP_SECURE,
-  fallbackPort: isGmailSmtp ? (SMTP_PORT === 465 ? 587 : 465) : null,
+  fallbackPort: fallbackTransporter ? (SMTP_PORT === 465 ? 587 : 465) : null,
   timeoutMs: SMTP_TIMEOUT_MS,
   emailConfigured: Boolean(process.env.SMTP_USER && process.env.SMTP_PASS),
 });

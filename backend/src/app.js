@@ -1,3 +1,5 @@
+require("dotenv").config();
+require("dns").setDefaultResultOrder("ipv4first");
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -6,10 +8,8 @@ const runtimeConfig = require("./config/runtime");
 const { getEmailTransportStatus } = require("./utils/email");
 const { checkSupabaseHealth } = require("./utils/supabaseHealth");
 
-const isLocalBrowserOrigin = (origin) => {
-  if (process.env.NODE_ENV === "production") return false;
-  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
-};
+const isLocalBrowserOrigin = (origin) => process.env.NODE_ENV !== "production"
+  && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
 
 const allowOrigin = (origin, callback) => {
   if (

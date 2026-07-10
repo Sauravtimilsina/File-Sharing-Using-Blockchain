@@ -1,9 +1,10 @@
 const crypto = require("crypto");
+const fs = require("fs/promises");
 const path = require("path");
 const repositories = require("../repositories");
-const { createDecryptedReadStream, encryptFileBuffer, hashDecryptedFile } = require("../services/fileService");
+const { createDecryptedReadStream, encryptFileFromPath, hashDecryptedFile } = require("../services/fileService");
 const { deleteEncryptedObject } = require("../services/storageService");
-const { auditBlockchain, createBlock, generateHash, verifyHashIntegrity } = require("../services/blockchainService");
+const { auditBlockchain, createBlock, generateHashFromPath, verifyHashIntegrity } = require("../services/blockchainService");
 const { recordActivityAudit } = require("../utils/audit");
 const { cleanFilename, isRecordId } = require("../utils/validation");
 
@@ -68,9 +69,9 @@ const uploadFile = async (req, res) => {
 
     const ext = path.extname(originalName);
     const storedName = `${crypto.randomUUID()}${ext}.enc`;
-    const fileHash = generateHash(req.file.buffer);
+    const fileHash = await generateHashFromPath(req.file.path);
 
-    await encryptFileBuffer(req.file.buffer, storedName);
+    await encryptFileFromPath(req.file.path, storedName);
 
     const file = await repositories.files.create({
       owner: req.user.id,
@@ -104,6 +105,10 @@ const uploadFile = async (req, res) => {
   } catch (error) {
     console.error("Upload error:", error);
     return res.status(500).json({ message: "Server error during file upload" });
+  } finally {
+    if (req.file?.path) {
+      await fs.rm(req.file.path, { force: true });
+    }
   }
 };
 
