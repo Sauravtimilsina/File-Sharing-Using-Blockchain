@@ -250,7 +250,7 @@ const DashboardPage = () => {
   if (loading) {
     return (
       <div className="flex min-h-[70vh] items-center justify-center">
-        <div className="surface-glass flex items-center gap-3 rounded-3xl border border-white/80 px-6 py-5 text-slate-500 dark:border-white/10 dark:text-slate-300">
+        <div className="surface-glass flex items-center gap-3 rounded-xl border border-white/80 px-6 py-5 text-slate-500 dark:border-white/10 dark:text-slate-300">
           <Loader2 className="h-6 w-6 animate-spin text-sky-500" />
           Loading dashboard
         </div>
@@ -260,7 +260,7 @@ const DashboardPage = () => {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <section className="surface-glass premium-shadow security-grid relative overflow-hidden rounded-[28px] border border-white/80 px-5 py-6 dark:border-white/10 sm:px-7 sm:py-8">
+      <section className="surface-glass premium-shadow security-grid relative overflow-hidden rounded-xl border border-white/80 px-5 py-6 dark:border-white/10 sm:px-7 sm:py-8">
         <div className="relative grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
           <div>
             <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50/80 px-3 py-1.5 text-sm font-semibold text-cyan-900 dark:border-cyan-400/15 dark:bg-cyan-400/10 dark:text-cyan-100">
@@ -278,21 +278,21 @@ const DashboardPage = () => {
           <div className="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
             <Link
               to="/upload"
-              className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-600 via-cyan-600 to-emerald-600 px-5 font-semibold text-white shadow-lg shadow-sky-900/15 transition hover:-translate-y-0.5 hover:shadow-xl"
+              className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-sky-600 via-cyan-600 to-emerald-600 px-5 font-semibold text-white shadow-sm shadow-sky-900/15 transition hover:-translate-y-0.5 hover:shadow-md"
             >
               <UploadCloud className="h-5 w-5" />
               Upload file
             </Link>
             <Link
               to="/shared"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white/80 px-5 font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-800 dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-100 dark:hover:text-sky-200"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white/80 px-5 font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-800 dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-100 dark:hover:text-sky-200"
             >
               Shared files
               <ArrowUpRight className="h-4 w-4" />
             </Link>
             <button
               onClick={() => { setLoading(true); fetchFiles(); fetchBlockchainStatus(); fetchExtras(); }}
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white/80 px-5 font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:text-emerald-800 dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-100 dark:hover:text-emerald-200"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white/80 px-5 font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:text-emerald-800 dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-100 dark:hover:text-emerald-200"
             >
               <RefreshCcw className="h-4 w-4" />
               Refresh
@@ -301,7 +301,7 @@ const DashboardPage = () => {
         </div>
       </section>
 
-      <section className="mt-5 overflow-hidden rounded-[34px] border border-white/80 bg-white/86 shadow-2xl shadow-slate-950/8 dark:border-white/10 dark:bg-slate-900/82">
+      <section className="mt-5 overflow-hidden rounded-xl border border-white/80 bg-white/86 shadow-sm shadow-slate-950/8 dark:border-white/10 dark:bg-slate-900/82">
         <div className="grid gap-0 xl:grid-cols-[1fr_360px]">
           <div className="bg-slate-950 p-6 text-white sm:p-7">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -315,8 +315,8 @@ const DashboardPage = () => {
               </span>
             </div>
 
-            <div className="mt-6 rounded-[28px] border border-cyan-200/10 bg-white/[0.06] p-4 sm:p-5">
-              <div className="relative h-56 overflow-hidden rounded-[22px] bg-slate-900/70">
+            <div className="mt-6 rounded-xl border border-cyan-200/10 bg-white/[0.06] p-4 sm:p-5">
+              <div className="relative h-56 overflow-hidden rounded-lg bg-slate-900/70">
                 <div className="absolute inset-x-0 bottom-0 top-6 grid grid-rows-4">
                   {[0, 1, 2, 3].map((line) => (
                     <span key={line} className="border-t border-white/8" />
@@ -338,15 +338,15 @@ const DashboardPage = () => {
                   <path d="M0 168 C58 132 88 152 132 112 C178 70 220 94 262 78 C306 60 338 120 382 96 C430 70 454 42 506 62 C560 82 592 50 640 28" fill="none" stroke="url(#integrityLine)" strokeWidth="5" strokeLinecap="round" />
                 </svg>
                 <div className="absolute bottom-4 left-4 right-4 grid grid-cols-3 gap-2">
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/65 px-3 py-2 backdrop-blur">
+                  <div className="rounded-lg border border-white/10 bg-slate-950/65 px-3 py-2 backdrop-blur">
                     <p className="text-[11px] text-slate-400">Latest file</p>
                     <p className="truncate text-sm font-semibold">{lastUpload?.filename || 'No file selected'}</p>
                   </div>
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/65 px-3 py-2 backdrop-blur">
+                  <div className="rounded-lg border border-white/10 bg-slate-950/65 px-3 py-2 backdrop-blur">
                     <p className="text-[11px] text-slate-400">Ledger</p>
                     <p className="text-sm font-semibold">{chainStatus?.status === 'valid' ? 'Verified' : 'Checking'}</p>
                   </div>
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/65 px-3 py-2 backdrop-blur">
+                  <div className="rounded-lg border border-white/10 bg-slate-950/65 px-3 py-2 backdrop-blur">
                     <p className="text-[11px] text-slate-400">Issues</p>
                     <p className="text-sm font-semibold">{chainStatus?.issues?.length ?? 0}</p>
                   </div>
@@ -358,12 +358,12 @@ const DashboardPage = () => {
               <button
                 onClick={() => lastUpload && handleVerify(lastUpload)}
                 disabled={!lastUpload || verifying === lastUpload?._id}
-                className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {verifying === lastUpload?._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
                 Check latest file
               </button>
-              <Link to="/shared" className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/[0.08] px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/[0.14]">
+              <Link to="/shared" className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-lg border border-white/15 bg-white/[0.08] px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/[0.14]">
                 Shared files
                 <ArrowUpRight className="h-4 w-4" />
               </Link>
@@ -373,33 +373,33 @@ const DashboardPage = () => {
           <aside className="p-5 sm:p-6">
             <div className="grid gap-3">
               {stats.map((stat) => (
-                <div key={stat.label} className="flex items-center justify-between gap-4 rounded-[22px] border border-slate-200/80 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.06]">
+                <div key={stat.label} className="flex items-center justify-between gap-4 rounded-lg border border-slate-200/80 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.06]">
                   <div>
                     <p className="text-xs font-semibold uppercase text-slate-400">{stat.label}</p>
                     <p className="mt-1 text-2xl font-semibold text-slate-950 dark:text-white">{stat.value}</p>
                   </div>
-                  <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br ${stat.tone} text-white shadow-lg`}>
+                  <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-gradient-to-br ${stat.tone} text-white shadow-sm`}>
                     <stat.icon className="h-5 w-5" />
                   </span>
                 </div>
               ))}
             </div>
 
-            <div className="mt-4 rounded-[22px] border border-slate-200/80 bg-slate-50/80 p-4 dark:border-white/10 dark:bg-slate-950/45">
+            <div className="mt-4 rounded-lg border border-slate-200/80 bg-slate-50/80 p-4 dark:border-white/10 dark:bg-slate-950/45">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <p className="text-xs font-bold uppercase text-emerald-700 dark:text-emerald-300">Workspace Signals</p>
                 <LockKeyhole className="h-4 w-4 text-emerald-500" />
               </div>
               <div className="flex flex-wrap gap-2">
                 {(extensionSignals.length ? extensionSignals : [['NONE', 0]]).map(([extension, count]) => (
-                  <span key={extension} className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800 dark:border-emerald-300/15 dark:bg-emerald-300/10 dark:text-emerald-100">
+                  <span key={extension} className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800 dark:border-emerald-300/15 dark:bg-emerald-300/10 dark:text-emerald-100">
                     {extension} / {count}
                   </span>
                 ))}
               </div>
               <div className="mt-4 space-y-2">
                 {(myShares.length ? myShares.slice(0, 2) : [{ _id: 'empty-share', fileId: { filename: 'No active shares' } }]).map((share) => (
-                  <div key={share._id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white/70 p-2.5 dark:border-white/10 dark:bg-slate-950/45">
+                  <div key={share._id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200/80 bg-white/70 p-2.5 dark:border-white/10 dark:bg-slate-950/45">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{share.fileId?.filename || 'Shared file'}</p>
                       <p className="text-xs text-slate-400">{share.expiresAt ? `Expires ${new Date(share.expiresAt).toLocaleDateString()}` : 'No expiry'}</p>
@@ -417,7 +417,7 @@ const DashboardPage = () => {
         </div>
       </section>
 
-      <section className="mt-5 overflow-hidden rounded-[28px] border border-white/80 bg-white/80 shadow-sm dark:border-white/10 dark:bg-slate-900/70">
+      <section className="mt-5 overflow-hidden rounded-xl border border-white/80 bg-white/80 shadow-sm dark:border-white/10 dark:bg-slate-900/70">
         <header className="flex flex-col gap-4 border-b border-slate-200/80 px-5 py-5 dark:border-white/10 lg:flex-row lg:items-center lg:justify-between lg:px-6">
           <div>
             <p className="text-sm font-semibold uppercase text-sky-700 dark:text-sky-300">File Management</p>
@@ -434,7 +434,7 @@ const DashboardPage = () => {
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="Search files"
-                className="h-12 w-full rounded-2xl border border-slate-200 bg-white/80 pl-11 pr-4 text-sm text-slate-950 outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/10 dark:border-white/10 dark:bg-slate-950/55 dark:text-white"
+                className="h-12 w-full rounded-lg border border-slate-200 bg-white/80 pl-11 pr-4 text-sm text-slate-950 outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/10 dark:border-white/10 dark:bg-slate-950/55 dark:text-white"
               />
             </label>
             <label className="relative block sm:w-44">
@@ -442,7 +442,7 @@ const DashboardPage = () => {
               <select
                 value={typeFilter}
                 onChange={(event) => setTypeFilter(event.target.value)}
-                className="h-12 w-full appearance-none rounded-2xl border border-slate-200 bg-white/80 pl-11 pr-4 text-sm font-semibold text-slate-700 outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/10 dark:border-white/10 dark:bg-slate-950/55 dark:text-white"
+                className="h-12 w-full appearance-none rounded-lg border border-slate-200 bg-white/80 pl-11 pr-4 text-sm font-semibold text-slate-700 outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/10 dark:border-white/10 dark:bg-slate-950/55 dark:text-white"
                 title="Filter by file type"
               >
                 <option value="all">All types</option>
@@ -452,24 +452,24 @@ const DashboardPage = () => {
             <select
               value={sortBy}
               onChange={(event) => setSortBy(event.target.value)}
-              className="h-12 rounded-2xl border border-slate-200 bg-white/80 px-4 text-sm font-semibold text-slate-700 outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/10 dark:border-white/10 dark:bg-slate-950/55 dark:text-white"
+              className="h-12 rounded-lg border border-slate-200 bg-white/80 px-4 text-sm font-semibold text-slate-700 outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/10 dark:border-white/10 dark:bg-slate-950/55 dark:text-white"
               title="Sort files"
             >
               <option value="newest">Newest first</option>
               <option value="name">Name A-Z</option>
               <option value="size">Largest first</option>
             </select>
-            <div className="inline-flex w-fit items-center gap-1 rounded-2xl border border-slate-200 bg-slate-100/80 p-1 dark:border-white/10 dark:bg-white/[0.06]">
+            <div className="inline-flex w-fit items-center gap-1 rounded-lg border border-slate-200 bg-slate-100/80 p-1 dark:border-white/10 dark:bg-white/[0.06]">
               <button
                 onClick={() => toggleView('grid')}
-                className={`grid h-10 w-10 place-items-center rounded-2xl transition ${view === 'grid' ? 'bg-white text-slate-950 shadow-sm dark:bg-white dark:text-slate-950' : 'text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
+                className={`grid h-10 w-10 place-items-center rounded-lg transition ${view === 'grid' ? 'bg-white text-slate-950 shadow-sm dark:bg-white dark:text-slate-950' : 'text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
                 title="Grid view"
               >
                 <LayoutGrid className="h-4 w-4" />
               </button>
               <button
                 onClick={() => toggleView('list')}
-                className={`grid h-10 w-10 place-items-center rounded-2xl transition ${view === 'list' ? 'bg-white text-slate-950 shadow-sm dark:bg-white dark:text-slate-950' : 'text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
+                className={`grid h-10 w-10 place-items-center rounded-lg transition ${view === 'list' ? 'bg-white text-slate-950 shadow-sm dark:bg-white dark:text-slate-950' : 'text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
                 title="List view"
               >
                 <List className="h-4 w-4" />
@@ -480,14 +480,14 @@ const DashboardPage = () => {
 
         {files.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-5 py-16 text-center">
-            <div className="mb-4 grid h-20 w-20 place-items-center rounded-[24px] bg-sky-50 text-sky-600 dark:bg-sky-400/10 dark:text-sky-200">
+            <div className="mb-4 grid h-20 w-20 place-items-center rounded-lg bg-sky-50 text-sky-600 dark:bg-sky-400/10 dark:text-sky-200">
               <Package className="h-10 w-10" />
             </div>
             <h3 className="text-lg font-semibold text-slate-950 dark:text-white">No files yet</h3>
             <p className="mt-2 max-w-md text-sm leading-6 text-slate-500 dark:text-slate-400">
               Upload the first document to start building your file library.
             </p>
-            <Link to="/upload" className="mt-5 inline-flex min-h-11 items-center justify-center rounded-2xl bg-slate-950 px-5 font-semibold text-white transition hover:-translate-y-0.5 dark:bg-white dark:text-slate-950">
+            <Link to="/upload" className="mt-5 inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-950 px-5 font-semibold text-white transition hover:-translate-y-0.5 dark:bg-white dark:text-slate-950">
               Upload first file
             </Link>
           </div>
@@ -499,8 +499,8 @@ const DashboardPage = () => {
         ) : view === 'grid' ? (
           <div className="grid gap-4 p-4 sm:grid-cols-2 md:p-5 lg:grid-cols-3 xl:grid-cols-4">
             {filteredFiles.map((file) => (
-              <article key={file._id} className="group rounded-[24px] border border-slate-200/80 bg-slate-50/80 p-4 transition hover:-translate-y-1 hover:border-sky-200 hover:bg-white hover:shadow-xl dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-sky-300/20 dark:hover:bg-white/[0.07]">
-                <div className="relative mb-4 flex aspect-[1.25] items-center justify-center overflow-hidden rounded-[20px] border border-white bg-white shadow-sm dark:border-white/10 dark:bg-slate-950/70">
+              <article key={file._id} className="group rounded-lg border border-slate-200/80 bg-slate-50/80 p-4 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-white hover:shadow-md dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-sky-300/20 dark:hover:bg-white/[0.07]">
+                <div className="relative mb-4 flex aspect-[1.25] items-center justify-center overflow-hidden rounded-lg border border-white bg-white shadow-sm dark:border-white/10 dark:bg-slate-950/70">
                   <FileTypeIcon filename={file.filename} className="h-14 w-14" />
                   <span className="absolute bottom-3 right-3 rounded-full bg-slate-950 px-2 py-1 text-[10px] font-bold text-white dark:bg-white dark:text-slate-950">
                     {getExtension(file.filename)}
@@ -522,22 +522,22 @@ const DashboardPage = () => {
                 </div>
 
                 <div className="touch-reveal mt-4 grid grid-cols-6 gap-2 opacity-100 transition md:opacity-0 md:group-hover:opacity-100">
-                  <button onClick={() => handleDownload(file)} disabled={downloading === file._id} className="grid min-h-10 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:border-sky-200 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Download">
+                  <button onClick={() => handleDownload(file)} disabled={downloading === file._id} className="grid min-h-10 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-sky-200 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Download">
                     {downloading === file._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                   </button>
-                  <button onClick={() => handlePreview(file)} disabled={previewing === file._id} className="grid min-h-10 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:border-sky-200 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Preview">
+                  <button onClick={() => handlePreview(file)} disabled={previewing === file._id} className="grid min-h-10 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-sky-200 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Preview">
                     {previewing === file._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
                   </button>
-                  <button onClick={() => setShareFile(file)} className="grid min-h-10 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:border-cyan-200 hover:text-cyan-700 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Share">
+                  <button onClick={() => setShareFile(file)} className="grid min-h-10 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-cyan-200 hover:text-cyan-700 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Share">
                     <Share2 className="h-4 w-4" />
                   </button>
-                  <button onClick={() => handleVerify(file)} disabled={verifying === file._id} className="grid min-h-10 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:border-emerald-200 hover:text-emerald-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Verify">
+                  <button onClick={() => handleVerify(file)} disabled={verifying === file._id} className="grid min-h-10 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-emerald-200 hover:text-emerald-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Verify">
                     {verifying === file._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
                   </button>
-                  <button onClick={() => handleRename(file)} disabled={renaming === file._id} className="grid min-h-10 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:border-amber-200 hover:text-amber-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Rename">
+                  <button onClick={() => handleRename(file)} disabled={renaming === file._id} className="grid min-h-10 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-amber-200 hover:text-amber-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Rename">
                     {renaming === file._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <SquarePen className="h-4 w-4" />}
                   </button>
-                  <button onClick={() => handleDelete(file)} disabled={deleting === file._id} className="grid min-h-10 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:border-danger/20 hover:text-danger disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Archive file">
+                  <button onClick={() => handleDelete(file)} disabled={deleting === file._id} className="grid min-h-10 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-danger/20 hover:text-danger disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Archive file">
                     {deleting === file._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                   </button>
                 </div>
@@ -562,7 +562,7 @@ const DashboardPage = () => {
                   <tr key={file._id} className="transition hover:bg-sky-50/60 dark:hover:bg-white/[0.04]">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-slate-100 dark:bg-white/10">
+                        <span className="grid h-11 w-11 place-items-center rounded-lg bg-slate-100 dark:bg-white/10">
                           <FileTypeIcon filename={file.filename} className="h-5 w-5" />
                         </span>
                         <span className="max-w-[240px] truncate text-sm font-semibold text-slate-950 dark:text-white">{file.filename}</span>
@@ -586,22 +586,22 @@ const DashboardPage = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => handleDownload(file)} disabled={downloading === file._id} className="grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 text-slate-500 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Download">
+                        <button onClick={() => handleDownload(file)} disabled={downloading === file._id} className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Download">
                           {downloading === file._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                         </button>
-                        <button onClick={() => handlePreview(file)} disabled={previewing === file._id} className="grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 text-slate-500 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Preview">
+                        <button onClick={() => handlePreview(file)} disabled={previewing === file._id} className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Preview">
                           {previewing === file._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
                         </button>
-                        <button onClick={() => setShareFile(file)} className="grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 text-slate-500 transition hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Share">
+                        <button onClick={() => setShareFile(file)} className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Share">
                           <Share2 className="h-4 w-4" />
                         </button>
-                        <button onClick={() => handleVerify(file)} disabled={verifying === file._id} className="grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 text-slate-500 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Verify">
+                        <button onClick={() => handleVerify(file)} disabled={verifying === file._id} className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Verify">
                           {verifying === file._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
                         </button>
-                        <button onClick={() => handleRename(file)} disabled={renaming === file._id} className="grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 text-slate-500 transition hover:border-amber-200 hover:bg-amber-50 hover:text-amber-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Rename">
+                        <button onClick={() => handleRename(file)} disabled={renaming === file._id} className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-amber-200 hover:bg-amber-50 hover:text-amber-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Rename">
                           {renaming === file._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <SquarePen className="h-4 w-4" />}
                         </button>
-                        <button onClick={() => handleDelete(file)} disabled={deleting === file._id} className="grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 text-slate-500 transition hover:border-danger/20 hover:bg-danger/10 hover:text-danger disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Archive file">
+                        <button onClick={() => handleDelete(file)} disabled={deleting === file._id} className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-danger/20 hover:bg-danger/10 hover:text-danger disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Archive file">
                           {deleting === file._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                         </button>
                       </div>
@@ -615,7 +615,7 @@ const DashboardPage = () => {
       </section>
 
       {verifyResult && (
-        <div className={`mt-5 rounded-[24px] border px-5 py-4 animate-[slideIn_0.3s_ease] ${verifyResult.isValid ? 'border-success/20 bg-success/10' : 'border-danger/20 bg-danger/10'}`}>
+        <div className={`mt-5 rounded-lg border px-5 py-4 animate-[slideIn_0.3s_ease] ${verifyResult.isValid ? 'border-success/20 bg-success/10' : 'border-danger/20 bg-danger/10'}`}>
           <div className="flex items-start gap-3">
             {verifyResult.isValid ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" /> : <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-danger" />}
             <div className="min-w-0">

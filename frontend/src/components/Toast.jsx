@@ -51,7 +51,7 @@ export const ToastProvider = ({ children }) => {
           return (
             <div
               key={t.id}
-              className={`pointer-events-auto flex items-start gap-3 rounded-[20px] border px-4 py-3 shadow-xl backdrop-blur-md animate-[slideIn_0.3s_ease] ${STYLES[t.type]}`}
+              className={`pointer-events-auto flex items-start gap-3 rounded-lg border px-4 py-3 shadow-md backdrop-blur-md animate-[slideIn_0.3s_ease] ${STYLES[t.type]}`}
             >
               <Icon className="w-5 h-5 mt-0.5 shrink-0" />
               <p className="text-sm font-medium flex-1">{t.message}</p>

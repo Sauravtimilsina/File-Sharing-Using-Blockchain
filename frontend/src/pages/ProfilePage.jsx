@@ -129,7 +129,7 @@ const ProfilePage = () => {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <section className="profile-aurora premium-shadow relative overflow-hidden rounded-[32px] border border-white/80 px-5 py-7 text-white dark:border-white/10 sm:px-7 sm:py-8">
+      <section className="profile-aurora premium-shadow relative overflow-hidden rounded-xl border border-white/80 px-5 py-7 text-white dark:border-white/10 sm:px-7 sm:py-8">
         <div className="relative z-10 grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
           <div>
             <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/12 px-3 py-1.5 text-sm font-semibold text-sky-50 backdrop-blur">
@@ -143,7 +143,7 @@ const ProfilePage = () => {
               Add your profile picture, role details, contact context, and security credentials in one polished control center.
             </p>
           </div>
-          <div className="rounded-[28px] border border-white/15 bg-white/12 p-5 shadow-2xl shadow-sky-950/20 backdrop-blur">
+          <div className="rounded-xl border border-white/15 bg-white/12 p-5 shadow-sm shadow-sky-950/20 backdrop-blur">
             <p className="text-sm font-medium text-sky-50/75">Profile strength</p>
             <p className="mt-2 text-4xl font-semibold">{profileComplete}%</p>
             <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/16">
@@ -154,13 +154,13 @@ const ProfilePage = () => {
       </section>
 
       <section className="mt-5 grid gap-5 lg:grid-cols-[0.82fr_1.18fr]">
-        <aside className="profile-card-luxe rounded-[32px] border border-white/80 bg-white/84 p-5 shadow-xl shadow-slate-950/8 dark:border-white/10 dark:bg-slate-900/78">
+        <aside className="profile-card-luxe rounded-xl border border-white/80 bg-white/84 p-5 shadow-md shadow-slate-950/8 dark:border-white/10 dark:bg-slate-900/78">
           <div className="relative mx-auto h-36 w-36">
-            <div className="avatar-ring absolute inset-0 rounded-[34px]" />
+            <div className="avatar-ring absolute inset-0 rounded-xl" />
             {user?.avatarDataUrl ? (
-              <img src={user.avatarDataUrl} alt="Profile" className="relative h-36 w-36 rounded-[34px] object-cover shadow-2xl" />
+              <img src={user.avatarDataUrl} alt="Profile" className="relative h-36 w-36 rounded-xl object-cover shadow-sm" />
             ) : (
-              <div className="relative grid h-36 w-36 place-items-center rounded-[34px] bg-gradient-to-br from-sky-600 via-cyan-500 to-emerald-500 text-5xl font-bold text-white shadow-2xl">
+              <div className="relative grid h-36 w-36 place-items-center rounded-xl bg-gradient-to-br from-sky-600 via-cyan-500 to-emerald-500 text-5xl font-bold text-white shadow-sm">
                 {user?.username?.charAt(0).toUpperCase()}
               </div>
             )}
@@ -168,7 +168,7 @@ const ProfilePage = () => {
               type="button"
               onClick={() => inputRef.current?.click()}
               disabled={savingAvatar}
-              className="absolute -bottom-2 -right-2 grid h-12 w-12 place-items-center rounded-2xl border border-white bg-slate-950 text-white shadow-xl transition hover:-translate-y-0.5 disabled:opacity-60"
+              className="absolute -bottom-2 -right-2 grid h-12 w-12 place-items-center rounded-lg border border-white bg-slate-950 text-white shadow-md transition hover:-translate-y-0.5 disabled:opacity-60"
               title="Upload profile picture"
             >
               {savingAvatar ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-5 w-5" />}
@@ -186,7 +186,7 @@ const ProfilePage = () => {
           </div>
 
           <div className="mt-6 grid gap-3">
-            <div className="rounded-2xl border border-slate-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.05]">
+            <div className="rounded-lg border border-slate-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.05]">
               <div className="flex items-center justify-between gap-2">
                 <p className="flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-white"><Mail className="h-4 w-4 text-sky-500" /> Email</p>
                 <button type="button" onClick={copyEmail} className="grid h-8 w-8 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-sky-700 dark:hover:bg-white/10" title="Copy email">
@@ -195,11 +195,11 @@ const ProfilePage = () => {
               </div>
               <p className="mt-1 truncate text-sm text-slate-500 dark:text-slate-300">{user?.email}</p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.05]">
+            <div className="rounded-lg border border-slate-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.05]">
               <p className="flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-white"><BriefcaseBusiness className="h-4 w-4 text-emerald-500" /> Department</p>
               <p className="mt-1 truncate text-sm text-slate-500 dark:text-slate-300">{profile.department || 'Not set'}</p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.05]">
+            <div className="rounded-lg border border-slate-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.05]">
               <p className="flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-white"><Phone className="h-4 w-4 text-amber-500" /> Phone</p>
               <p className="mt-1 truncate text-sm text-slate-500 dark:text-slate-300">{profile.phone || 'Not set'}</p>
             </div>
@@ -207,9 +207,9 @@ const ProfilePage = () => {
         </aside>
 
         <div className="space-y-5">
-          <form onSubmit={handleProfileSubmit} className="rounded-[32px] border border-white/80 bg-white/84 p-5 shadow-xl shadow-slate-950/8 dark:border-white/10 dark:bg-slate-900/78 sm:p-6">
+          <form onSubmit={handleProfileSubmit} className="rounded-xl border border-white/80 bg-white/84 p-5 shadow-md shadow-slate-950/8 dark:border-white/10 dark:bg-slate-900/78 sm:p-6">
             <div className="mb-5 flex items-center gap-3">
-              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-sky-50 text-sky-700 dark:bg-sky-300/10 dark:text-sky-200">
+              <span className="grid h-12 w-12 place-items-center rounded-lg bg-sky-50 text-sky-700 dark:bg-sky-300/10 dark:text-sky-200">
                 <UserRound className="h-5 w-5" />
               </span>
               <div>
@@ -231,7 +231,7 @@ const ProfilePage = () => {
                   onChange={(event) => handleChange('bio', event.target.value)}
                   maxLength={240}
                   rows={4}
-                  className="w-full resize-none rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 dark:border-white/10 dark:bg-slate-950/55 dark:text-white"
+                  className="w-full resize-none rounded-lg border border-slate-200 bg-white/80 px-4 py-3 text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 dark:border-white/10 dark:bg-slate-950/55 dark:text-white"
                   placeholder="Short professional note"
                 />
               </label>
@@ -240,16 +240,16 @@ const ProfilePage = () => {
             <button
               type="submit"
               disabled={savingProfile}
-              className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-700 via-cyan-600 to-emerald-600 px-5 font-semibold text-white shadow-lg shadow-sky-950/18 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-sky-700 via-cyan-600 to-emerald-600 px-5 font-semibold text-white shadow-sm shadow-sky-950/18 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {savingProfile ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
               Save profile
             </button>
           </form>
 
-          <form onSubmit={handlePasswordSubmit} className="rounded-[32px] border border-white/80 bg-white/84 p-5 shadow-xl shadow-slate-950/8 dark:border-white/10 dark:bg-slate-900/78 sm:p-6">
+          <form onSubmit={handlePasswordSubmit} className="rounded-xl border border-white/80 bg-white/84 p-5 shadow-md shadow-slate-950/8 dark:border-white/10 dark:bg-slate-900/78 sm:p-6">
             <div className="mb-5 flex items-center gap-3">
-              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-50 text-emerald-700 dark:bg-emerald-300/10 dark:text-emerald-200">
+              <span className="grid h-12 w-12 place-items-center rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-300/10 dark:text-emerald-200">
                 <KeyRound className="h-5 w-5" />
               </span>
               <div>
@@ -262,7 +262,7 @@ const ProfilePage = () => {
               <Field label="New password" type="password" value={newPassword} onChange={setNewPassword} />
               <Field label="Confirm new password" type="password" value={confirmPassword} onChange={setConfirmPassword} />
             </div>
-            <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 dark:border-white/10 dark:bg-white/[0.04]">
+            <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50/80 p-4 dark:border-white/10 dark:bg-white/[0.04]">
               <div className="mb-3 flex items-center justify-between gap-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
                 <span>Password strength</span>
                 <span>{passwordScore}/3</span>
@@ -282,7 +282,7 @@ const ProfilePage = () => {
             <button
               type="submit"
               disabled={savingPassword || !currentPassword || !newPassword || newPassword !== confirmPassword}
-              className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 font-semibold text-white shadow-lg shadow-slate-950/20 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-slate-950"
+              className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-slate-950 px-5 font-semibold text-white shadow-sm shadow-slate-950/20 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-slate-950"
             >
               {savingPassword ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShieldCheck className="h-5 w-5" />}
               Update password
@@ -301,7 +301,7 @@ const Field = ({ label, value, onChange, type = 'text' }) => (
       type={type}
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="h-12 w-full rounded-2xl border border-slate-200 bg-white/80 px-4 text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 dark:border-white/10 dark:bg-slate-950/55 dark:text-white"
+      className="h-12 w-full rounded-lg border border-slate-200 bg-white/80 px-4 text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 dark:border-white/10 dark:bg-slate-950/55 dark:text-white"
     />
   </label>
 );

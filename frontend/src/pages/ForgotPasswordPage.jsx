@@ -67,7 +67,7 @@ const ForgotPasswordPage = () => {
               placeholder="you@example.com"
               required
               disabled={requested}
-              className="w-full rounded-2xl border border-slate-200 bg-white/90 py-3.5 pl-11 pr-4 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 disabled:opacity-70 dark:border-white/10 dark:bg-slate-950/80 dark:text-white dark:focus:border-sky-300"
+              className="w-full rounded-lg border border-slate-200 bg-white/90 py-3.5 pl-11 pr-4 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 disabled:opacity-70 dark:border-white/10 dark:bg-slate-950/80 dark:text-white dark:focus:border-sky-300"
             />
           </div>
         </div>
@@ -85,7 +85,7 @@ const ForgotPasswordPage = () => {
                 required
                 minLength={6}
                 maxLength={6}
-                className="w-full rounded-2xl border border-slate-200 bg-white/90 px-4 py-3.5 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 dark:border-white/10 dark:bg-slate-950/80 dark:text-white dark:focus:border-sky-300"
+                className="w-full rounded-lg border border-slate-200 bg-white/90 px-4 py-3.5 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 dark:border-white/10 dark:bg-slate-950/80 dark:text-white dark:focus:border-sky-300"
               />
             </div>
 
@@ -101,7 +101,7 @@ const ForgotPasswordPage = () => {
                   required
                   minLength={8}
                   maxLength={128}
-                  className="w-full rounded-2xl border border-slate-200 bg-white/90 py-3.5 pl-11 pr-12 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 dark:border-white/10 dark:bg-slate-950/80 dark:text-white dark:focus:border-sky-300"
+                  className="w-full rounded-lg border border-slate-200 bg-white/90 py-3.5 pl-11 pr-12 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 dark:border-white/10 dark:bg-slate-950/80 dark:text-white dark:focus:border-sky-300"
                 />
                 <button
                   type="button"
@@ -119,7 +119,7 @@ const ForgotPasswordPage = () => {
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-600 via-cyan-600 to-emerald-600 px-4 py-3.5 font-semibold text-white shadow-lg shadow-sky-900/15 transition hover:-translate-y-0.5 hover:shadow-xl disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-sky-600 via-cyan-600 to-emerald-600 px-4 py-3.5 font-semibold text-white shadow-sm shadow-sky-900/15 transition hover:-translate-y-0.5 hover:shadow-md disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : requested ? 'Set new password' : 'Send reset code'}
         </button>

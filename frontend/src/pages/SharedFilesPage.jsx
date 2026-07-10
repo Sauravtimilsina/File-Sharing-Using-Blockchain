@@ -156,7 +156,7 @@ const SharedFilesPage = () => {
   if (loading) {
     return (
       <div className="flex min-h-[70vh] items-center justify-center">
-        <div className="surface-glass flex items-center gap-3 rounded-3xl border border-white/80 px-6 py-5 text-slate-500 dark:border-white/10 dark:text-slate-300">
+        <div className="surface-glass flex items-center gap-3 rounded-xl border border-white/80 px-6 py-5 text-slate-500 dark:border-white/10 dark:text-slate-300">
           <Loader2 className="h-6 w-6 animate-spin text-sky-500" />
           Loading shared files
         </div>
@@ -166,7 +166,7 @@ const SharedFilesPage = () => {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <section className="surface-glass premium-shadow security-grid rounded-[28px] border border-white/80 px-5 py-6 dark:border-white/10 sm:px-7 sm:py-8">
+      <section className="surface-glass premium-shadow security-grid rounded-xl border border-white/80 px-5 py-6 dark:border-white/10 sm:px-7 sm:py-8">
         <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
           <div>
             <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-fuchsia-200 bg-fuchsia-50/80 px-3 py-1.5 text-sm font-semibold text-fuchsia-800 dark:border-fuchsia-400/15 dark:bg-fuchsia-400/10 dark:text-fuchsia-100">
@@ -178,12 +178,12 @@ const SharedFilesPage = () => {
               Review files shared by other users, run a quick check before use, and keep ownership context visible.
             </p>
           </div>
-          <div className="rounded-[24px] border border-white/80 bg-white/70 p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
+          <div className="rounded-lg border border-white/80 bg-white/70 p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.06]">
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Available shares</p>
             <p className="mt-1 text-3xl font-semibold text-slate-950 dark:text-white">{filteredFiles.length}</p>
             <button
               onClick={fetchSharedFiles}
-              className="mt-3 inline-flex min-h-10 items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 dark:bg-white dark:text-slate-950"
+              className="mt-3 inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 dark:bg-white dark:text-slate-950"
             >
               <RefreshCcw className="h-4 w-4" />
               Refresh
@@ -192,7 +192,7 @@ const SharedFilesPage = () => {
         </div>
       </section>
 
-      <section className="mt-5 overflow-hidden rounded-[28px] border border-white/80 bg-white/80 shadow-sm dark:border-white/10 dark:bg-slate-900/70">
+      <section className="mt-5 overflow-hidden rounded-xl border border-white/80 bg-white/80 shadow-sm dark:border-white/10 dark:bg-slate-900/70">
         <header className="flex flex-col gap-4 border-b border-slate-200/80 px-5 py-5 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div>
             <p className="text-sm font-semibold uppercase text-fuchsia-700 dark:text-fuchsia-300">Collaborative access</p>
@@ -208,7 +208,7 @@ const SharedFilesPage = () => {
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="Search shared files"
-                className="h-12 w-full rounded-2xl border border-slate-200 bg-white/80 pl-11 pr-4 text-sm text-slate-950 outline-none transition focus:border-fuchsia-400 focus:ring-4 focus:ring-fuchsia-500/10 dark:border-white/10 dark:bg-slate-950/55 dark:text-white"
+                className="h-12 w-full rounded-lg border border-slate-200 bg-white/80 pl-11 pr-4 text-sm text-slate-950 outline-none transition focus:border-fuchsia-400 focus:ring-4 focus:ring-fuchsia-500/10 dark:border-white/10 dark:bg-slate-950/55 dark:text-white"
               />
             </label>
             <label className="relative block sm:w-44">
@@ -216,7 +216,7 @@ const SharedFilesPage = () => {
               <select
                 value={ownerFilter}
                 onChange={(event) => setOwnerFilter(event.target.value)}
-                className="h-12 w-full appearance-none rounded-2xl border border-slate-200 bg-white/80 pl-11 pr-4 text-sm font-semibold text-slate-700 outline-none transition focus:border-fuchsia-400 focus:ring-4 focus:ring-fuchsia-500/10 dark:border-white/10 dark:bg-slate-950/55 dark:text-white"
+                className="h-12 w-full appearance-none rounded-lg border border-slate-200 bg-white/80 pl-11 pr-4 text-sm font-semibold text-slate-700 outline-none transition focus:border-fuchsia-400 focus:ring-4 focus:ring-fuchsia-500/10 dark:border-white/10 dark:bg-slate-950/55 dark:text-white"
               >
                 <option value="all">All owners</option>
                 {owners.map((owner) => <option key={owner} value={owner}>{owner}</option>)}
@@ -225,22 +225,22 @@ const SharedFilesPage = () => {
             <select
               value={typeFilter}
               onChange={(event) => setTypeFilter(event.target.value)}
-              className="h-12 rounded-2xl border border-slate-200 bg-white/80 px-4 text-sm font-semibold text-slate-700 outline-none transition focus:border-fuchsia-400 focus:ring-4 focus:ring-fuchsia-500/10 dark:border-white/10 dark:bg-slate-950/55 dark:text-white"
+              className="h-12 rounded-lg border border-slate-200 bg-white/80 px-4 text-sm font-semibold text-slate-700 outline-none transition focus:border-fuchsia-400 focus:ring-4 focus:ring-fuchsia-500/10 dark:border-white/10 dark:bg-slate-950/55 dark:text-white"
             >
               <option value="all">All types</option>
               {sharedTypes.map((type) => <option key={type} value={type}>{type}</option>)}
             </select>
-            <div className="inline-flex w-fit items-center gap-1 rounded-2xl border border-slate-200 bg-slate-100/80 p-1 dark:border-white/10 dark:bg-white/[0.06]">
+            <div className="inline-flex w-fit items-center gap-1 rounded-lg border border-slate-200 bg-slate-100/80 p-1 dark:border-white/10 dark:bg-white/[0.06]">
               <button
                 onClick={() => toggleView('grid')}
-                className={`grid h-10 w-10 place-items-center rounded-2xl transition ${view === 'grid' ? 'bg-white text-slate-950 shadow-sm dark:bg-white dark:text-slate-950' : 'text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
+                className={`grid h-10 w-10 place-items-center rounded-lg transition ${view === 'grid' ? 'bg-white text-slate-950 shadow-sm dark:bg-white dark:text-slate-950' : 'text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
                 title="Grid view"
               >
                 <LayoutGrid className="h-4 w-4" />
               </button>
               <button
                 onClick={() => toggleView('list')}
-                className={`grid h-10 w-10 place-items-center rounded-2xl transition ${view === 'list' ? 'bg-white text-slate-950 shadow-sm dark:bg-white dark:text-slate-950' : 'text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
+                className={`grid h-10 w-10 place-items-center rounded-lg transition ${view === 'list' ? 'bg-white text-slate-950 shadow-sm dark:bg-white dark:text-slate-950' : 'text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
                 title="List view"
               >
                 <List className="h-4 w-4" />
@@ -251,7 +251,7 @@ const SharedFilesPage = () => {
 
         {files.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-5 py-16 text-center">
-            <div className="mb-4 grid h-20 w-20 place-items-center rounded-[24px] bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-400/10 dark:text-fuchsia-200">
+            <div className="mb-4 grid h-20 w-20 place-items-center rounded-lg bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-400/10 dark:text-fuchsia-200">
               <Package className="h-10 w-10" />
             </div>
             <h3 className="text-lg font-semibold text-slate-950 dark:text-white">Nothing has been shared yet</h3>
@@ -271,8 +271,8 @@ const SharedFilesPage = () => {
               const filename = share.fileId?.filename || 'Unknown file';
               const ownerName = share.owner?.username || 'Unknown';
               return (
-                <article key={share._id} className="group rounded-[24px] border border-slate-200/80 bg-slate-50/80 p-4 transition hover:-translate-y-1 hover:border-fuchsia-200 hover:bg-white hover:shadow-xl dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.07]">
-                  <div className="relative mb-4 flex aspect-[1.25] items-center justify-center rounded-[20px] border border-white bg-white shadow-sm dark:border-white/10 dark:bg-slate-950/70">
+                <article key={share._id} className="group rounded-lg border border-slate-200/80 bg-slate-50/80 p-4 transition hover:-translate-y-0.5 hover:border-fuchsia-200 hover:bg-white hover:shadow-md dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.07]">
+                  <div className="relative mb-4 flex aspect-[1.25] items-center justify-center rounded-lg border border-white bg-white shadow-sm dark:border-white/10 dark:bg-slate-950/70">
                     <FileTypeIcon filename={filename} className="h-14 w-14" />
                     <span className="absolute bottom-3 right-3 rounded-full bg-slate-950 px-2 py-1 text-[10px] font-bold text-white dark:bg-white dark:text-slate-950">{getExtension(filename)}</span>
                     {verifyResult?.fileId === fileId && (
@@ -293,13 +293,13 @@ const SharedFilesPage = () => {
                     {share.expiresAt ? `Expires ${new Date(share.expiresAt).toLocaleDateString()}` : formatSize(share.fileId?.fileSize)}
                   </div>
                   <div className="touch-reveal mt-4 grid grid-cols-3 gap-2 opacity-100 transition md:opacity-0 md:group-hover:opacity-100">
-                    <button onClick={() => handleDownload(share)} disabled={downloading === fileId} className="grid min-h-10 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:border-sky-200 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Download">
+                    <button onClick={() => handleDownload(share)} disabled={downloading === fileId} className="grid min-h-10 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-sky-200 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Download">
                       {downloading === fileId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                     </button>
-                    <button onClick={() => handlePreview(share)} disabled={previewing === fileId} className="grid min-h-10 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:border-sky-200 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Preview">
+                    <button onClick={() => handlePreview(share)} disabled={previewing === fileId} className="grid min-h-10 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-sky-200 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Preview">
                       {previewing === fileId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
                     </button>
-                    <button onClick={() => handleVerify(share)} disabled={verifying === fileId} className="grid min-h-10 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:border-emerald-200 hover:text-emerald-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Verify">
+                    <button onClick={() => handleVerify(share)} disabled={verifying === fileId} className="grid min-h-10 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-emerald-200 hover:text-emerald-700 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200" title="Verify">
                       {verifying === fileId ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
                     </button>
                   </div>
@@ -329,7 +329,7 @@ const SharedFilesPage = () => {
                     <tr key={share._id} className="transition hover:bg-fuchsia-50/50 dark:hover:bg-white/[0.04]">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-slate-100 dark:bg-white/10">
+                          <span className="grid h-11 w-11 place-items-center rounded-lg bg-slate-100 dark:bg-white/10">
                             <FileTypeIcon filename={filename} className="h-5 w-5" />
                           </span>
                           <span className="max-w-[220px] truncate text-sm font-semibold text-slate-950 dark:text-white">{filename}</span>
@@ -361,13 +361,13 @@ const SharedFilesPage = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end gap-2">
-                          <button onClick={() => handleDownload(share)} disabled={downloading === fileId} className="grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 text-slate-500 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Download">
+                          <button onClick={() => handleDownload(share)} disabled={downloading === fileId} className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Download">
                             {downloading === fileId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                           </button>
-                          <button onClick={() => handlePreview(share)} disabled={previewing === fileId} className="grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 text-slate-500 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Preview">
+                          <button onClick={() => handlePreview(share)} disabled={previewing === fileId} className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Preview">
                             {previewing === fileId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
                           </button>
-                          <button onClick={() => handleVerify(share)} disabled={verifying === fileId} className="grid h-10 w-10 place-items-center rounded-2xl border border-slate-200 text-slate-500 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Verify">
+                          <button onClick={() => handleVerify(share)} disabled={verifying === fileId} className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10" title="Verify">
                             {verifying === fileId ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
                           </button>
                         </div>
@@ -382,7 +382,7 @@ const SharedFilesPage = () => {
       </section>
 
       {verifyResult && (
-        <div className={`mt-5 flex items-start gap-3 rounded-[24px] border px-5 py-4 animate-[slideIn_0.3s_ease] ${verifyResult.isValid ? 'border-success/20 bg-success/10' : 'border-danger/20 bg-danger/10'}`}>
+        <div className={`mt-5 flex items-start gap-3 rounded-lg border px-5 py-4 animate-[slideIn_0.3s_ease] ${verifyResult.isValid ? 'border-success/20 bg-success/10' : 'border-danger/20 bg-danger/10'}`}>
           {verifyResult.isValid ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" /> : <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-danger" />}
           <p className={`text-sm font-semibold ${verifyResult.isValid ? 'text-success' : 'text-danger'}`}>{verifyResult.message}</p>
         </div>

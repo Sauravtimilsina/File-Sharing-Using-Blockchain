@@ -26,17 +26,17 @@ const looksLikePlaceholder = (value) => !value
   || value.includes("your_")
   || value.includes("mail_");
 
-const requireStrongProductionSecret = (name, value) => {
-  if (isProduction && (looksLikePlaceholder(value) || value.length < 32)) {
+const requireRuntimeSecret = (name, value) => {
+  if (!value || looksLikePlaceholder(value) || (isProduction && value.length < 32)) {
     throw new Error(
       `${name} must be set in the runtime environment with at least 32 random characters. `
       + "Generate one with: npm run generate:secrets",
     );
   }
+
+  return value;
 };
 
-requireStrongProductionSecret("JWT_SECRET", process.env.JWT_SECRET);
-requireStrongProductionSecret("OTP_SECRET", process.env.OTP_SECRET || process.env.JWT_SECRET);
 
 const runtimeConfig = {
   port: Number(process.env.PORT) || 5000,
@@ -54,6 +54,7 @@ const runtimeConfig = {
     provider: process.env.FILE_STORAGE_PROVIDER || "local",
     bucket: process.env.SUPABASE_STORAGE_BUCKET || "encrypted-files",
   },
+  requireRuntimeSecret,
 };
 
 module.exports = runtimeConfig;

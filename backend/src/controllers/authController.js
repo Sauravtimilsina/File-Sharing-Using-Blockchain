@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const repositories = require("../repositories");
+const runtimeConfig = require("../config/runtime");
 const { sendOTP: sendOTPEmail, sendPasswordResetOTP } = require("../utils/email");
 const { recordLoginAudit } = require("../utils/audit");
 const { equalOtpHash, hashOtp } = require("../utils/otp");
@@ -35,7 +36,7 @@ const PROFILE_TEXT_LIMITS = {
 const ALLOWED_AVATAR_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+  return jwt.sign({ id: userId }, runtimeConfig.requireRuntimeSecret("JWT_SECRET", process.env.JWT_SECRET), {
     algorithm: "HS256",
     expiresIn: "7d",
     issuer: "secure-transfer-api",

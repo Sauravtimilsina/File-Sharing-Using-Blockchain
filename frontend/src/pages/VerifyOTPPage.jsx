@@ -109,13 +109,13 @@ const VerifyOTPPage = () => {
       )}
       footer="Verification codes expire after 5 minutes."
     >
-      <div className="mb-6 flex items-center gap-3 rounded-2xl border border-sky-200/80 bg-sky-50/80 px-4 py-3 text-sm text-sky-800 dark:border-sky-400/15 dark:bg-sky-400/10 dark:text-sky-100">
+      <div className="mb-6 flex items-center gap-3 rounded-lg border border-sky-200/80 bg-sky-50/80 px-4 py-3 text-sm text-sky-800 dark:border-sky-400/15 dark:bg-sky-400/10 dark:text-sky-100">
         <ShieldCheck className="h-5 w-5 shrink-0" />
         Complete this step before opening your account.
       </div>
 
       {devOtp && (
-        <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-100">
+        <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-100">
           Local verification code: <span className="font-mono">{devOtp}</span>
         </div>
       )}
@@ -132,7 +132,7 @@ const VerifyOTPPage = () => {
               value={digit}
               onChange={(e) => handleChange(index, e.target.value)}
               onKeyDown={(e) => handleKeyDown(index, e)}
-              className="h-14 min-w-0 rounded-2xl border border-slate-200 bg-white/90 text-center text-xl font-bold text-slate-950 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 dark:border-white/10 dark:bg-slate-950/80 dark:text-white dark:focus:border-sky-300 sm:h-16"
+              className="h-14 min-w-0 rounded-lg border border-slate-200 bg-white/90 text-center text-xl font-bold text-slate-950 shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 dark:border-white/10 dark:bg-slate-950/80 dark:text-white dark:focus:border-sky-300 sm:h-16"
               autoFocus={index === 0}
             />
           ))}
@@ -141,7 +141,7 @@ const VerifyOTPPage = () => {
         <button
           type="submit"
           disabled={loading || otp.join('').length !== 6}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-600 via-cyan-600 to-emerald-600 px-4 py-3.5 font-semibold text-white shadow-lg shadow-sky-900/15 transition hover:-translate-y-0.5 hover:shadow-xl disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-sky-600 via-cyan-600 to-emerald-600 px-4 py-3.5 font-semibold text-white shadow-sm shadow-sky-900/15 transition hover:-translate-y-0.5 hover:shadow-md disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Verify email'}
         </button>
